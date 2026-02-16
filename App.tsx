@@ -27,7 +27,6 @@ const App: React.FC = () => {
   const [isAiMinimized, setIsAiMinimized] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // 스크롤 초기화
   useEffect(() => {
     const containers = document.querySelectorAll('.custom-scrollbar');
     containers.forEach(el => el.scrollTo({ top: 0, behavior: 'auto' }));
@@ -107,15 +106,6 @@ const App: React.FC = () => {
     };
   }, [loadUserProgressFromDB]);
 
-  useEffect(() => {
-    if (user && selectedTrack) {
-      const completedIds = user.completedLessonIds || [];
-      const rawTrack = ALL_TRACKS.find(t => t.id === selectedTrack.id) || selectedTrack;
-      const synced = syncTrackProgress([rawTrack], completedIds)[0];
-      setSelectedTrack(synced);
-    }
-  }, [user, selectedTrack?.id, syncTrackProgress]);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsLoggedIn(false);
@@ -132,16 +122,26 @@ const App: React.FC = () => {
     setActiveRoute(AppRoute.CURRICULUM);
   };
 
-  // 트랙 분류
+  // 트랙 분류 (Memoized)
   const tutorialTracks = useMemo(() => (ALL_TRACKS || []).filter(t => t.category === 'tutorial'), []);
   const languageTracks = useMemo(() => (ALL_TRACKS || []).filter(t => t.category === 'language'), []);
 
   if (isInitialLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-500 font-bold text-sm">StepCode 준비 중...</p>
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-6">
+        <div className="w-16 h-16 bg-[#007AFF] rounded-3xl flex items-center justify-center shadow-2xl shadow-[#007AFF]/20 animate-pulse">
+          <span className="text-white font-black text-3xl">S</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ x: '-100%' }}
+              animate={{ x: '100%' }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+              className="w-1/2 h-full bg-[#007AFF]"
+            />
+          </div>
+          <p className="text-gray-600 font-bold text-[10px] uppercase tracking-[0.3em]">Initialising Platform</p>
         </div>
       </div>
     );
@@ -164,19 +164,20 @@ const App: React.FC = () => {
           className="h-full"
         >
           {activeRoute === AppRoute.HOME && (
-            <div className="p-6 lg:p-12 space-y-20 max-w-7xl mx-auto pb-32 overflow-y-auto custom-scrollbar h-full">
+            <div className="p-6 lg:p-12 space-y-24 max-w-7xl mx-auto pb-32 overflow-y-auto custom-scrollbar h-full">
               <header className="mb-12">
                 <h2 className="text-3xl lg:text-5xl font-black mb-4 tracking-tighter text-white">반가워요, {user.name}님!</h2>
                 <p className="text-gray-500 text-lg font-light">오늘은 어떤 성장을 이루어볼까요?</p>
               </header>
 
+              {/* 튜토리얼 섹션 */}
               {tutorialTracks.length > 0 && (
                 <section className="space-y-8">
                   <div className="flex items-center gap-4">
                     <div className="p-2.5 bg-purple-500/20 rounded-xl text-purple-400"><BrainCircuit size={24} /></div>
                     <div>
                       <h3 className="text-2xl font-bold tracking-tight text-white">사고력 튜토리얼</h3>
-                      <p className="text-xs text-gray-600 font-bold uppercase tracking-widest mt-1">Foundation & Logic</p>
+                      <p className="text-xs text-gray-600 font-bold uppercase tracking-widest mt-1">Foundation & Thinking</p>
                     </div>
                     <div className="h-px flex-1 bg-white/5" />
                   </div>
@@ -199,6 +200,7 @@ const App: React.FC = () => {
                 </section>
               )}
 
+              {/* 언어 학습 섹션 */}
               {languageTracks.length > 0 && (
                 <section className="space-y-8">
                   <div className="flex items-center gap-4">

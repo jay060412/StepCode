@@ -3,7 +3,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 
 const getApiKey = () => {
   try {
-    // process 객체가 존재하는지 확인 후 접근하여 ReferenceError 방지
+    // process 객체 존재 여부 확인 후 안전하게 접근
     const env = typeof process !== 'undefined' ? process.env : (window as any).process?.env;
     return env?.API_KEY || '';
   } catch (e) {
@@ -15,8 +15,8 @@ export const askGemini = async (prompt: string, context?: string) => {
   try {
     const apiKey = getApiKey();
     if (!apiKey) {
-      console.warn("Gemini API Key is missing.");
-      return "AI 서비스를 설정하는 중입니다. 잠시 후 다시 시도해주세요.";
+      console.warn("Gemini API Key is missing. Check your environment variables.");
+      return "AI 연결을 설정하는 중입니다. 잠시 후 다시 시도해주세요.";
     }
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
