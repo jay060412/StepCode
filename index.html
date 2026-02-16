@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StepCode | Visual Coding Learning</title>
+    <!-- 전역 process 객체 폴리필: 배포 환경에서의 ReferenceError 방지 -->
+    <script>
+        window.process = {
+            env: {
+                NODE_ENV: 'production'
+            }
+        };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@100;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
@@ -21,22 +29,14 @@
             backdrop-filter: blur(24px) saturate(180%);
             -webkit-backdrop-filter: blur(24px) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            
-            /* 블러 짤림 방지 핵심: 레이어 격리 및 가속 */
             isolation: isolate;
             transform: translate3d(0, 0, 0);
-            -webkit-transform: translate3d(0, 0, 0);
-            backface-visibility: hidden;
-            perspective: 1000px;
-            will-change: backdrop-filter, transform;
         }
         .glass-blue {
             background: rgba(0, 122, 255, 0.04);
             backdrop-filter: blur(24px) saturate(180%);
             -webkit-backdrop-filter: blur(24px) saturate(180%);
             border: 1px solid rgba(0, 122, 255, 0.15);
-            transform: translate3d(0, 0, 0);
-            isolation: isolate;
         }
         ::-webkit-scrollbar {
             width: 8px;
@@ -48,9 +48,6 @@
             background: #333;
             border-radius: 10px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #444;
-        }
         .custom-scrollbar {
             scroll-behavior: smooth;
         }
@@ -60,11 +57,6 @@
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 3px;
-        }
-        /* 블러 연산 최적화 클래스 */
-        .blur-fix {
-            transform: translateZ(0);
-            backface-visibility: hidden;
         }
     </style>
 <script type="importmap">
@@ -84,5 +76,7 @@
 </head>
 <body>
     <div id="root"></div>
+    <!-- 앱 진입점 명시적 로드 -->
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>
