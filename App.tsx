@@ -4,17 +4,16 @@ import { Layout } from './components/Layout';
 import { CodeViewer } from './components/CodeViewer';
 import { AIChat } from './components/AIChat';
 import { Curriculum } from './components/Curriculum';
-import { ProblemSolving } from './components/ProblemSolving';
 import { Playground } from './components/Playground';
 import { StudyGuide } from './components/StudyGuide';
 import { GapFiller } from './components/GapFiller';
 import { Admin } from './components/Admin';
 import { Auth } from './components/Auth';
 import { QuestionPage } from './components/QuestionPage';
-import { AppRoute, UserProfile, Lesson, Problem, Track } from './types';
+import { AppRoute, UserProfile, Lesson, Track } from './types';
 import { ALL_TRACKS } from './contentData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe2, Sparkles, BrainCircuit, Terminal, Code2 } from 'lucide-react';
+import { BrainCircuit, Sparkles, Code2, Terminal } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
 const ADMIN_EMAIL = 'jay447233@gmail.com';
@@ -24,7 +23,6 @@ const App: React.FC = () => {
   const [activeRoute, setActiveRoute] = useState<AppRoute>(AppRoute.HOME);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
-  const [learningStage, setLearningStage] = useState<'concept' | 'quiz' | 'coding'>('concept');
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAiMinimized, setIsAiMinimized] = useState(false);
 
@@ -54,21 +52,27 @@ const App: React.FC = () => {
   }, []);
 
   const loadUserProgressFromDB = useCallback(async (userId: string) => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (error) return;
-    if (data) {
-      setUser({
-        id: data.id,
-        name: data.name || '학습자',
-        email: authUser?.email || '',
-        level: data.level || 1,
-        progress: data.progress || 0,
-        missedConcepts: data.missed_concepts || [],
-        selectedTrackId: null,
-        completedLessonIds: data.completed_lesson_ids || []
-      });
-      setIsLoggedIn(true);
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setUser({
+          id: data.id,
+          name: data.name || '학습자',
+          email: authUser?.email || '',
+          level: data.level || 1,
+          progress: data.progress || 0,
+          missedConcepts: data.missed_concepts || [],
+          selectedTrackId: null,
+          completedLessonIds: data.completed_lesson_ids || []
+        });
+        setIsLoggedIn(true);
+      }
+    } catch (err) {
+      console.error("Progress Load Error:", err);
     }
   }, []);
 
@@ -76,11 +80,19 @@ const App: React.FC = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) loadUserProgressFromDB(session.user.id);
     });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) loadUserProgressFromDB(session.user.id);
-      else { setIsLoggedIn(false); setUser(null); }
+      if (session?.user) {
+        loadUserProgressFromDB(session.user.id);
+      } else {
+        setIsLoggedIn(false);
+        setUser(null);
+      }
     });
-    return () => { subscription.unsubscribe(); };
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [loadUserProgressFromDB]);
 
   useEffect(() => {
@@ -94,9 +106,9 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setIsLoggedIn(false); 
-    setUser(null); 
-    setSelectedTrack(null); 
+    setIsLoggedIn(false);
+    setUser(null);
+    setSelectedTrack(null);
     setSelectedLesson(null);
     setActiveRoute(AppRoute.HOME);
   };
@@ -112,14 +124,19 @@ const App: React.FC = () => {
     return <Auth onLoginSuccess={(acc) => { loadUserProgressFromDB(acc.id); }} />;
   }
 
-  // 트랙 카테고리별 분류
-  const tutorialTracks = ALL_TRACKS.filter(track => track.category === 'tutorial');
-  const languageTracks = ALL_TRACKS.filter(track => track.category === 'language');
+  const tutorialTracks = ALL_TRACKS.filter(t => t.category === 'tutorial');
+  const languageTracks = ALL_TRACKS.filter(t => t.category === 'language');
 
   return (
     <Layout activeRoute={activeRoute} setActiveRoute={setActiveRoute} user={user} onLogout={handleLogout}>
       <AnimatePresence mode="wait">
-        <motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+        <motion.div 
+          key={activeRoute} 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0 }} 
+          className="h-full"
+        >
           {activeRoute === AppRoute.HOME && (
             <div className="p-6 lg:p-12 space-y-20 max-w-7xl mx-auto pb-32 overflow-y-auto custom-scrollbar h-full">
               <header className="mb-12">
@@ -127,7 +144,6 @@ const App: React.FC = () => {
                 <p className="text-gray-500 text-lg font-light">오늘은 어떤 성장을 이루어볼까요?</p>
               </header>
 
-              {/* Tutorial Category Section */}
               {tutorialTracks.length > 0 && (
                 <section className="space-y-8">
                   <div className="flex items-center gap-4">
@@ -157,7 +173,6 @@ const App: React.FC = () => {
                 </section>
               )}
 
-              {/* Language Category Section */}
               {languageTracks.length > 0 && (
                 <section className="space-y-8">
                   <div className="flex items-center gap-4">
@@ -192,7 +207,7 @@ const App: React.FC = () => {
           {activeRoute === AppRoute.LEARN && selectedLesson && (
             <div className="flex h-full overflow-hidden relative">
               <div id="learn-scroll-container" className="flex-1 overflow-y-auto p-4 lg:p-12 custom-scrollbar pb-24">
-                <CodeViewer lesson={selectedLesson} onFinishConcept={() => { setLearningStage('quiz'); }} onPageChange={() => {}} />
+                <CodeViewer lesson={selectedLesson} onFinishConcept={() => { setActiveRoute(AppRoute.CURRICULUM); }} />
               </div>
               <motion.div animate={{ width: isAiMinimized ? 80 : 400 }} className="hidden lg:block border-l border-white/5 bg-black/20 shrink-0 relative overflow-hidden">
                 <AIChat currentLesson={selectedLesson} isMinimized={isAiMinimized} onToggleMinimize={() => { setIsAiMinimized(!isAiMinimized); }} />
@@ -201,7 +216,11 @@ const App: React.FC = () => {
           )}
 
           {activeRoute === AppRoute.CURRICULUM && selectedTrack && (
-            <Curriculum onSelectLesson={(lesson) => { setSelectedLesson(lesson); setLearningStage('concept'); setActiveRoute(AppRoute.LEARN); }} selectedTrack={selectedTrack} onChangeTrack={() => { setActiveRoute(AppRoute.HOME); }} />
+            <Curriculum 
+              onSelectLesson={(lesson) => { setSelectedLesson(lesson); setActiveRoute(AppRoute.LEARN); }} 
+              selectedTrack={selectedTrack} 
+              onChangeTrack={() => { setActiveRoute(AppRoute.HOME); }} 
+            />
           )}
 
           {activeRoute === AppRoute.QUESTION && <QuestionPage user={user} />}

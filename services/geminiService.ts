@@ -1,9 +1,19 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
 
+const getApiKey = () => {
+  try {
+    return process.env.API_KEY || '';
+  } catch (e) {
+    console.warn("API Key environment variable not found.");
+    return '';
+  }
+};
+
 export const askGemini = async (prompt: string, context?: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = getApiKey();
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `You are StepCode AI Assistant, an expert Python educator. 
@@ -30,7 +40,8 @@ export const askGemini = async (prompt: string, context?: string) => {
 
 export const getGeminiSpeech = async (text: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = getApiKey();
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text: `읽어주세요: ${text}` }] }],
@@ -38,7 +49,7 @@ export const getGeminiSpeech = async (text: string) => {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' }, // Warm and clear Korean voice
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
           },
         },
       },
@@ -53,7 +64,6 @@ export const getGeminiSpeech = async (text: string) => {
   }
 };
 
-// PCM Decoding Utility
 export async function playPcmAudio(base64Data: string) {
   const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
   

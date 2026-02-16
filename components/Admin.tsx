@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Users, Activity, CheckCircle2, BarChart3, AlertTriangle, Settings, LayoutGrid, Loader2, RefreshCw, MessageCircle } from 'lucide-react';
+import { ShieldCheck, Users, Activity, CheckCircle2, BarChart3, LayoutGrid, Loader2, RefreshCw, MessageCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SupportQuestion } from '../types';
 
@@ -28,10 +28,9 @@ export const Admin: React.FC = () => {
   const fetchAdminData = async () => {
     setIsLoading(true);
     try {
-      // 1. 전체 사용자 통계 가져오기
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('name, level, progress, updated_at');
+        .select('id, name, level, progress, updated_at');
 
       if (profileError) throw profileError;
 
@@ -39,14 +38,14 @@ export const Admin: React.FC = () => {
         const total = profiles.length;
         const sumProgress = profiles.reduce((acc, curr) => acc + (curr.progress || 0), 0);
         const sumLevel = profiles.reduce((acc, curr) => acc + (curr.level || 1), 0);
-        const today = new Date().toISOString().split('T')[0];
-        const activeTodayCount = profiles.filter(p => p.updated_at && p.updated_at.startsWith(today)).length;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const activeTodayCount = profiles.filter(p => p.updated_at && p.updated_at.startsWith(todayStr)).length;
 
         setStats({
           totalUsers: total,
           avgProgress: total > 0 ? Math.round(sumProgress / total) : 0,
           avgLevel: total > 0 ? Number((sumLevel / total).toFixed(1)) : 1,
-          activeToday: activeTodayCount || Math.floor(total * 0.15)
+          activeToday: activeTodayCount
         });
 
         const sorted = [...profiles]
@@ -56,13 +55,12 @@ export const Admin: React.FC = () => {
         const logs = sorted.map(p => ({
           id: p.id || Math.random().toString(),
           name: p.name || '익명',
-          action: p.progress > 0 ? `학습 진척도 ${p.progress}% 달성` : '플랫폼 가입 완료',
+          action: (p.progress || 0) > 0 ? `학습 진척도 ${p.progress}% 달성` : '플랫폼 가입 완료',
           time: getTimeAgo(p.updated_at)
         }));
         setActivities(logs);
       }
 
-      // 2. 미답변 질문 가져오기
       const { data: questions, error: qError } = await supabase
         .from('support_questions')
         .select('*')
@@ -95,18 +93,18 @@ export const Admin: React.FC = () => {
 
   useEffect(() => {
     fetchAdminData();
-    const subscription = supabase
+    const channel = supabase
       .channel('admin_realtime')
       .on('postgres_changes', { event: '*', table: 'profiles' }, () => { fetchAdminData(); })
       .on('postgres_changes', { event: '*', table: 'support_questions' }, () => { fetchAdminData(); })
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, []);
 
-  const getTimeAgo = (dateStr?: string) => {
+  function getTimeAgo(dateStr?: string) {
     if (!dateStr) return '방금 전';
     const now = new Date();
     const past = new Date(dateStr);
@@ -116,7 +114,7 @@ export const Admin: React.FC = () => {
     if (diffMin < 60) return `${diffMin}분 전`;
     if (diffMin < 1440) return `${Math.floor(diffMin / 60)}시간 전`;
     return `${Math.floor(diffMin / 1440)}일 전`;
-  };
+  }
 
   const dashboardStats = [
     { label: '전체 학습자', value: stats.totalUsers.toLocaleString(), icon: <Users />, color: 'bg-blue-500' },
@@ -137,7 +135,7 @@ export const Admin: React.FC = () => {
         </div>
         <div className="flex gap-3">
           <button 
-            onClick={fetchAdminData}
+            onClick={() => { fetchAdminData(); }}
             disabled={isLoading}
             className="flex items-center gap-3 px-6 py-4 glass rounded-2xl text-sm font-bold hover:bg-white/10 transition-all border-white/10"
           >
@@ -147,7 +145,6 @@ export const Admin: React.FC = () => {
         </div>
       </header>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
         {dashboardStats.map((stat, i) => (
           <motion.div
@@ -158,7 +155,7 @@ export const Admin: React.FC = () => {
             className="glass p-8 rounded-[40px] border-white/5 bg-white/[0.02]"
           >
             <div className={`w-12 h-12 rounded-2xl ${stat.color} bg-opacity-10 flex items-center justify-center mb-6`}>
-              {React.cloneElement(stat.icon as React.ReactElement<any>, { size: 24, className: `text-${stat.color.split('-')[1]}-400` })}
+              {React.cloneElement(stat.icon as React.ReactElement<any>, { size: 24, className: "text-white" })}
             </div>
             <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-2">{stat.label}</p>
             <h4 className="text-4xl font-black tracking-tighter text-white">
@@ -169,7 +166,6 @@ export const Admin: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Recent Activities */}
         <div className="glass rounded-[40px] border-white/5 overflow-hidden">
           <div className="px-10 py-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
             <h3 className="text-xl font-bold flex items-center gap-3 text-white"><LayoutGrid size={20} className="text-[#007AFF]" /> 최근 활동</h3>
@@ -202,7 +198,6 @@ export const Admin: React.FC = () => {
           </div>
         </div>
 
-        {/* User Questions List */}
         <div className="glass rounded-[40px] border-white/5 overflow-hidden bg-gradient-to-br from-red-500/5 to-transparent">
           <div className="px-10 py-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
             <h3 className="text-xl font-bold flex items-center gap-3 text-white"><MessageCircle size={20} className="text-red-400" /> 미답변 질문 피드</h3>
