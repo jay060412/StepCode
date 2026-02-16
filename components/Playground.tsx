@@ -18,7 +18,6 @@ export const Playground: React.FC = () => {
   
   const lineCount = Math.max(15, code.split('\n').length + 3);
 
-  // Pyodide 초기화 및 입출력 설정
   useEffect(() => {
     if (lang === 'python') {
       const initPyodide = async () => {
@@ -29,7 +28,6 @@ export const Playground: React.FC = () => {
               indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/"
             });
 
-            // 1. 표준 출력(Stdout) 및 에러(Stderr) 설정
             const handleOutput = (text: string) => {
               const trimmed = text.trimEnd();
               if (trimmed) {
@@ -41,16 +39,12 @@ export const Playground: React.FC = () => {
             pyodideRef.current.setStdout({ batched: handleOutput });
             pyodideRef.current.setStderr({ batched: handleOutput });
 
-            // 2. 표준 입력(Stdin) 설정 - window.prompt 활용
             pyodideRef.current.setStdin({
               read() {
-                // 파이썬의 input() 호출 시 브라우저 프롬프트 실행
                 const result = window.prompt("입력이 필요합니다:");
-                if (result === null) return null; // 취소 시 EOF
+                if (result === null) return null;
                 
                 const inputLine = result + "\n";
-                
-                // [UX 개선] 입력한 값을 출력창에도 표시하여 터미널처럼 보이게 함
                 outputBufferRef.current.push(`> ${result}`);
                 setOutput([...outputBufferRef.current]);
                 
@@ -88,14 +82,11 @@ export const Playground: React.FC = () => {
 
     if (lang === 'python' && pyodideRef.current) {
       try {
-        // 실제 파이썬 코드 실행
         await pyodideRef.current.runPythonAsync(code);
-        
         if (outputBufferRef.current.length === 0) {
           setOutput([">>> 실행 완료 (출력 없음)"]);
         }
       } catch (e: any) {
-        // 파이썬 런타임 에러 캡처
         setOutput([...outputBufferRef.current, `❌ Error: ${e.message}`]);
       }
     } else if (lang === 'c') {

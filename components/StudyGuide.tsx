@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-// Add MessageSquareCode to the imports
 import { 
   PlayCircle, BookOpen, 
   CheckCircle2, Terminal, Variable, 
@@ -25,8 +24,6 @@ const HelpCircleIcon = (props: any): React.ReactNode => (
 
 export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCurriculum, onStartAlgorithm }) => {
   const [activeTab, setActiveTab] = useState<'concept' | 'quiz' | 'coding'>('concept');
-
-  const name = "StepCode";
 
   const studyStages = {
     concept: {
@@ -70,7 +67,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
 
   return (
     <div className="p-6 lg:p-12 max-w-7xl mx-auto pb-32 h-full overflow-y-auto custom-scrollbar scroll-smooth">
-      {/* Hero Section */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -88,7 +84,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         </p>
       </motion.div>
 
-      {/* Actual Screen Example Section */}
       <div className="mb-24 lg:mb-32">
         <div className="flex flex-wrap justify-center gap-3 lg:gap-4 mb-10">
           {(['concept', 'quiz', 'coding'] as const).map((tab) => (
@@ -107,7 +102,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 lg:gap-16 items-start">
-          {/* Visual Simulation Area */}
           <div className="flex flex-col gap-4 sticky top-4">
             <div className="flex items-center justify-between px-4">
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Screen Simulation</span>
@@ -126,7 +120,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
                   exit={{ opacity: 0, scale: 0.98 }}
                   className="glass rounded-[40px] border-white/10 bg-black/40 overflow-hidden shadow-2xl aspect-[4/3] flex flex-col"
                 >
-                  {/* Mock UI Header */}
                   <div className="px-6 py-4 bg-white/[0.03] border-b border-white/5 flex items-center justify-between">
                     <div className="flex gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-red-500/40" />
@@ -188,7 +181,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
                             </div>
                          </div>
                          <div className="h-20 glass bg-[#0a0a0a] rounded-2xl border-white/5 p-4 font-mono text-[10px] text-green-400">
-                           <div>> 입력을 기다리는 중...</div>
+                           <div>&gt; 입력을 기다리는 중...</div>
                          </div>
                          <div className="flex justify-end">
                            <div className="px-8 py-3 bg-cyan-500 text-black rounded-xl text-xs font-black">
@@ -204,7 +197,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
             </motion.div>
           </div>
 
-          {/* Description Area */}
           <div className="space-y-12">
             <div>
               <span className={`px-4 py-2 ${studyStages[activeTab].bgColor} ${studyStages[activeTab].color} rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block`}>
@@ -236,7 +228,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         </div>
       </div>
 
-      {/* Categorized Curriculum Map */}
       <div className="mb-24 lg:mb-32">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-5xl font-bold mb-4 tracking-tight">당신의 코딩 수준은 어디인가요?</h2>
@@ -244,7 +235,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Beginner Path */}
           <motion.div 
             whileHover={{ y: -5 }}
             className="glass p-10 lg:p-14 rounded-[50px] border-white/5 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent flex flex-col items-center text-center group"
@@ -273,7 +263,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
             </button>
           </motion.div>
 
-          {/* Experienced Path */}
           <motion.div 
             whileHover={{ y: -5 }}
             className="glass p-10 lg:p-14 rounded-[50px] border-white/5 bg-gradient-to-br from-[#007AFF]/10 via-transparent to-transparent flex flex-col items-center text-center group"
@@ -304,7 +293,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         </div>
       </div>
 
-      {/* Feature Highlights */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
           { icon: Layout, title: "정갈한 UI", desc: "학습에만 몰입할 수 있도록 깔끔하고 정제된 인터페이스를 제공합니다." },
@@ -324,7 +312,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         })}
       </div>
 
-      {/* Final Call to Action */}
       <motion.div 
         whileInView={{ opacity: 1, y: 0 }}
         initial={{ opacity: 0, y: 30 }}
