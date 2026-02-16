@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Layout } from './components/Layout';
 import { CodeViewer } from './components/CodeViewer';
 import { AIChat } from './components/AIChat';
@@ -25,15 +25,18 @@ const App: React.FC = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAiMinimized, setIsAiMinimized] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
+  // 스크롤 초기화
   useEffect(() => {
     const containers = document.querySelectorAll('.custom-scrollbar');
     containers.forEach(el => el.scrollTo({ top: 0, behavior: 'auto' }));
   }, [activeRoute]);
 
   const syncTrackProgress = useCallback((tracks: Track[], completedIds: string[]): Track[] => {
+    if (!tracks) return [];
     return tracks.map(track => {
-      const newLessons = track.lessons.map((lesson, idx) => {
+      const newLessons = (track.lessons || []).map((lesson, idx) => {
         const isCompleted = completedIds.includes(lesson.id);
         let status: Lesson['status'] = 'locked';
         if (isCompleted) {
@@ -73,13 +76,22 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error("Progress Load Error:", err);
+    } finally {
+      setIsInitialLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) loadUserProgressFromDB(session.user.id);
-    });
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await loadUserProgressFromDB(session.user.id);
+      } else {
+        setIsInitialLoading(false);
+      }
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
@@ -120,12 +132,26 @@ const App: React.FC = () => {
     setActiveRoute(AppRoute.CURRICULUM);
   };
 
+  // 트랙 분류
+  const tutorialTracks = useMemo(() => (ALL_TRACKS || []).filter(t => t.category === 'tutorial'), []);
+  const languageTracks = useMemo(() => (ALL_TRACKS || []).filter(t => t.category === 'language'), []);
+
+  if (isInitialLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-500 font-bold text-sm">StepCode 준비 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoggedIn || !user) {
     return <Auth onLoginSuccess={(acc) => { loadUserProgressFromDB(acc.id); }} />;
   }
 
-  const tutorialTracks = ALL_TRACKS.filter(t => t.category === 'tutorial');
-  const languageTracks = ALL_TRACKS.filter(t => t.category === 'language');
+  const isAdmin = user.email === ADMIN_EMAIL;
 
   return (
     <Layout activeRoute={activeRoute} setActiveRoute={setActiveRoute} user={user} onLogout={handleLogout}>
@@ -225,9 +251,9 @@ const App: React.FC = () => {
 
           {activeRoute === AppRoute.QUESTION && <QuestionPage user={user} />}
           {activeRoute === AppRoute.PLAYGROUND && <Playground />}
-          {activeRoute === AppRoute.GAP_FILLER && <GapFiller missedProblems={user.missedConcepts} onStartReview={() => {}} />}
-          {activeRoute === AppRoute.STUDY_GUIDE && <StudyGuide onStartPython={() => {}} onViewCurriculum={() => {}} onStartAlgorithm={() => {}} />}
-          {activeRoute === AppRoute.ADMIN && user.email === ADMIN_EMAIL && <Admin />}
+          {activeRoute === AppRoute.GAP_FILLER && <GapFiller missedProblems={user.missedConcepts || []} onStartReview={() => {}} />}
+          {activeRoute === AppRoute.STUDY_GUIDE && <StudyGuide onStartPython={() => { setActiveRoute(AppRoute.HOME); }} onViewCurriculum={() => { setActiveRoute(AppRoute.CURRICULUM); }} onStartAlgorithm={() => { setActiveRoute(AppRoute.HOME); }} />}
+          {activeRoute === AppRoute.ADMIN && isAdmin && <Admin />}
         </motion.div>
       </AnimatePresence>
     </Layout>

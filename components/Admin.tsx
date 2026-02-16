@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Users, Activity, CheckCircle2, BarChart3, LayoutGrid, Loader2, RefreshCw, MessageCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -25,7 +25,7 @@ export const Admin: React.FC = () => {
   const [pendingQuestions, setPendingQuestions] = useState<SupportQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchAdminData = async () => {
+  const fetchAdminData = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data: profiles, error: profileError } = await supabase
@@ -75,7 +75,7 @@ export const Admin: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const handleResolve = async (id: string) => {
     try {
@@ -102,7 +102,7 @@ export const Admin: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchAdminData]);
 
   function getTimeAgo(dateStr?: string) {
     if (!dateStr) return '방금 전';
@@ -130,14 +130,14 @@ export const Admin: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 text-[#007AFF] text-[10px] font-black uppercase tracking-widest mb-4">
             <ShieldCheck size={12} /> System Administrator
           </div>
-          <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-2">대시보드</h2>
+          <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-2 text-white">대시보드</h2>
           <p className="text-gray-500 font-light text-lg">실시간 데이터 및 학습자 지원을 관리합니다.</p>
         </div>
         <div className="flex gap-3">
           <button 
             onClick={() => { fetchAdminData(); }}
             disabled={isLoading}
-            className="flex items-center gap-3 px-6 py-4 glass rounded-2xl text-sm font-bold hover:bg-white/10 transition-all border-white/10"
+            className="flex items-center gap-3 px-6 py-4 glass rounded-2xl text-sm font-bold hover:bg-white/10 transition-all border-white/10 text-white"
           >
             {isLoading ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
             새로고침
@@ -218,9 +218,9 @@ export const Admin: React.FC = () => {
                    >
                      <div className="flex items-center justify-between">
                        <div className="flex items-center gap-3">
-                         <div className="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 font-bold text-[10px]">{q.user_name[0]}</div>
+                         <div className="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 font-bold text-[10px]">{q.user_name ? q.user_name[0] : '?'}</div>
                          <div>
-                           <p className="text-xs font-bold text-white">{q.user_name}</p>
+                           <p className="text-xs font-bold text-white">{q.user_name || '익명'}</p>
                            <p className="text-[8px] text-gray-600 font-mono">{getTimeAgo(q.created_at)}</p>
                          </div>
                        </div>
