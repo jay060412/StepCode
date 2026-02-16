@@ -26,7 +26,6 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // 로컬 스토리지에서 저장된 이메일 불러오기
   useEffect(() => {
     const savedEmail = localStorage.getItem('stepcode_saved_email');
     if (savedEmail) {
@@ -34,12 +33,6 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
       setRememberMe(true);
     }
   }, []);
-
-  useEffect(() => {
-    if (verificationCode.length >= 6 && authStage === 'verify') {
-      setError('');
-    }
-  }, [verificationCode]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +54,6 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
           throw loginError;
         }
 
-        // 아이디 저장 로직
         if (rememberMe) {
           localStorage.setItem('stepcode_saved_email', email);
         } else {
@@ -71,7 +63,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
         if (data.user) {
           onLoginSuccess({
             id: data.user.id,
-            name: data.user.user_metadata.full_name || '학습자',
+            name: data.user.user_metadata?.full_name || '학습자',
             email: data.user.email || '',
             level: 1,
             progress: 0,
@@ -89,7 +81,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
           email,
           password,
           options: {
-            data: { full_name: name },
+            data: { full_name: name.trim() }, // 이름 앞뒤 공백 제거 후 전송
             emailRedirectTo: window.location.origin,
           },
         });
@@ -126,9 +118,12 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
       if (verifyError) throw verifyError;
 
       if (data.user) {
+        // 회원가입 인증 성공 시, 입력했던 이름을 metadata에서 명확히 추출
+        const finalName = data.user.user_metadata?.full_name || name.trim();
+        
         onLoginSuccess({
           id: data.user.id,
-          name: data.user.user_metadata.full_name || name,
+          name: finalName,
           email: data.user.email || email,
           level: 1,
           progress: 0,

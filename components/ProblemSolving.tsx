@@ -77,8 +77,10 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({ problems, onFini
             read() {
               const result = window.prompt("입력이 필요한 문제입니다:");
               if (result === null) return null;
+              
               outputBufferRef.current.push(`> ${result}`);
               setOutput([...outputBufferRef.current]);
+              
               return result + "\n";
             }
           });
@@ -99,6 +101,7 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({ problems, onFini
 
   const handleExecute = async () => {
     if (!pyodideRef.current) return;
+    
     setOutput(["실행 중..."]);
     outputBufferRef.current = [];
     try {
@@ -115,13 +118,22 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({ problems, onFini
       const matched = userAnswer === currentProb.answer;
       setIsCorrect(matched);
       if (!matched) setMissed(prev => [...prev, currentProb]);
+      
       const feedback = matched 
         ? `### 정답입니다! 🎉\n${currentProb.explanation || '완벽하게 이해하셨네요!'}`
         : `### 틀렸습니다! 😢\n정답은 **${currentProb.answer}** 입니다.\n\n**이유:** ${currentProb.explanation || '다시 한 번 생각해보세요.'}`;
+      
       setAiFeedback(feedback);
     } else {
       setIsAiLoading(true);
-      const gradingPrompt = `사용자의 파이썬 코드가 아래 문제에 정답인지 판단하세요.\n[문제]: ${currentProb.question}\n[정답 예시]: ${currentProb.answer}\n[사용자 코드]: ${userAnswer}\n[실행 결과]: ${output.join('\n')}\n응답 형식: "TRUE" 또는 "FALSE" 한 줄 이후 상세 설명을 적으세요.`;
+      const gradingPrompt = `
+      사용자의 파이썬 코드가 아래 문제에 정답인지 판단하세요.
+      [문제]: ${currentProb.question}
+      [정답 예시]: ${currentProb.answer}
+      [사용자 코드]: ${userAnswer}
+      [실행 결과]: ${output.join('\n')}
+      응답 형식: "TRUE" 또는 "FALSE" 한 줄 이후 상세 설명을 적으세요.
+      `;
       try {
         const result = await askGemini(gradingPrompt, "Grading Mode");
         const matched = result.trim().toUpperCase().startsWith("TRUE");
