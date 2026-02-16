@@ -13,7 +13,7 @@ import { QuestionPage } from './components/QuestionPage';
 import { AppRoute, UserProfile, Lesson, Track } from './types';
 import { ALL_TRACKS } from './contentData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BrainCircuit, Sparkles, Code2, Terminal } from 'lucide-react';
+import { BrainCircuit, Sparkles, Code2, Terminal, ChevronRight, BookOpen } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
 const ADMIN_EMAIL = 'jay447233@gmail.com';
@@ -50,12 +50,10 @@ const App: React.FC = () => {
 
   const loadUserProgressFromDB = useCallback(async (userId: string) => {
     try {
-      // 1. 현재 인증된 사용자의 최신 메타데이터 가져오기
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
 
-      // 2. 프로필 테이블 데이터 가져오기
-      const { data: profileData, error } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -64,12 +62,10 @@ const App: React.FC = () => {
       const metadataName = authUser.user_metadata?.full_name;
       const dbName = profileData?.name;
       
-      // [이름 버그 수정]: DB 이름이 가입 시 입력한 이름(metadata)과 다르거나 DB에 이름이 없을 경우 동기화
-      let finalName = dbName || metadataName || '학습자';
+      let finalName = metadataName || dbName || '학습자';
       
       if (metadataName && dbName !== metadataName) {
         finalName = metadataName;
-        // DB 프로필 업데이트 실행
         await supabase
           .from('profiles')
           .update({ name: metadataName })
@@ -234,7 +230,51 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {activeRoute === AppRoute.CURRICULUM && selectedTrack && <Curriculum onSelectLesson={(l) => { setSelectedLesson(l); setActiveRoute(AppRoute.LEARN); }} selectedTrack={selectedTrack} onChangeTrack={() => setActiveRoute(AppRoute.HOME)} />}
+          {activeRoute === AppRoute.CURRICULUM && (
+            selectedTrack ? (
+              <Curriculum 
+                onSelectLesson={(l) => { setSelectedLesson(l); setActiveRoute(AppRoute.LEARN); }} 
+                selectedTrack={selectedTrack} 
+                onChangeTrack={() => setActiveRoute(AppRoute.HOME)} 
+              />
+            ) : (
+              <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full flex flex-col items-center justify-center text-center space-y-12 pb-32">
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+                  <div className="w-20 h-20 bg-white/5 rounded-[30px] flex items-center justify-center mx-auto mb-6 text-gray-500 border border-white/5">
+                    <BookOpen size={40} />
+                  </div>
+                  <h2 className="text-4xl lg:text-6xl font-black tracking-tighter">학습 트랙을 선택해 주세요</h2>
+                  <p className="text-gray-500 text-lg lg:text-xl font-light max-w-2xl mx-auto">
+                    커리큘럼을 확인하려면 먼저 학습하고 싶은 분야를 선택해야 합니다.<br/>아래 트랙 중 하나를 골라 시작해 보세요.
+                  </p>
+                </motion.div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                  {ALL_TRACKS.map(track => (
+                    <motion.div 
+                      key={track.id} 
+                      whileHover={{ y: -10, borderColor: 'rgba(0,122,255,0.4)' }}
+                      onClick={() => handleSelectTrack(track)}
+                      className="glass p-8 rounded-[40px] border-white/5 cursor-pointer flex flex-col items-center text-center gap-6 bg-gradient-to-br from-white/[0.02] to-transparent shadow-2xl transition-all"
+                    >
+                      <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-xl ${
+                        track.category === 'tutorial' ? 'bg-purple-500/10 text-purple-400' : 'bg-[#007AFF]/10 text-[#007AFF]'
+                      }`}>
+                        {track.iconType === 'python' ? 'Py' : track.iconType === 'c' ? 'C' : <Sparkles size={28} />}
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold mb-2">{track.title}</h4>
+                        <p className="text-xs text-gray-500 font-light leading-relaxed line-clamp-2">{track.description}</p>
+                      </div>
+                      <div className="mt-auto w-full py-4 rounded-2xl bg-white/5 text-[10px] font-black uppercase tracking-widest group-hover:bg-[#007AFF] transition-colors flex items-center justify-center gap-2">
+                        커리큘럼 보기 <ChevronRight size={14} />
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )
+          )}
           {activeRoute === AppRoute.QUESTION && <QuestionPage user={user} />}
           {activeRoute === AppRoute.PLAYGROUND && <Playground />}
           {activeRoute === AppRoute.GAP_FILLER && <GapFiller missedProblems={user.missedConcepts || []} onStartReview={() => {}} />}

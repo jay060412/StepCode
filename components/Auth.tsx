@@ -81,7 +81,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
           email,
           password,
           options: {
-            data: { full_name: name.trim() }, // 이름 앞뒤 공백 제거 후 전송
+            data: { full_name: name.trim() },
             emailRedirectTo: window.location.origin,
           },
         });
@@ -118,7 +118,6 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
       if (verifyError) throw verifyError;
 
       if (data.user) {
-        // 회원가입 인증 성공 시, 입력했던 이름을 metadata에서 명확히 추출
         const finalName = data.user.user_metadata?.full_name || name.trim();
         
         onLoginSuccess({
