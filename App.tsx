@@ -10,22 +10,34 @@ import { GapFiller } from './components/GapFiller';
 import { Admin } from './components/Admin';
 import { Auth } from './components/Auth';
 import { QuestionPage } from './components/QuestionPage';
+import { ProblemSolving } from './components/ProblemSolving';
 import { AppRoute, UserProfile, Lesson, Track } from './types';
 import { ALL_TRACKS } from './contentData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BrainCircuit, Sparkles, Code2, Terminal, ChevronRight, BookOpen } from 'lucide-react';
+import { BrainCircuit, Sparkles, Code2, Terminal, ChevronRight, BookOpen, PlayCircle, HelpCircle, Target } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
 const ADMIN_EMAIL = 'jay447233@gmail.com';
+
+type LearningStage = 'concept' | 'quiz' | 'coding';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeRoute, setActiveRoute] = useState<AppRoute>(AppRoute.HOME);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [learningStage, setLearningStage] = useState<LearningStage>('concept');
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAiMinimized, setIsAiMinimized] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // 단계 변경 시 스크롤 최상단 이동
+  useEffect(() => {
+    const scrollContainer = document.getElementById('learn-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [learningStage, selectedLesson]);
 
   const syncTrackProgress = useCallback((tracks: Track[], completedIds: string[]): Track[] => {
     if (!tracks) return [];
@@ -53,6 +65,7 @@ const App: React.FC = () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
 
+      // [Fix] Corrected circular reference where profileData was used in .eq before it was defined.
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -119,6 +132,18 @@ const App: React.FC = () => {
     const completedIds = user?.completedLessonIds || [];
     const syncedTrack = syncTrackProgress([track], completedIds)[0];
     setSelectedTrack(syncedTrack);
+    setActiveRoute(AppRoute.CURRICULUM);
+  };
+
+  const handleFinishLesson = async () => {
+    if (!selectedLesson || !user) return;
+    const newCompletedIds = [...new Set([...user.completedLessonIds, selectedLesson.id])];
+    
+    await supabase.from('profiles').update({
+      completed_lesson_ids: newCompletedIds
+    }).eq('id', user.id);
+
+    setUser({ ...user, completedLessonIds: newCompletedIds });
     setActiveRoute(AppRoute.CURRICULUM);
   };
 
@@ -220,20 +245,62 @@ const App: React.FC = () => {
           )}
 
           {activeRoute === AppRoute.LEARN && selectedLesson && (
-            <div className="flex h-full overflow-hidden relative">
-              <div className="flex-1 overflow-y-auto p-4 lg:p-12 custom-scrollbar pb-24">
-                <CodeViewer lesson={selectedLesson} onFinishConcept={() => setActiveRoute(AppRoute.CURRICULUM)} />
+            <div className="flex flex-col h-full overflow-hidden relative">
+              <div className="shrink-0 bg-black/40 border-b border-white/5 py-4 px-8 flex items-center justify-center gap-8 lg:gap-12">
+                {[
+                  { stage: 'concept' as LearningStage, label: '관찰 (개념학습)', icon: <PlayCircle size={14} /> },
+                  { stage: 'quiz' as LearningStage, label: '검증 (개념퀴즈)', icon: <HelpCircle size={14} /> },
+                  { stage: 'coding' as LearningStage, label: '구현 (코딩도전)', icon: <Target size={14} /> }
+                ].map((s) => (
+                  <div key={s.stage} className={`flex items-center gap-3 transition-all duration-500 ${learningStage === s.stage ? 'text-[#007AFF] scale-105' : 'text-gray-600'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${learningStage === s.stage ? 'border-[#007AFF] bg-[#007AFF]/10' : 'border-gray-800'}`}>
+                      {s.icon}
+                    </div>
+                    <span className="text-[10px] lg:text-xs font-black uppercase tracking-widest">{s.label}</span>
+                  </div>
+                ))}
               </div>
-              <motion.div animate={{ width: isAiMinimized ? 80 : 400 }} className="hidden lg:block border-l border-white/5 bg-black/20 shrink-0 relative overflow-hidden">
-                <AIChat currentLesson={selectedLesson} isMinimized={isAiMinimized} onToggleMinimize={() => setIsAiMinimized(!isAiMinimized)} />
-              </motion.div>
+
+              <div className="flex-1 flex overflow-hidden relative">
+                <div id="learn-scroll-container" className="flex-1 overflow-y-auto p-4 lg:p-12 custom-scrollbar pb-24">
+                  {learningStage === 'concept' && (
+                    <CodeViewer 
+                      lesson={selectedLesson} 
+                      onFinishConcept={() => setLearningStage('quiz')} 
+                    />
+                  )}
+                  {learningStage === 'quiz' && (
+                    <ProblemSolving 
+                      problems={selectedLesson.conceptProblems} 
+                      type="concept"
+                      onFinish={() => setLearningStage('coding')} 
+                    />
+                  )}
+                  {learningStage === 'coding' && (
+                    <ProblemSolving 
+                      problems={selectedLesson.codingProblems} 
+                      type="coding"
+                      onFinish={handleFinishLesson} 
+                    />
+                  )}
+                </div>
+                
+                <motion.div animate={{ width: isAiMinimized ? 80 : 400 }} className="hidden lg:block border-l border-white/5 bg-black/20 shrink-0 relative overflow-hidden">
+                  <AIChat 
+                    currentLesson={selectedLesson} 
+                    currentStage={learningStage}
+                    isMinimized={isAiMinimized} 
+                    onToggleMinimize={() => setIsAiMinimized(!isAiMinimized)} 
+                  />
+                </motion.div>
+              </div>
             </div>
           )}
 
           {activeRoute === AppRoute.CURRICULUM && (
             selectedTrack ? (
               <Curriculum 
-                onSelectLesson={(l) => { setSelectedLesson(l); setActiveRoute(AppRoute.LEARN); }} 
+                onSelectLesson={(l) => { setSelectedLesson(l); setLearningStage('concept'); setActiveRoute(AppRoute.LEARN); }} 
                 selectedTrack={selectedTrack} 
                 onChangeTrack={() => setActiveRoute(AppRoute.HOME)} 
               />
@@ -243,7 +310,7 @@ const App: React.FC = () => {
                   <div className="w-20 h-20 bg-white/5 rounded-[30px] flex items-center justify-center mx-auto mb-6 text-gray-500 border border-white/5">
                     <BookOpen size={40} />
                   </div>
-                  <h2 className="text-4xl lg:text-6xl font-black tracking-tighter">학습 트랙을 선택해 주세요</h2>
+                  <h2 className="text-4xl lg:text-6xl font-black tracking-tighter text-white">학습 트랙을 선택해 주세요</h2>
                   <p className="text-gray-500 text-lg lg:text-xl font-light max-w-2xl mx-auto">
                     커리큘럼을 확인하려면 먼저 학습하고 싶은 분야를 선택해야 합니다.<br/>아래 트랙 중 하나를 골라 시작해 보세요.
                   </p>
@@ -263,10 +330,10 @@ const App: React.FC = () => {
                         {track.iconType === 'python' ? 'Py' : track.iconType === 'c' ? 'C' : <Sparkles size={28} />}
                       </div>
                       <div>
-                        <h4 className="text-xl font-bold mb-2">{track.title}</h4>
+                        <h4 className="text-xl font-bold mb-2 text-white">{track.title}</h4>
                         <p className="text-xs text-gray-500 font-light leading-relaxed line-clamp-2">{track.description}</p>
                       </div>
-                      <div className="mt-auto w-full py-4 rounded-2xl bg-white/5 text-[10px] font-black uppercase tracking-widest group-hover:bg-[#007AFF] transition-colors flex items-center justify-center gap-2">
+                      <div className="mt-auto w-full py-4 rounded-2xl bg-white/5 text-[10px] font-black uppercase tracking-widest group-hover:bg-[#007AFF] transition-colors flex items-center justify-center gap-2 text-white/50 group-hover:text-white">
                         커리큘럼 보기 <ChevronRight size={14} />
                       </div>
                     </motion.div>
