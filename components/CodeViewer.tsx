@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lesson, ExplanationBlock } from '../types';
-import { ChevronLeft, ChevronRight, CheckCircle2, PlayCircle, Terminal, Sparkles, Variable, BookOpen, Quote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, PlayCircle, Terminal, Sparkles, Variable, BookOpen, Quote, Maximize2, Minimize2 } from 'lucide-react';
 
 interface CodeViewerProps {
   lesson: Lesson;
@@ -31,6 +31,7 @@ const BG_MAP: Record<ExplanationBlock['type'], string> = {
 export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept, onPageChange }) => {
   const [pageIndex, setPageIndex] = useState(0);
   const [isTracing, setIsTracing] = useState(false);
+  const [isWide, setIsWide] = useState(false); // 가로 확장 모드 상태
   const [activeLine, setActiveLine] = useState<number | null>(null);
   const [currentVars, setCurrentVars] = useState<Record<string, any> | null>(null);
   
@@ -110,7 +111,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
         </div>
       </motion.div>
 
-      {/* 2. 상단 핵심 내용 요약 (전체 너비) - 가독성 강화 및 폰트 크기 최적화 */}
+      {/* 2. 상단 핵심 내용 요약 (전체 너비) */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -136,18 +137,35 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
         </div>
       </motion.div>
 
-      {/* 3. 하단 그리드 레이아웃: 좌(코드/터미널), 우(상세 분석) */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 lg:gap-12 items-start">
+      {/* 3. 하단 레이아웃: 확장 모드에 따라 grid-cols 가변 적용 */}
+      <motion.div 
+        layout
+        className={`grid grid-cols-1 ${isWide ? 'xl:grid-cols-1 gap-16' : 'xl:grid-cols-5 gap-8 lg:gap-12'} items-start`}
+      >
         
-        {/* [Left Column] Code & Logical Tracing & Output (3/5 비율) */}
-        <div className="xl:col-span-3 space-y-8 sticky top-4">
+        {/* [Left Column] Code & Logical Tracing & Output */}
+        <motion.div 
+          layout
+          className={`${isWide ? 'xl:col-span-1' : 'xl:col-span-3'} space-y-8 ${isWide ? '' : 'sticky top-4'}`}
+        >
           <div className="glass rounded-[32px] lg:rounded-[40px] border-white/10 bg-[#0a0a0a] overflow-hidden relative shadow-inner">
             <div className="px-8 py-5 bg-white/[0.03] border-b border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                  <Terminal size={18} className="text-[#007AFF]" />
                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Live Code Environment</span>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                {/* 확장 토글 버튼 */}
+                <button 
+                  onClick={() => setIsWide(!isWide)}
+                  className="p-2.5 glass rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all border-white/5"
+                  title={isWide ? "축소하기" : "넓게 보기"}
+                >
+                  {isWide ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                </button>
+
+                <div className="h-6 w-px bg-white/10 mx-1" />
+
                 <button 
                   onClick={startTrace}
                   disabled={isTracing}
@@ -156,7 +174,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                   <PlayCircle size={18} className={isTracing ? "animate-spin" : "group-hover:scale-110 transition-transform"} />
                   <span className="text-xs">{isTracing ? "Executing..." : "로직 흐름 추적"}</span>
                 </button>
-                <div className="flex gap-1.5 ml-2 border-l border-white/10 pl-4">
+                <div className="hidden sm:flex gap-1.5 ml-2 border-l border-white/10 pl-4">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/40" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/40" />
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 border border-green-500/40" />
@@ -164,8 +182,8 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
               </div>
             </div>
 
-            <div className="p-8 lg:p-14 overflow-x-auto custom-scrollbar">
-              <div className="font-mono text-xl lg:text-3xl leading-relaxed lg:leading-[1.7] relative min-h-[250px]">
+            <div className={`p-8 lg:p-14 overflow-x-auto custom-scrollbar transition-all duration-500 ${isWide ? 'min-h-[400px]' : 'min-h-[250px]'}`}>
+              <div className="font-mono text-xl lg:text-3xl leading-relaxed lg:leading-[1.7] relative">
                 {currentPage.code.split('\n').map((line, idx) => {
                   const explanation = currentPage.explanations?.find(e => e.codeLine === idx);
                   const isActive = activeLine === idx;
@@ -253,10 +271,13 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                </div>
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
 
-        {/* [Right Column] Detailed Analysis (2/5 비율) */}
-        <div className="xl:col-span-2 space-y-6 lg:space-y-8">
+        {/* [Right Column] Detailed Analysis */}
+        <motion.div 
+          layout
+          className={`${isWide ? 'xl:col-span-1' : 'xl:col-span-2'} space-y-6 lg:space-y-8`}
+        >
            <div className="flex items-center gap-3 px-4">
               <div className="p-2 bg-[#007AFF]/10 rounded-lg text-[#007AFF]">
                 <Sparkles size={20} />
@@ -264,7 +285,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
               <h4 className="text-lg lg:text-xl font-black text-white tracking-tight uppercase">Detail Logic Analysis</h4>
            </div>
            
-           <div className="space-y-6 lg:space-y-8">
+           <div className={`space-y-6 lg:space-y-8 ${isWide ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 !space-y-0' : ''}`}>
               <AnimatePresence mode="popLayout">
                 {currentPage.explanations?.map((exp, i) => (
                   <motion.div
@@ -274,15 +295,15 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                     transition={{ delay: i * 0.1 }}
                     className="flex items-start gap-6 group"
                   >
-                    <div className="flex flex-col items-center pt-2 shrink-0">
+                    <div className={`flex flex-col items-center pt-2 shrink-0 ${isWide ? 'hidden sm:flex' : 'flex'}`}>
                        <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl flex items-center justify-center font-black text-black shadow-xl text-lg lg:text-xl group-hover:scale-110 transition-transform rotate-3 group-hover:rotate-0" style={{ backgroundColor: COLOR_MAP[exp.type] }}>
                          {exp.badge}
                        </div>
-                       {i < (currentPage.explanations?.length || 0) - 1 && (
+                       {i < (currentPage.explanations?.length || 0) - 1 && !isWide && (
                          <div className="w-0.5 h-12 lg:h-16 bg-white/5 my-2" />
                        )}
                     </div>
-                    <div className="flex-1 p-6 lg:p-8 rounded-[32px] glass-blue border-white/5 relative group-hover:border-[#007AFF]/30 group-hover:bg-[#007AFF]/5 transition-all shadow-xl blur-fix">
+                    <div className="flex-1 p-6 lg:p-8 rounded-[32px] glass-blue border-white/5 relative group-hover:border-[#007AFF]/30 group-hover:bg-[#007AFF]/5 transition-all shadow-xl blur-fix h-full">
                       <h5 className="font-black text-lg lg:text-xl mb-2 lg:mb-3" style={{ color: COLOR_MAP[exp.type] }}>{exp.title}</h5>
                       <p className="text-gray-400 leading-relaxed text-sm lg:text-lg font-light">{exp.text}</p>
                     </div>
@@ -290,8 +311,8 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                 ))}
               </AnimatePresence>
            </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Footer Navigation */}
       <div className="flex flex-col items-center gap-10 pt-16 border-t border-white/5">

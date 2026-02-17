@@ -1,4 +1,32 @@
 
+export type UserRole = 'user' | 'staff' | 'admin';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  level: number;
+  progress: number;
+  missed_concepts: Problem[]; // DB: missed_concepts (jsonb)
+  last_track_id: string | null; // DB: last_track_id (text)
+  completed_lesson_ids: string[]; // DB: completed_lesson_ids (_text)
+  role?: UserRole;
+  is_banned?: boolean;
+  updated_at?: string;
+}
+
+export interface SupportQuestion {
+  id: string;
+  user_id: string;
+  user_name: string;
+  content: string;
+  is_resolved: boolean;
+  created_at: string;
+  answer?: string;
+  answered_by?: string;
+  answered_at?: string;
+}
+
 export interface ConceptPage {
   id: string;
   title: string;
@@ -65,26 +93,6 @@ export enum AppRoute {
   ADMIN = 'admin',
   STUDY_GUIDE = 'study-guide',
   QUESTION = 'question'
-}
-
-export interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  level: number;
-  progress: number;
-  missedConcepts: Problem[];
-  selectedTrackId: string | null;
-  completedLessonIds: string[];
-}
-
-export interface SupportQuestion {
-  id: string;
-  user_id: string;
-  user_name: string;
-  content: string;
-  is_resolved: boolean;
-  created_at: string;
 }
 
 export interface UserAccount extends UserProfile {

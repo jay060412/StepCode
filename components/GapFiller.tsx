@@ -1,24 +1,23 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Target, AlertCircle, RefreshCw, ChevronRight, CheckCircle2, Bot, HelpCircle, BrainCircuit, Terminal } from 'lucide-react';
+import { Target, CheckCircle2, Bot, HelpCircle, BrainCircuit, Terminal, ChevronRight } from 'lucide-react';
 import { Problem } from '../types';
-import { FormattedText } from './FormattedText';
 
 interface GapFillerProps {
-  missedProblems: Problem[];
+  missed_concepts: Problem[];
   onStartReview: (problem: Problem) => void;
 }
 
-export const GapFiller: React.FC<GapFillerProps> = ({ missedProblems, onStartReview }) => {
+export const GapFiller: React.FC<GapFillerProps> = ({ missed_concepts, onStartReview }) => {
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'concept' | 'coding'>('all');
 
-  const filtered = missedProblems.filter(p => {
+  const filtered = missed_concepts.filter(p => {
     if (selectedCategory === 'all') return true;
     return p.type === selectedCategory;
   });
 
-  if (missedProblems.length === 0) {
+  if (missed_concepts.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-12 text-center">
         <div className="w-24 h-24 rounded-[40px] bg-green-500/10 text-green-400 flex items-center justify-center mb-8 shadow-2xl shadow-green-500/5">
@@ -26,8 +25,7 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missedProblems, onStartRev
         </div>
         <h2 className="text-3xl lg:text-5xl font-black mb-4 tracking-tight">완벽한 학습 상태입니다!</h2>
         <p className="text-gray-500 text-lg lg:text-xl font-light max-w-lg leading-relaxed">
-          현재 틀린 문제가 하나도 없습니다. <br className="hidden sm:block"/>
-          새로운 트랙에 도전하여 지평을 넓혀보세요.
+          현재 틀린 문제가 하나도 없습니다. 새로운 트랙에 도전하여 지평을 넓혀보세요.
         </p>
       </div>
     );
@@ -42,7 +40,7 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missedProblems, onStartRev
           </div>
           <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-4">빈틈 매우기</h2>
           <p className="text-gray-500 text-lg lg:text-xl font-light">
-            잊고 있었던 <span className="text-white font-medium">{missedProblems.length}개의 약점</span>을 강점으로 바꾸세요.
+            잊고 있었던 <span className="text-white font-medium">{missed_concepts.length}개의 약점</span>을 강점으로 바꾸세요.
           </p>
         </div>
 
@@ -63,7 +61,7 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missedProblems, onStartRev
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <AnimatePresence mode="popLayout">
-          {filtered.map((prob, idx) => (
+          {filtered.map((prob) => (
             <motion.div
               key={prob.id}
               layout
@@ -87,23 +85,19 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missedProblems, onStartRev
                   <span className="text-xs text-gray-700 font-mono">#{prob.id}</span>
                 </div>
 
-                <h4 className="text-xl lg:text-2xl font-bold mb-6 leading-snug line-clamp-3">
-                  {prob.question}
-                </h4>
+                <h4 className="text-xl lg:text-2xl font-bold mb-6 leading-snug line-clamp-3">{prob.question}</h4>
 
                 <div className="bg-black/40 p-5 rounded-2xl border border-white/5 mb-8">
                   <div className="flex items-center gap-2 text-[10px] font-black text-gray-600 uppercase mb-3">
                     <Bot size={12} className="text-[#007AFF]" /> Tutor Hint
                   </div>
-                  <p className="text-sm text-gray-400 font-light leading-relaxed italic line-clamp-2">
-                    "{prob.hint}"
-                  </p>
+                  <p className="text-sm text-gray-400 font-light leading-relaxed italic line-clamp-2">"{prob.hint}"</p>
                 </div>
               </div>
 
               <button
                 onClick={() => onStartReview(prob)}
-                className="w-full py-5 bg-white/5 group-hover:bg-[#007AFF] text-gray-400 group-hover:text-white rounded-[24px] font-black transition-all flex items-center justify-center gap-3 border border-white/5 group-hover:border-[#007AFF] group-hover:shadow-2xl group-hover:shadow-[#007AFF]/30"
+                className="w-full py-5 bg-white/5 group-hover:bg-[#007AFF] text-gray-400 group-hover:text-white rounded-[24px] font-black transition-all flex items-center justify-center gap-3 border border-white/5 group-hover:border-[#007AFF]"
               >
                 다시 풀어보기 <ChevronRight size={18} />
               </button>

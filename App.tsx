@@ -11,15 +11,15 @@ import { Admin } from './components/Admin';
 import { Auth } from './components/Auth';
 import { QuestionPage } from './components/QuestionPage';
 import { ProblemSolving } from './components/ProblemSolving';
-import { AppRoute, UserProfile, Lesson, Track } from './types';
+import { AppRoute, UserProfile, Lesson, Track, Problem } from './types';
 import { ALL_TRACKS } from './contentData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BrainCircuit, Sparkles, Code2, Terminal, ChevronRight, BookOpen, PlayCircle, HelpCircle, Target } from 'lucide-react';
+import { PlayCircle, HelpCircle, Target, Loader2, Brain, Terminal, ChevronRight, Rocket, AlertCircle, RefreshCw, BookOpen } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
-const ADMIN_EMAIL = 'jay447233@gmail.com';
-
 type LearningStage = 'concept' | 'quiz' | 'coding';
+
+const ADMIN_EMAIL = 'jay447233@gmail.com';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -30,323 +30,320 @@ const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAiMinimized, setIsAiMinimized] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [dbError, setDbError] = useState<string | null>(null);
 
-  // 단계 변경 시 스크롤 최상단 이동
-  useEffect(() => {
-    const scrollContainer = document.getElementById('learn-scroll-container');
-    if (scrollContainer) {
-      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+  const availableStages = useMemo(() => {
+    if (!selectedLesson) return [];
+    const stages: { stage: LearningStage; label: string; icon: React.ReactNode }[] = [];
+    if (selectedLesson.pages && selectedLesson.pages.length > 0) {
+      stages.push({ stage: 'concept', label: '관찰 (개념학습)', icon: <PlayCircle size={14} /> });
     }
-  }, [learningStage, selectedLesson]);
+    if (selectedLesson.conceptProblems && selectedLesson.conceptProblems.length > 0) {
+      stages.push({ stage: 'quiz', label: '검증 (개념퀴즈)', icon: <HelpCircle size={14} /> });
+    }
+    if (selectedLesson.codingProblems && selectedLesson.codingProblems.length > 0) {
+      stages.push({ stage: 'coding', label: '구현 (코딩도전)', icon: <Target size={14} /> });
+    }
+    return stages;
+  }, [selectedLesson]);
 
-  const syncTrackProgress = useCallback((tracks: Track[], completedIds: string[]): Track[] => {
-    if (!tracks) return [];
-    return tracks.map(track => {
-      const newLessons = (track.lessons || []).map((lesson, idx) => {
-        const isCompleted = completedIds.includes(lesson.id);
-        let status: Lesson['status'] = 'locked';
-        if (isCompleted) {
-          status = 'completed';
-        } else {
-          const prevLessons = track.lessons.slice(0, idx);
-          const allPrevCompleted = prevLessons.every(pl => completedIds.includes(pl.id));
-          if (idx === 0 || allPrevCompleted) {
-            status = 'current';
-          }
-        }
-        return { ...lesson, status };
-      });
-      return { ...track, lessons: newLessons };
-    });
+  const syncProfileToDB = useCallback(async (updates: any) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ 
+          id: session.user.id,
+          ...updates, 
+          updated_at: new Date().toISOString() 
+        }, { onConflict: 'id' });
+      
+      if (error) console.error("DB Sync Error:", error.message);
+    } catch (err: any) {
+      console.error("DB Sync Critical Error:", err.message);
+    }
   }, []);
 
-  const loadUserProgressFromDB = useCallback(async (userId: string) => {
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+  const handleSelectTrack = useCallback((track: Track | null) => {
+    setSelectedTrack(track);
+    if (track) {
+      setActiveRoute(AppRoute.CURRICULUM);
+      syncProfileToDB({ last_track_id: track.id });
+    } else {
+      setActiveRoute(AppRoute.HOME);
+      syncProfileToDB({ last_track_id: null });
+    }
+  }, [syncProfileToDB]);
 
-      // [Fix] Corrected circular reference where profileData was used in .eq before it was defined.
-      const { data: profileData } = await supabase
+  const handleFinishLesson = useCallback(async (missedFromProblemSolving: Problem[] = []) => {
+    if (!selectedLesson || !user) return;
+
+    const currentCompleted = user.completed_lesson_ids || [];
+    const newCompletedIds = Array.from(new Set([...currentCompleted, selectedLesson.id]));
+    
+    const totalLessons = ALL_TRACKS.reduce((acc, track) => acc + (track.lessons?.length || 0), 0);
+    const newProgress = Math.min(100, Math.round((newCompletedIds.length / totalLessons) * 100));
+
+    const existingMissed = user.missed_concepts || [];
+    const newMissedConcepts = [...existingMissed];
+    missedFromProblemSolving.forEach(mp => {
+      if (!newMissedConcepts.find(ex => ex.id === mp.id)) {
+        newMissedConcepts.push(mp);
+      }
+    });
+
+    const updates = { 
+      completed_lesson_ids: newCompletedIds, 
+      progress: newProgress,
+      missed_concepts: newMissedConcepts 
+    };
+
+    setUser(prev => prev ? { ...prev, ...updates } : null);
+    setActiveRoute(AppRoute.CURRICULUM);
+    setSelectedLesson(null);
+
+    await syncProfileToDB({
+      ...updates,
+      last_track_id: selectedTrack?.id || user.last_track_id
+    });
+  }, [selectedLesson, user, syncProfileToDB, selectedTrack]);
+
+  const moveToNextStage = useCallback((missed: Problem[] = []) => {
+    const currentIndex = availableStages.findIndex(s => s.stage === learningStage);
+    if (currentIndex < availableStages.length - 1) {
+      setLearningStage(availableStages[currentIndex + 1].stage);
+    } else {
+      handleFinishLesson(missed);
+    }
+  }, [availableStages, learningStage, handleFinishLesson]);
+
+  const loadUserProgressFromDB = useCallback(async (userId: string, email: string, name: string) => {
+    setIsProfileLoading(true);
+    setDbError(null);
+
+    try {
+      const { data: profileData, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
-      const metadataName = authUser.user_metadata?.full_name;
-      const dbName = profileData?.name;
-      
-      let finalName = metadataName || dbName || '학습자';
-      
-      if (metadataName && dbName !== metadataName) {
-        finalName = metadataName;
-        await supabase
-          .from('profiles')
-          .update({ name: metadataName })
-          .eq('id', userId);
-      }
+      if (fetchError) throw fetchError;
 
-      setUser({
-        id: authUser.id,
-        name: finalName,
-        email: authUser.email || '',
+      const userData: UserProfile = {
+        id: userId,
+        name: profileData?.name || name || '학습자',
+        email: profileData?.email || email,
         level: profileData?.level || 1,
         progress: profileData?.progress || 0,
-        missedConcepts: profileData?.missed_concepts || [],
-        selectedTrackId: null,
-        completedLessonIds: profileData?.completed_lesson_ids || []
-      });
+        missed_concepts: profileData?.missed_concepts || [],
+        last_track_id: profileData?.last_track_id || null,
+        completed_lesson_ids: profileData?.completed_lesson_ids || [],
+        role: (email === ADMIN_EMAIL ? 'admin' : (profileData?.role || 'user')) as any,
+        is_banned: profileData?.is_banned || false,
+        updated_at: new Date().toISOString()
+      };
+
+      if (!profileData) {
+        await supabase.from('profiles').upsert(userData);
+      }
+
+      setUser(userData);
       setIsLoggedIn(true);
-    } catch (err) {
-      console.error("Progress Load Error:", err);
+
+      if (userData.last_track_id) {
+        const track = ALL_TRACKS.find(t => t.id === userData.last_track_id);
+        if (track) setSelectedTrack(track);
+      }
+    } catch (err: any) {
+      console.error("loadUserProgressFromDB Error:", err);
+      setDbError(err.message || "데이터 로드 실패");
     } finally {
+      setIsProfileLoading(false);
       setIsInitialLoading(false);
     }
   }, []);
 
+  const handleLogout = useCallback(async () => {
+    try {
+      // 1. 모든 학습 상태 즉시 초기화 (UI 에러 방지)
+      setIsLoggedIn(false);
+      setUser(null);
+      setSelectedTrack(null);
+      setSelectedLesson(null);
+      setActiveRoute(AppRoute.HOME);
+
+      // 2. 세션 종료
+      await supabase.auth.signOut();
+      
+      // 3. 새로고침 없이 루트로 이동 (SPA 방식)
+      // 만약 필요하다면 window.location.assign('/')를 사용할 수 있으나 
+      // 상태 초기화만으로도 <Auth /> 컴포넌트가 렌더링되므로 충분합니다.
+    } catch (err) {
+      console.error("Logout Error:", err);
+      // 에러 발생 시에도 최소한 화면은 돌려놓음
+      setIsLoggedIn(false);
+      setUser(null);
+    }
+  }, []);
+
   useEffect(() => {
-    const initAuth = async () => {
+    const checkInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        await loadUserProgressFromDB(session.user.id);
+        await loadUserProgressFromDB(
+          session.user.id, 
+          session.user.email || '', 
+          session.user.user_metadata?.full_name || '학습자'
+        );
       } else {
         setIsInitialLoading(false);
       }
     };
+    checkInitialSession();
 
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        loadUserProgressFromDB(session.user.id);
-      } else {
-        setIsLoggedIn(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
+        loadUserProgressFromDB(
+          session.user.id, 
+          session.user.email || '', 
+          session.user.user_metadata?.full_name || '학습자'
+        );
+      } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        setIsLoggedIn(false);
         setIsInitialLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [loadUserProgressFromDB]);
 
-  const handleSelectTrack = (track: Track) => {
-    const completedIds = user?.completedLessonIds || [];
-    const syncedTrack = syncTrackProgress([track], completedIds)[0];
-    setSelectedTrack(syncedTrack);
-    setActiveRoute(AppRoute.CURRICULUM);
-  };
-
-  const handleFinishLesson = async () => {
-    if (!selectedLesson || !user) return;
-    const newCompletedIds = [...new Set([...user.completedLessonIds, selectedLesson.id])];
-    
-    await supabase.from('profiles').update({
-      completed_lesson_ids: newCompletedIds
-    }).eq('id', user.id);
-
-    setUser({ ...user, completedLessonIds: newCompletedIds });
-    setActiveRoute(AppRoute.CURRICULUM);
-  };
-
-  const tutorialTracks = useMemo(() => (ALL_TRACKS || []).filter(t => t.category === 'tutorial'), []);
-  const languageTracks = useMemo(() => (ALL_TRACKS || []).filter(t => t.category === 'language'), []);
-
-  if (isInitialLoading) {
+  if (isInitialLoading || isProfileLoading) {
     return (
-      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-6">
-        <div className="w-16 h-16 bg-[#007AFF] rounded-3xl flex items-center justify-center shadow-2xl animate-pulse">
-          <span className="text-white font-black text-3xl">S</span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-            <motion.div initial={{ x: '-100%' }} animate={{ x: '100%' }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} className="w-1/2 h-full bg-[#007AFF]" />
-          </div>
-          <p className="text-gray-600 font-bold text-[10px] uppercase tracking-widest">StepCode Loading...</p>
-        </div>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-6">
+        <Loader2 className="animate-spin text-[#007AFF]" size={64} />
+        <p className="text-white font-black text-xl tracking-tight">StepCode 환경 준비 중...</p>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center gap-6">
+        <AlertCircle size={48} className="text-red-500" />
+        <h2 className="text-2xl font-bold text-white">데이터 동기화 오류</h2>
+        <p className="text-gray-500">{dbError}</p>
+        <button onClick={() => window.location.reload()} className="px-8 py-3 bg-[#007AFF] text-white rounded-xl font-bold">다시 시도</button>
       </div>
     );
   }
 
   if (!isLoggedIn || !user) {
-    return (
-      <Auth 
-        onLoginSuccess={(newUser) => {
-          setUser(newUser);
-          setIsLoggedIn(true);
-          loadUserProgressFromDB(newUser.id);
-        }} 
-      />
-    );
+    return <Auth onLoginSuccess={(u) => { setIsLoggedIn(true); setUser(u); }} />;
   }
-
-  const isAdmin = user.email === ADMIN_EMAIL;
 
   return (
     <Layout 
       activeRoute={activeRoute} 
       setActiveRoute={setActiveRoute} 
       user={user} 
-      onLogout={async () => { 
-        await supabase.auth.signOut(); 
-        setIsLoggedIn(false); 
-        setUser(null);
-      }}
+      onLogout={handleLogout}
     >
       <AnimatePresence mode="wait">
         <motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
           {activeRoute === AppRoute.HOME && (
-            <div className="p-6 lg:p-12 space-y-24 max-w-7xl mx-auto pb-32 overflow-y-auto custom-scrollbar h-full">
-              <header className="mb-12">
-                <h2 className="text-3xl lg:text-5xl font-black mb-4 tracking-tighter text-white">반가워요, {user.name}님!</h2>
-                <p className="text-gray-500 text-lg font-light">오늘은 어떤 성장을 이루어볼까요?</p>
-              </header>
-
-              {tutorialTracks.length > 0 && (
-                <section className="space-y-8">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2.5 bg-purple-500/20 rounded-xl text-purple-400"><BrainCircuit size={24} /></div>
-                    <h3 className="text-2xl font-bold tracking-tight text-white">사고력 튜토리얼</h3>
-                    <div className="h-px flex-1 bg-white/5" />
+            <div className="p-8 lg:p-12 max-w-7xl mx-auto pb-32">
+              <header className="mb-16">
+                <h2 className="text-4xl lg:text-7xl font-black mb-4 tracking-tighter text-white">반가워요, {user.name}님!</h2>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 lg:gap-8">
+                  <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-white/5">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center"><Target size={20} /></div>
+                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Progress</p><p className="text-sm font-bold text-white">{user.progress}%</p></div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {tutorialTracks.map(track => (
-                      <motion.div key={track.id} whileHover={{ y: -8 }} onClick={() => handleSelectTrack(track)} className="glass p-10 rounded-[40px] cursor-pointer border-white/5 flex flex-col h-full bg-gradient-to-br from-purple-500/5 to-transparent shadow-xl transition-all">
-                        <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-8 bg-purple-500/10 text-purple-400">
-                          {track.iconType === 'algorithm' ? <Sparkles size={28} /> : <BrainCircuit size={28} />}
-                        </div>
-                        <h4 className="text-2xl font-bold mb-3 text-white">{track.title}</h4>
-                        <p className="text-sm text-gray-500 font-light leading-relaxed line-clamp-3">{track.description}</p>
-                      </motion.div>
-                    ))}
+                  <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-white/5">
+                    <div className="w-10 h-10 rounded-xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center"><Rocket size={20} /></div>
+                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Current Level</p><p className="text-sm font-bold text-white">Level {user.level}</p></div>
                   </div>
-                </section>
-              )}
-
-              {languageTracks.length > 0 && (
-                <section className="space-y-8">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2.5 bg-[#007AFF]/20 rounded-xl text-[#007AFF]"><Code2 size={24} /></div>
-                    <h3 className="text-2xl font-bold tracking-tight text-white">프로그래밍 언어 트랙</h3>
-                    <div className="h-px flex-1 bg-white/5" />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {languageTracks.map(track => (
-                      <motion.div key={track.id} whileHover={{ y: -8 }} onClick={() => handleSelectTrack(track)} className="glass p-10 rounded-[40px] cursor-pointer border-white/5 flex flex-col h-full bg-gradient-to-br from-[#007AFF]/5 to-transparent shadow-xl transition-all">
-                        <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-8 bg-[#007AFF]/10 text-[#007AFF]">
-                          {track.iconType === 'python' ? 'Py' : track.iconType === 'c' ? 'C' : <Terminal size={28} />}
-                        </div>
-                        <h4 className="text-2xl font-bold mb-3 text-white">{track.title}</h4>
-                        <p className="text-sm text-gray-500 font-light leading-relaxed line-clamp-3">{track.description}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </div>
-          )}
-
-          {activeRoute === AppRoute.LEARN && selectedLesson && (
-            <div className="flex flex-col h-full overflow-hidden relative">
-              <div className="shrink-0 bg-black/40 border-b border-white/5 py-4 px-8 flex items-center justify-center gap-8 lg:gap-12">
-                {[
-                  { stage: 'concept' as LearningStage, label: '관찰 (개념학습)', icon: <PlayCircle size={14} /> },
-                  { stage: 'quiz' as LearningStage, label: '검증 (개념퀴즈)', icon: <HelpCircle size={14} /> },
-                  { stage: 'coding' as LearningStage, label: '구현 (코딩도전)', icon: <Target size={14} /> }
-                ].map((s) => (
-                  <div key={s.stage} className={`flex items-center gap-3 transition-all duration-500 ${learningStage === s.stage ? 'text-[#007AFF] scale-105' : 'text-gray-600'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${learningStage === s.stage ? 'border-[#007AFF] bg-[#007AFF]/10' : 'border-gray-800'}`}>
-                      {s.icon}
-                    </div>
-                    <span className="text-[10px] lg:text-xs font-black uppercase tracking-widest">{s.label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex-1 flex overflow-hidden relative">
-                <div id="learn-scroll-container" className="flex-1 overflow-y-auto p-4 lg:p-12 custom-scrollbar pb-24">
-                  {learningStage === 'concept' && (
-                    <CodeViewer 
-                      lesson={selectedLesson} 
-                      onFinishConcept={() => setLearningStage('quiz')} 
-                    />
-                  )}
-                  {learningStage === 'quiz' && (
-                    <ProblemSolving 
-                      problems={selectedLesson.conceptProblems} 
-                      type="concept"
-                      onFinish={() => setLearningStage('coding')} 
-                    />
-                  )}
-                  {learningStage === 'coding' && (
-                    <ProblemSolving 
-                      problems={selectedLesson.codingProblems} 
-                      type="coding"
-                      onFinish={handleFinishLesson} 
-                    />
-                  )}
                 </div>
-                
-                <motion.div animate={{ width: isAiMinimized ? 80 : 400 }} className="hidden lg:block border-l border-white/5 bg-black/20 shrink-0 relative overflow-hidden">
-                  <AIChat 
-                    currentLesson={selectedLesson} 
-                    currentStage={learningStage}
-                    isMinimized={isAiMinimized} 
-                    onToggleMinimize={() => setIsAiMinimized(!isAiMinimized)} 
-                  />
-                </motion.div>
-              </div>
-            </div>
-          )}
-
-          {activeRoute === AppRoute.CURRICULUM && (
-            selectedTrack ? (
-              <Curriculum 
-                onSelectLesson={(l) => { setSelectedLesson(l); setLearningStage('concept'); setActiveRoute(AppRoute.LEARN); }} 
-                selectedTrack={selectedTrack} 
-                onChangeTrack={() => setActiveRoute(AppRoute.HOME)} 
-              />
-            ) : (
-              <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full flex flex-col items-center justify-center text-center space-y-12 pb-32">
-                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
-                  <div className="w-20 h-20 bg-white/5 rounded-[30px] flex items-center justify-center mx-auto mb-6 text-gray-500 border border-white/5">
-                    <BookOpen size={40} />
-                  </div>
-                  <h2 className="text-4xl lg:text-6xl font-black tracking-tighter text-white">학습 트랙을 선택해 주세요</h2>
-                  <p className="text-gray-500 text-lg lg:text-xl font-light max-w-2xl mx-auto">
-                    커리큘럼을 확인하려면 먼저 학습하고 싶은 분야를 선택해야 합니다.<br/>아래 트랙 중 하나를 골라 시작해 보세요.
-                  </p>
-                </motion.div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-                  {ALL_TRACKS.map(track => (
-                    <motion.div 
-                      key={track.id} 
-                      whileHover={{ y: -10, borderColor: 'rgba(0,122,255,0.4)' }}
-                      onClick={() => handleSelectTrack(track)}
-                      className="glass p-8 rounded-[40px] border-white/5 cursor-pointer flex flex-col items-center text-center gap-6 bg-gradient-to-br from-white/[0.02] to-transparent shadow-2xl transition-all"
-                    >
-                      <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-xl ${
-                        track.category === 'tutorial' ? 'bg-purple-500/10 text-purple-400' : 'bg-[#007AFF]/10 text-[#007AFF]'
-                      }`}>
-                        {track.iconType === 'python' ? 'Py' : track.iconType === 'c' ? 'C' : <Sparkles size={28} />}
-                      </div>
-                      <div>
-                        <h4 className="text-xl font-bold mb-2 text-white">{track.title}</h4>
-                        <p className="text-xs text-gray-500 font-light leading-relaxed line-clamp-2">{track.description}</p>
-                      </div>
-                      <div className="mt-auto w-full py-4 rounded-2xl bg-white/5 text-[10px] font-black uppercase tracking-widest group-hover:bg-[#007AFF] transition-colors flex items-center justify-center gap-2 text-white/50 group-hover:text-white">
-                        커리큘럼 보기 <ChevronRight size={14} />
-                      </div>
+              </header>
+              <section className="mb-20">
+                <h3 className="flex items-center gap-3 text-xl font-bold text-white mb-8 border-l-4 border-purple-500 pl-6 uppercase tracking-widest">
+                  <Brain className="text-purple-400" size={24} /> 사고력 트랙
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {ALL_TRACKS.filter(t => t.category === 'tutorial').map(track => (
+                    <motion.div key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-white shadow-xl mb-6"><Brain size={28} /></div>
+                      <h4 className="text-2xl font-bold mb-3 group-hover:text-white">{track.title}</h4>
+                      <p className="text-sm text-gray-500 leading-relaxed mb-8 h-12 line-clamp-2">{track.description}</p>
+                      <div className="flex items-center gap-2 text-[#007AFF] text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
                     </motion.div>
                   ))}
                 </div>
+              </section>
+              <section className="mb-20">
+                <h3 className="flex items-center gap-3 text-xl font-bold text-white mb-8 border-l-4 border-[#007AFF] pl-6 uppercase tracking-widest">
+                  <Terminal className="text-[#007AFF]" size={24} /> 언어 트랙
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {ALL_TRACKS.filter(t => t.category === 'language').map(track => (
+                    <motion.div key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
+                      <div className="mb-6">{track.iconType === 'python' ? <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3776AB] to-[#FFD43B]/20 flex items-center justify-center font-black text-white shadow-xl text-xl">Py</div> : track.iconType === 'c' ? <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5C5C5C] to-[#004482] flex items-center justify-center font-black text-white shadow-xl text-2xl">C</div> : <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-white shadow-xl"><Brain size={24} /></div>}</div>
+                      <h4 className="text-2xl font-bold mb-3 group-hover:text-white">{track.title}</h4>
+                      <p className="text-sm text-gray-500 leading-relaxed mb-8 h-12 line-clamp-2">{track.description}</p>
+                      <div className="flex items-center gap-2 text-[#007AFF] text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
+          {activeRoute === AppRoute.LEARN && selectedLesson && (
+            <div className="flex flex-col h-full overflow-hidden">
+              <div className="bg-black/40 border-b border-white/5 py-4 px-8 flex items-center justify-center gap-12 text-sm font-bold shrink-0">
+                {availableStages.map(s => (
+                  <button key={s.stage} onClick={() => setLearningStage(s.stage)} className={`flex items-center gap-3 ${learningStage === s.stage ? 'text-[#007AFF]' : 'text-gray-600'}`}>{s.icon} <span className="text-xs uppercase tracking-widest">{s.label}</span></button>
+                ))}
+              </div>
+              <div className="flex-1 flex overflow-hidden">
+                <div id="learn-scroll-container" className="flex-1 overflow-y-auto p-12 custom-scrollbar">
+                  {learningStage === 'concept' && <CodeViewer lesson={selectedLesson} onFinishConcept={() => moveToNextStage([])} />}
+                  {learningStage === 'quiz' && <ProblemSolving problems={selectedLesson.conceptProblems} type="concept" onFinish={missed => moveToNextStage(missed)} />}
+                  {learningStage === 'coding' && <ProblemSolving problems={selectedLesson.codingProblems} type="coding" onFinish={missed => handleFinishLesson(missed)} />}
+                </div>
+                <motion.div animate={{ width: isAiMinimized ? 72 : 320 }} className="hidden lg:block border-l border-white/5 bg-black/20 shrink-0 overflow-hidden">
+                  <AIChat currentLesson={selectedLesson} currentStage={learningStage} isMinimized={isAiMinimized} onToggleMinimize={() => setIsAiMinimized(!isAiMinimized)} />
+                </motion.div>
+              </div>
+            </div>
+          )}
+          {activeRoute === AppRoute.CURRICULUM && (
+            selectedTrack ? (
+              <Curriculum 
+                onSelectLesson={l => { setSelectedLesson(l); setLearningStage(l.pages?.length > 0 ? 'concept' : 'quiz'); setActiveRoute(AppRoute.LEARN); }} 
+                selectedTrack={selectedTrack} 
+                onChangeTrack={() => handleSelectTrack(null)} 
+                completed_lesson_ids={user.completed_lesson_ids} 
+              />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                <BookOpen size={48} className="text-gray-600 mb-8" />
+                <h2 className="text-3xl font-black text-white mb-4">선택된 트랙이 없습니다</h2>
+                <button onClick={() => setActiveRoute(AppRoute.HOME)} className="px-10 py-5 bg-[#007AFF] text-white rounded-2xl font-black">홈으로 이동</button>
               </div>
             )
           )}
           {activeRoute === AppRoute.QUESTION && <QuestionPage user={user} />}
           {activeRoute === AppRoute.PLAYGROUND && <Playground />}
-          {activeRoute === AppRoute.GAP_FILLER && <GapFiller missedProblems={user.missedConcepts || []} onStartReview={() => {}} />}
-          {activeRoute === AppRoute.STUDY_GUIDE && <StudyGuide onStartPython={() => setActiveRoute(AppRoute.HOME)} onViewCurriculum={() => setActiveRoute(AppRoute.CURRICULUM)} onStartAlgorithm={() => setActiveRoute(AppRoute.HOME)} />}
-          {activeRoute === AppRoute.ADMIN && isAdmin && <Admin />}
+          {activeRoute === AppRoute.STUDY_GUIDE && <StudyGuide onStartPython={() => handleSelectTrack(ALL_TRACKS.find(t=>t.id==='py_basic')!)} onViewCurriculum={() => setActiveRoute(AppRoute.CURRICULUM)} onStartAlgorithm={() => handleSelectTrack(ALL_TRACKS.find(t=>t.id==='algo_tutorial')!)} />}
+          {activeRoute === AppRoute.GAP_FILLER && <GapFiller missed_concepts={user.missed_concepts} onStartReview={() => {}} />}
+          {activeRoute === AppRoute.ADMIN && user.role === 'admin' && <Admin />}
         </motion.div>
       </AnimatePresence>
     </Layout>
