@@ -110,28 +110,25 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Screen Simulation</span>
             </div>
 
-            <MotionDiv
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="relative group overflow-hidden"
-            >
-              <AnimatePresence mode="wait">
-                <MotionDiv
-                  key={activeTab}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  className="glass rounded-[40px] border-white/10 bg-black/40 overflow-hidden shadow-2xl aspect-[4/3] flex flex-col"
-                >
-                  <div className="px-6 py-4 bg-white/[0.03] border-b border-white/5 flex items-center justify-between">
-                    <div className="flex gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-red-500/40" />
-                      <div className="w-2 h-2 rounded-full bg-yellow-500/40" />
-                      <div className="w-2 h-2 rounded-full bg-green-500/40" />
-                    </div>
-                  </div>
+            <div className="relative overflow-hidden glass rounded-[40px] border-white/10 bg-black/40 shadow-2xl aspect-[4/3] flex flex-col">
+              <div className="px-6 py-4 bg-white/[0.03] border-b border-white/5 flex items-center justify-between">
+                <div className="flex gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-red-500/40" />
+                  <div className="w-2 h-2 rounded-full bg-yellow-500/40" />
+                  <div className="w-2 h-2 rounded-full bg-green-500/40" />
+                </div>
+              </div>
 
-                  <div className="flex-1 p-6 lg:p-10 flex flex-col gap-6 overflow-hidden">
+              <div className="flex-1 relative overflow-hidden">
+                <AnimatePresence mode="wait">
+                  <MotionDiv
+                    key={activeTab}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 p-6 lg:p-10 flex flex-col gap-6"
+                  >
                     {activeTab === 'concept' && (
                       <div className="space-y-6">
                         <div className="flex items-center gap-3">
@@ -147,8 +144,10 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
                             <span className="text-gray-700 text-xs">02</span>
                             <span>print(f"Hello {'{'}name{'}'}")</span>
                           </div>
+                          {/* 변수 모니터링 배지 - 애니메이션 부하를 줄이기 위해 부모 애니메이션에 의존 */}
                           <div className="absolute top-4 right-4 px-3 py-1 bg-[#007AFF]/20 border border-[#007AFF]/40 rounded-full text-[10px] flex items-center gap-2">
-                            <Variable size={10} /> name: "StepCode"
+                            <Variable size={10} className="text-[#007AFF]" />
+                            <span className="text-white">name: "StepCode"</span>
                           </div>
                         </div>
                         <div className="flex justify-end">
@@ -193,11 +192,10 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
                          </div>
                       </div>
                     )}
-                  </div>
-                </MotionDiv>
-              </AnimatePresence>
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-[#007AFF]/10 blur-[40px] rounded-full -z-10" />
-            </MotionDiv>
+                  </MotionDiv>
+                </AnimatePresence>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-12">
@@ -208,7 +206,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
               <h3 className="text-3xl lg:text-5xl font-bold mb-6 tracking-tight text-white leading-tight">
                 {studyStages[activeTab].title}
               </h3>
-              <p className="text-gray-400 text-lg lg:text-xl font-light leathering-relaxed">
+              <p className="text-gray-400 text-lg lg:text-xl font-light leading-relaxed">
                 {studyStages[activeTab].desc}
               </p>
             </div>
@@ -216,10 +214,10 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
             <div className="space-y-6">
               {studyStages[activeTab].points.map((point, i) => (
                 <MotionDiv 
-                  key={i}
+                  key={`${activeTab}-${i}`}
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * 0.1, duration: 0.3 }}
                   className="flex items-start gap-4"
                 >
                   <div className={`mt-1.5 w-2 h-2 rounded-full ${studyStages[activeTab].color} shrink-0`} />

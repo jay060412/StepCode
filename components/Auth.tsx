@@ -147,8 +147,8 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess, initialStage = 'inpu
   // 2. 8자리 코드 검증
   const handleVerifyResetOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (resetOtp.length < 6) {
-      setError('코드를 정확히 입력해주세요.');
+    if (resetOtp.length < 8) {
+      setError('8자리 코드를 정확히 입력해주세요.');
       return;
     }
     setError('');
@@ -200,6 +200,10 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess, initialStage = 'inpu
   };
 
   const handleVerifySignupOtp = async () => {
+    if (verificationCode.length < 8) {
+      setError('8자리 인증 코드를 입력해주세요.');
+      return;
+    }
     setIsLoading(true);
     setError('');
     try {
@@ -336,7 +340,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess, initialStage = 'inpu
                       placeholder="00000000" 
                     />
                     {error && <div className="text-red-400 text-xs mb-6">{error}</div>}
-                    <button type="submit" disabled={isLoading || resetOtp.length < 6} className="w-full py-4 bg-[#007AFF] text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all disabled:opacity-30">
+                    <button type="submit" disabled={isLoading || resetOtp.length < 8} className="w-full py-4 bg-[#007AFF] text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all disabled:opacity-30">
                       {isLoading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : '인증 완료'}
                     </button>
                   </form>
@@ -372,18 +376,18 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess, initialStage = 'inpu
                   <button type="button" onClick={() => setAuthStage('input')} className="self-start flex items-center gap-1 text-gray-500 text-xs mb-6 hover:text-white transition-colors"><ChevronLeft size={14} /> 돌아가기</button>
                   <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6 text-[#007AFF]"><ShieldCheck size={32} /></div>
                   <h2 className="text-2xl font-bold mb-2 text-white">이메일 인증</h2>
-                  <p className="text-gray-400 text-xs mb-8">{email}로 발송된<br/>6자리 인증 코드를 입력하세요.</p>
+                  <p className="text-gray-400 text-xs mb-8">{email}로 발송된<br/><span className="text-white font-bold">8자리 인증 코드</span>를 입력하세요.</p>
                   <input 
                     type="text" 
-                    maxLength={6} 
+                    maxLength={8} 
                     autoFocus 
                     value={verificationCode} 
                     onChange={e => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))} 
                     className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 text-center text-4xl font-black tracking-[0.3em] text-white focus:border-[#007AFF] outline-none mb-8" 
-                    placeholder="000000" 
+                    placeholder="00000000" 
                   />
                   {error && <div className="text-red-400 text-xs mb-6">{error}</div>}
-                  <button type="button" onClick={handleVerifySignupOtp} disabled={isLoading || verificationCode.length < 6} className="w-full py-4 bg-[#007AFF] text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all disabled:opacity-30">
+                  <button type="button" onClick={handleVerifySignupOtp} disabled={isLoading || verificationCode.length < 8} className="w-full py-4 bg-[#007AFF] text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all disabled:opacity-30">
                     {isLoading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : '인증 완료'}
                   </button>
                 </MotionDiv>
