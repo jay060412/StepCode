@@ -8,13 +8,12 @@ import { GoogleGenAI } from "@google/genai";
 
 export const askGemini = async (prompt: string, context?: string) => {
   try {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      console.error("API_KEY is missing");
-      return "AI 엔진 설정(API_KEY)이 완료되지 않았습니다. Netlify 환경 변수에서 GROQ_API_KEY를 API_KEY로 이름을 바꾸고 다시 배포해주세요.";
+    if (!process.env.API_KEY) {
+      throw new Error("API_KEY_MISSING");
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    // Fixed: Initializing with apiKey property using process.env.API_KEY directly as per guidelines
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: [
@@ -39,17 +38,24 @@ ${prompt}`
         }
       ],
       config: {
-        thinkingConfig: { thinkingBudget: 24576 } // 복잡한 코딩 추론을 위한 생각 예산 할당
+        thinkingConfig: { thinkingBudget: 16000 } // 코딩 추론 성능 극대화
       }
     });
 
+    // Fixed: Using .text property instead of .text() method
     return response.text || "답변을 생성할 수 없습니다.";
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Service Error:", error);
-    if (error instanceof Error && error.message.includes("API key not found")) {
-      return "API 키를 찾을 수 없습니다. Netlify 환경 변수 이름을 API_KEY로 설정했는지 확인해주세요.";
+    
+    if (error.message === "API_KEY_MISSING") {
+      return "CONNECTED_KEY_REQUIRED";
     }
+    
+    if (error.message?.includes("Requested entity was not found")) {
+      return "INVALID_KEY_ERROR";
+    }
+
     return "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
   }
 };
@@ -58,23 +64,11 @@ ${prompt}`
  * 브라우저 표준 Web Speech API를 활용한 음성 합성
  */
 export const getGeminiSpeech = async (text: string) => {
-  if (!('speechSynthesis' in window)) {
-    console.warn("이 브라우저는 음성 합성을 지원하지 않습니다.");
-    return null;
-  }
-
+  if (!('speechSynthesis' in window)) return null;
   window.speechSynthesis.cancel();
-
   const cleanText = text.replace(/[*#`]/g, ''); 
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = 'ko-KR';
-  utterance.rate = 1.0;
-  utterance.pitch = 1.0;
-
   window.speechSynthesis.speak(utterance);
   return null;
 };
-
-export async function playPcmAudio(base64Data: string) {
-  return null;
-}

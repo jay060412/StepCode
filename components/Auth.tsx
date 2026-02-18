@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { Code2, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2, KeyRound, RefreshCw, ChevronLeft } from 'lucide-react';
+import { Code2, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2, KeyRound, RefreshCw, ChevronLeft, Square } from 'lucide-react';
 import { UserAccount } from '../types';
 import { supabase } from '../lib/supabase';
 
@@ -226,7 +226,36 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                       <input type="password" placeholder="비밀번호 확인" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white focus:border-[#007AFF] outline-none transition-all" />
                     </div>
                   )}
-                  {error && <div className="text-red-400 text-xs px-2">{error}</div>}
+
+                  {/* 로그인 전용 옵션 영역 (기억하기) */}
+                  {isLoginView && (
+                    <div className="flex items-center justify-between px-2 py-1">
+                      <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                        <div className="relative flex items-center justify-center">
+                          <input 
+                            type="checkbox" 
+                            className="hidden" 
+                            checked={rememberMe} 
+                            onChange={() => setRememberMe(!rememberMe)} 
+                          />
+                          <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all duration-300 ${rememberMe ? 'bg-[#007AFF] border-[#007AFF] shadow-lg shadow-[#007AFF]/30' : 'border-white/10 bg-white/5 group-hover:border-white/30'}`}>
+                            <AnimatePresence>
+                              {rememberMe && (
+                                <motion.div initial={{ scale: 0, rotate: -45 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }}>
+                                  <CheckCircle2 size={14} className="text-white" />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+                        <span className={`text-[11px] font-medium transition-colors ${rememberMe ? 'text-white' : 'text-gray-500 group-hover:text-gray-400'}`}>로그인 정보 기억하기</span>
+                      </label>
+                      <button type="button" className="text-[11px] text-gray-600 hover:text-[#007AFF] transition-colors">비밀번호를 잊으셨나요?</button>
+                    </div>
+                  )}
+
+                  {error && <div className="text-red-400 text-xs px-2 mt-1 flex items-center gap-1.5 font-medium animate-pulse"><AlertCircle size={12} /> {error}</div>}
+                  
                   <button type="submit" disabled={isLoading} className="w-full py-4 bg-[#007AFF] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-2xl transition-all hover:bg-[#007AFF]/90 active:scale-95 disabled:opacity-50 mt-2">
                     {isLoading ? <RefreshCw className="animate-spin" size={18} /> : <>{isLoginView ? '로그인' : '회원가입 시작'} <ArrowRight size={18} /></>}
                   </button>

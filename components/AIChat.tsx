@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, Volume2, Loader2, Minimize2, Maximize2, MessageSquare, Sparkles } from 'lucide-react';
+import { Send, Bot, Volume2, Loader2, Minimize2, Maximize2, MessageSquare, Sparkles, Key, AlertCircle, ExternalLink } from 'lucide-react';
 import { askGemini, getGeminiSpeech } from '../services/geminiService';
 import { ChatMessage, Lesson, Problem } from '../types';
 import { FormattedText } from './FormattedText';
@@ -18,6 +18,9 @@ interface AIChatProps {
   onToggleMinimize?: () => void;
 }
 
+// Fixed: Removed local AIStudio interface and Window augmentation to avoid conflicts with 
+// pre-configured global definitions provided by the environment.
+
 export const AIChat: React.FC<AIChatProps> = ({ 
   currentLesson, 
   currentPageIndex, 
@@ -26,18 +29,47 @@ export const AIChat: React.FC<AIChatProps> = ({
   isMinimized = false,
   onToggleMinimize
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', content: '반가워요! 차세대 **Gemini 3 Pro** 엔진으로 업그레이드된 StepCode AI 튜터입니다. 궁금한 점은 무엇이든 물어보세요! 코드의 맥락을 완벽히 이해하고 도와드릴게요.' }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [needsKey, setNeedsKey] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    checkKeyStatus();
+  }, []);
+
+  const checkKeyStatus = async () => {
+    // Fixed: Always check for selected key if process.env.API_KEY is not hardcoded
+    if (process.env.API_KEY) {
+      setNeedsKey(false);
+      if (messages.length === 0) {
+        setMessages([{ role: 'assistant', content: '반가워요! **Gemini 3 Pro** 연결이 완료되었습니다. 궁금한 점은 무엇이든 물어보세요!' }]);
+      }
+    } else {
+      // Assuming window.aistudio is pre-configured and globally accessible as per guidelines
+      const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+      setNeedsKey(!hasKey);
+    }
+  };
+
+  const handleConnectKey = async () => {
+    try {
+      // Trigger key selection dialog
+      await (window as any).aistudio.openSelectKey();
+      // Assume successful selection to avoid race condition as per guidelines
+      setNeedsKey(false);
+      setMessages([{ role: 'assistant', content: '엔진이 성공적으로 연결되었습니다! 코딩 학습 중 궁금한 내용을 입력해주세요.' }]);
+    } catch (err) {
+      console.error("Key selection failed", err);
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isMinimized]);
+  }, [messages, isMinimized, needsKey]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -57,7 +89,13 @@ export const AIChat: React.FC<AIChatProps> = ({
     `;
 
     const response = await askGemini(input, context);
-    setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+
+    if (response === "CONNECTED_KEY_REQUIRED" || response === "INVALID_KEY_ERROR") {
+      setNeedsKey(true);
+      setMessages(prev => [...prev, { role: 'assistant', content: '앗, API 키 연결이 해제되었거나 유효하지 않습니다. 다시 연결이 필요합니다.' }]);
+    } else {
+      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+    }
     setIsLoading(false);
   };
 
@@ -75,17 +113,11 @@ export const AIChat: React.FC<AIChatProps> = ({
           className="w-14 h-14 rounded-[22px] bg-[#007AFF] text-white flex items-center justify-center shadow-2xl shadow-[#007AFF]/40 relative group"
         >
           <Bot size={28} />
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0a0a]" />
+          {!needsKey && <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0a0a]" />}
         </MotionButton>
-        <div className="h-px w-10 bg-white/10" />
-        <button onClick={onToggleMinimize} className="p-4 text-gray-500 hover:text-white transition-all bg-white/5 rounded-2xl hover:bg-white/10">
+        <button onClick={onToggleMinimize} className="p-4 text-gray-500 hover:text-white transition-all bg-white/5 rounded-2xl">
           <Maximize2 size={24} />
         </button>
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="[writing-mode:vertical-rl] rotate-180 text-gray-700 font-black uppercase tracking-[0.4em] text-[11px] py-10 select-none opacity-50">
-            Gemini 3 Pro AI Assistant
-          </div>
-        </div>
       </div>
     );
   }
@@ -98,13 +130,15 @@ export const AIChat: React.FC<AIChatProps> = ({
              <div className="w-11 h-11 rounded-2xl bg-[#007AFF] flex items-center justify-center text-white shadow-xl shadow-[#007AFF]/20">
                <Bot size={24} />
              </div>
-             <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-black" />
+             {!needsKey && <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-black" />}
            </div>
            <div>
              <span className="font-bold text-sm block tracking-tight">StepCode AI Tutor</span>
              <div className="flex items-center gap-1.5">
-               <span className="w-1.5 h-1.5 rounded-full bg-[#007AFF] animate-pulse" />
-               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Gemini 3 Pro</span>
+               <span className={`w-1.5 h-1.5 rounded-full ${needsKey ? 'bg-red-500' : 'bg-[#007AFF] animate-pulse'}`} />
+               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                 {needsKey ? 'Offline' : 'Gemini 3 Pro Online'}
+               </span>
              </div>
            </div>
         </div>
@@ -114,6 +148,37 @@ export const AIChat: React.FC<AIChatProps> = ({
       </div>
       
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-gradient-to-b from-transparent to-[#007AFF]/5">
+        {needsKey && (
+          <MotionDiv 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-8 rounded-[32px] glass-blue border-[#007AFF]/30 flex flex-col items-center text-center gap-6 my-4"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-[#007AFF]/10 text-[#007AFF] flex items-center justify-center">
+              <Key size={32} />
+            </div>
+            <div>
+              <h4 className="text-xl font-bold text-white mb-2">AI 엔진을 활성화하세요</h4>
+              <p className="text-sm text-gray-400 font-light leading-relaxed">
+                Gemini 3 Pro 엔진을 사용하려면 <br/> Netlify에 설정한 API 키를 연결해야 합니다.
+              </p>
+            </div>
+            <button 
+              onClick={handleConnectKey}
+              className="w-full py-4 bg-[#007AFF] text-white rounded-2xl font-black text-sm shadow-xl shadow-[#007AFF]/20 flex items-center justify-center gap-2 hover:scale-105 transition-all"
+            >
+              AI 엔진 연결하기 <ExternalLink size={16} />
+            </button>
+            <a 
+              href="https://ai.google.dev/gemini-api/docs/billing" 
+              target="_blank" 
+              className="text-[10px] text-gray-600 underline hover:text-gray-400"
+            >
+              결제 및 프로젝트 설정 안내 (ai.google.dev)
+            </a>
+          </MotionDiv>
+        )}
+
         {messages.map((m, i) => (
           <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
             {m.role === 'assistant' && (
@@ -153,14 +218,15 @@ export const AIChat: React.FC<AIChatProps> = ({
           <input 
             type="text" 
             value={input}
+            disabled={needsKey}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="궁금한 점을 물어보세요..."
-            className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder:text-gray-600"
+            placeholder={needsKey ? "먼저 엔진을 연결해주세요..." : "궁금한 점을 물어보세요..."}
+            className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder:text-gray-600 disabled:opacity-30"
           />
           <button 
             onClick={handleSend}
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || needsKey}
             className="w-11 h-11 bg-[#007AFF] text-white rounded-[18px] flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-30 shadow-lg shadow-[#007AFF]/20"
           >
             <Send size={20} />
