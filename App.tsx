@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Layout } from './components/Layout';
 import { CodeViewer } from './components/CodeViewer';
-import { AIChat } from './components/AIChat';
 import { Curriculum } from './components/Curriculum';
 import { Playground } from './components/Playground';
 import { StudyGuide } from './components/StudyGuide';
@@ -31,10 +30,18 @@ const App: React.FC = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [learningStage, setLearningStage] = useState<LearningStage>('concept');
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isAiMinimized, setIsAiMinimized] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [dbError, setDbError] = useState<string | null>(null);
+
+  // 현재 레슨의 세션 기록 (퀴즈/코딩 결과 유지용)
+  const [sessionResults, setSessionResults] = useState<Record<string, { 
+    results: Record<number, any>; 
+    answers: Record<number, string>;
+  }>>({
+    quiz: { results: {}, answers: {} },
+    coding: { results: {}, answers: {} }
+  });
 
   const availableStages = useMemo(() => {
     if (!selectedLesson) return [];
@@ -107,6 +114,11 @@ const App: React.FC = () => {
     setUser(prev => prev ? { ...prev, ...updates } : null);
     setActiveRoute(AppRoute.CURRICULUM);
     setSelectedLesson(null);
+    // 레슨 종료 시 세션 초기화
+    setSessionResults({
+      quiz: { results: {}, answers: {} },
+      coding: { results: {}, answers: {} }
+    });
 
     await syncProfileToDB({
       ...updates,
@@ -115,13 +127,26 @@ const App: React.FC = () => {
   }, [selectedLesson, user, syncProfileToDB, selectedTrack]);
 
   const moveToNextStage = useCallback((missed: Problem[] = []) => {
+    if (missed.length > 0 && user) {
+      const existingMissed = user.missed_concepts || [];
+      const newMissedConcepts = [...existingMissed];
+      missed.forEach(mp => {
+        if (!newMissedConcepts.find(ex => ex.id === mp.id)) {
+          newMissedConcepts.push(mp);
+        }
+      });
+      
+      setUser(prev => prev ? { ...prev, missed_concepts: newMissedConcepts } : null);
+      syncProfileToDB({ missed_concepts: newMissedConcepts });
+    }
+
     const currentIndex = availableStages.findIndex(s => s.stage === learningStage);
     if (currentIndex < availableStages.length - 1) {
       setLearningStage(availableStages[currentIndex + 1].stage);
     } else {
       handleFinishLesson(missed);
     }
-  }, [availableStages, learningStage, handleFinishLesson]);
+  }, [availableStages, learningStage, handleFinishLesson, user, syncProfileToDB]);
 
   const loadUserProgressFromDB = useCallback(async (userId: string, email: string, name: string) => {
     setIsProfileLoading(true);
@@ -172,21 +197,14 @@ const App: React.FC = () => {
 
   const handleLogout = useCallback(async () => {
     try {
-      // 1. 모든 학습 상태 즉시 초기화 (UI 에러 방지)
       setIsLoggedIn(false);
       setUser(null);
       setSelectedTrack(null);
       setSelectedLesson(null);
       setActiveRoute(AppRoute.HOME);
-
-      // 2. 세션 종료
       await supabase.auth.signOut();
-      
-      // 3. 새로고침 없이 루트로 이동 (SPA 방식)
-      // 상태 초기화만으로도 <Auth /> 컴포넌트가 렌더링되므로 충분합니다.
     } catch (err) {
       console.error("Logout Error:", err);
-      // 에러 발생 시에도 최소한 화면은 돌려놓음
       setIsLoggedIn(false);
       setUser(null);
     }
@@ -316,12 +334,31 @@ const App: React.FC = () => {
               <div className="flex-1 flex overflow-hidden">
                 <div id="learn-scroll-container" className="flex-1 overflow-y-auto p-12 custom-scrollbar">
                   {learningStage === 'concept' && <CodeViewer lesson={selectedLesson} onFinishConcept={() => moveToNextStage([])} />}
-                  {learningStage === 'quiz' && <ProblemSolving problems={selectedLesson.conceptProblems} type="concept" onFinish={missed => moveToNextStage(missed)} />}
-                  {learningStage === 'coding' && <ProblemSolving problems={selectedLesson.codingProblems} type="coding" onFinish={missed => handleFinishLesson(missed)} />}
+                  
+                  {learningStage === 'quiz' && (
+                    <ProblemSolving 
+                      problems={selectedLesson.conceptProblems} 
+                      type="concept" 
+                      savedResults={sessionResults.quiz.results}
+                      savedAnswers={sessionResults.quiz.answers}
+                      onSaveProgress={(res, ans) => setSessionResults(prev => ({ ...prev, quiz: { results: res, answers: ans } }))}
+                      onBackToConcept={() => setLearningStage('concept')} 
+                      onFinish={missed => moveToNextStage(missed)} 
+                    />
+                  )}
+                  
+                  {learningStage === 'coding' && (
+                    <ProblemSolving 
+                      problems={selectedLesson.codingProblems} 
+                      type="coding" 
+                      savedResults={sessionResults.coding.results}
+                      savedAnswers={sessionResults.coding.answers}
+                      onSaveProgress={(res, ans) => setSessionResults(prev => ({ ...prev, coding: { results: res, answers: ans } }))}
+                      onBackToConcept={() => setLearningStage('concept')} 
+                      onFinish={missed => handleFinishLesson(missed)} 
+                    />
+                  )}
                 </div>
-                <MotionDiv animate={{ width: isAiMinimized ? 72 : 320 }} className="hidden lg:block border-l border-white/5 bg-black/20 shrink-0 overflow-hidden">
-                  <AIChat currentLesson={selectedLesson} currentStage={learningStage} isMinimized={isAiMinimized} onToggleMinimize={() => setIsAiMinimized(!isAiMinimized)} />
-                </MotionDiv>
               </div>
             </div>
           )}

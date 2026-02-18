@@ -5,7 +5,7 @@ import {
   PlayCircle, BookOpen, 
   CheckCircle2, Terminal, Variable, 
   Sparkles, Code2, Layout, MousePointer2, Brain, Rocket,
-  MessageSquareCode
+  History, RotateCcw
 } from 'lucide-react';
 
 // Fix for framer-motion intrinsic element type errors
@@ -47,7 +47,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
       desc: "눈으로 본 논리가 내 것이 되었는지 즉시 테스트합니다. 헷갈리는 개념을 잡아주는 가장 빠른 필터입니다.",
       points: [
         "객관식 퀴즈를 통해 핵심 개념의 빈틈을 찾습니다.",
-        "오답 시 AI 튜터가 제공하는 정교한 힌트를 활용해 다시 생각해보세요.",
+        "오답 시 시스템이 제공하는 정교한 힌트를 활용해 다시 생각해보세요.",
         "단순히 정답을 맞히는 것보다 '왜' 정답인지를 이해하는 것이 중요합니다."
       ],
       color: "text-purple-400",
@@ -60,7 +60,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
       points: [
         "별도의 설치 없이 브라우저에서 즉시 코드를 작성하세요.",
         "콘솔창의 에러 메시지를 두려워 말고 하나씩 해결해 나가는 재미를 느끼세요.",
-        "최종 제출 시 AI가 당신의 코드를 분석해 최적화 방향을 제시해줍니다."
+        "최종 제출 시 자동 채점 시스템이 당신의 코드를 분석해 성공 여부를 판별해줍니다."
       ],
       color: "text-cyan-400",
       bgColor: "bg-cyan-500/10",
@@ -299,7 +299,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
           { icon: Layout, title: "정갈한 UI", desc: "학습에만 몰입할 수 있도록 깔끔하고 정제된 인터페이스를 제공합니다." },
-          { icon: MessageSquareCode, title: "AI 밀착 케어", desc: "모든 페이지에서 당신의 코드를 이해하는 AI 튜터가 24시간 대기합니다." },
+          { icon: History, title: "체계적인 복습", desc: "틀린 문제를 실시간으로 기록하여 '빈틈 매우기' 메뉴에서 언제든 다시 학습할 수 있습니다." },
           { icon: MousePointer2, title: "시각적 추적", desc: "코드가 실행되는 순간의 공기를 읽듯, 데이터의 흐름을 눈으로 보며 익힙니다." }
         ].map((f, i) => {
           const IconComponent = f.icon;
