@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Layout } from './components/Layout';
 import { CodeViewer } from './components/CodeViewer';
 import { Curriculum } from './components/Curriculum';
@@ -10,17 +10,16 @@ import { Admin } from './components/Admin';
 import { Auth } from './components/Auth';
 import { QuestionPage } from './components/QuestionPage';
 import { ProblemSolving } from './components/ProblemSolving';
+import { Settings } from './components/Settings';
+import { NoticePage } from './components/NoticePage';
 import { AppRoute, UserProfile, Lesson, Track, Problem } from './types';
 import { ALL_TRACKS } from './contentData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayCircle, HelpCircle, Target, Loader2, Brain, Terminal, ChevronRight, Rocket, AlertCircle, RefreshCw, BookOpen } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
-// Fix for framer-motion intrinsic element type errors
 const MotionDiv = motion.div as any;
-
 type LearningStage = 'concept' | 'quiz' | 'coding';
-
 const ADMIN_EMAIL = 'jay447233@gmail.com';
 
 const App: React.FC = () => {
@@ -30,11 +29,20 @@ const App: React.FC = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [learningStage, setLearningStage] = useState<LearningStage>('concept');
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  
+  const [isLoading, setIsLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
+  const loadingInProgress = useRef(false);
 
-  // 현재 레슨의 세션 기록 (퀴즈/코딩 결과 유지용)
+  // 테마 적용 효과
+  useEffect(() => {
+    if (user?.theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  }, [user?.theme]);
+
   const [sessionResults, setSessionResults] = useState<Record<string, { 
     results: Record<number, any>; 
     answers: Record<number, string>;
@@ -61,19 +69,19 @@ const App: React.FC = () => {
   const syncProfileToDB = useCallback(async (updates: any) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
+      if (!session?.user) return { error: 'No session' };
+      const { solved_concepts, ...validUpdates } = updates;
+      
       const { error } = await supabase
         .from('profiles')
-        .upsert({ 
-          id: session.user.id,
-          ...updates, 
-          updated_at: new Date().toISOString() 
-        }, { onConflict: 'id' });
-      
-      if (error) console.error("DB Sync Error:", error.message);
+        .update({ ...validUpdates, updated_at: new Date().toISOString() })
+        .eq('id', session.user.id);
+        
+      if (error) return { error: error.message };
+      return { success: true };
     } catch (err: any) {
-      console.error("DB Sync Critical Error:", err.message);
+      console.error("DB Sync Error:", err);
+      return { error: err.message };
     }
   }, []);
 
@@ -90,40 +98,35 @@ const App: React.FC = () => {
 
   const handleFinishLesson = useCallback(async (missedFromProblemSolving: Problem[] = []) => {
     if (!selectedLesson || !user) return;
-
+    if (selectedLesson.id === 'temp-review-lesson') {
+      const allReviewProblems = [...selectedLesson.conceptProblems, ...selectedLesson.codingProblems];
+      const newlySolvedIds = allReviewProblems.filter(p => !missedFromProblemSolving.find(m => m.id === p.id)).map(p => p.id);
+      if (newlySolvedIds.length > 0) {
+        const updatedMissed = (user.missed_concepts || []).map(prob => newlySolvedIds.includes(prob.id) ? { ...prob, mastered: true } : prob);
+        setUser(prev => prev ? { ...prev, missed_concepts: updatedMissed } : null);
+        await syncProfileToDB({ missed_concepts: updatedMissed });
+      }
+      setActiveRoute(AppRoute.GAP_FILLER);
+      setSelectedLesson(null);
+      return;
+    }
     const currentCompleted = user.completed_lesson_ids || [];
     const newCompletedIds = Array.from(new Set([...currentCompleted, selectedLesson.id]));
-    
     const totalLessons = ALL_TRACKS.reduce((acc, track) => acc + (track.lessons?.length || 0), 0);
     const newProgress = Math.min(100, Math.round((newCompletedIds.length / totalLessons) * 100));
-
     const existingMissed = user.missed_concepts || [];
     const newMissedConcepts = [...existingMissed];
     missedFromProblemSolving.forEach(mp => {
-      if (!newMissedConcepts.find(ex => ex.id === mp.id)) {
-        newMissedConcepts.push(mp);
-      }
+      const idx = newMissedConcepts.findIndex(ex => ex.id === mp.id);
+      if (idx === -1) newMissedConcepts.push({ ...mp, mastered: false });
+      else newMissedConcepts[idx] = { ...newMissedConcepts[idx], mastered: false };
     });
-
-    const updates = { 
-      completed_lesson_ids: newCompletedIds, 
-      progress: newProgress,
-      missed_concepts: newMissedConcepts 
-    };
-
+    const updates = { completed_lesson_ids: newCompletedIds, progress: newProgress, missed_concepts: newMissedConcepts };
     setUser(prev => prev ? { ...prev, ...updates } : null);
     setActiveRoute(AppRoute.CURRICULUM);
     setSelectedLesson(null);
-    // 레슨 종료 시 세션 초기화
-    setSessionResults({
-      quiz: { results: {}, answers: {} },
-      coding: { results: {}, answers: {} }
-    });
-
-    await syncProfileToDB({
-      ...updates,
-      last_track_id: selectedTrack?.id || user.last_track_id
-    });
+    setSessionResults({ quiz: { results: {}, answers: {} }, coding: { results: {}, answers: {} } });
+    await syncProfileToDB({ ...updates, last_track_id: selectedTrack?.id || user.last_track_id });
   }, [selectedLesson, user, syncProfileToDB, selectedTrack]);
 
   const moveToNextStage = useCallback((missed: Problem[] = []) => {
@@ -131,25 +134,35 @@ const App: React.FC = () => {
       const existingMissed = user.missed_concepts || [];
       const newMissedConcepts = [...existingMissed];
       missed.forEach(mp => {
-        if (!newMissedConcepts.find(ex => ex.id === mp.id)) {
-          newMissedConcepts.push(mp);
-        }
+        const foundIdx = newMissedConcepts.findIndex(ex => ex.id === mp.id);
+        if (foundIdx === -1) newMissedConcepts.push({ ...mp, mastered: false });
+        else newMissedConcepts[foundIdx] = { ...newMissedConcepts[foundIdx], mastered: false };
       });
-      
       setUser(prev => prev ? { ...prev, missed_concepts: newMissedConcepts } : null);
       syncProfileToDB({ missed_concepts: newMissedConcepts });
     }
-
     const currentIndex = availableStages.findIndex(s => s.stage === learningStage);
-    if (currentIndex < availableStages.length - 1) {
-      setLearningStage(availableStages[currentIndex + 1].stage);
-    } else {
-      handleFinishLesson(missed);
-    }
+    if (currentIndex < availableStages.length - 1) setLearningStage(availableStages[currentIndex + 1].stage);
+    else handleFinishLesson(missed);
   }, [availableStages, learningStage, handleFinishLesson, user, syncProfileToDB]);
 
+  const handleStartReview = useCallback((problem: Problem) => {
+    const tempLesson: Lesson = {
+      id: 'temp-review-lesson', title: '약점 복습 모드', description: '틀렸던 문제를 다시 풀어보며 개념을 완벽히 이해합니다.',
+      category: 'language', status: 'current', pages: [], 
+      conceptProblems: problem.type === 'concept' ? [problem] : [],
+      codingProblems: problem.type === 'coding' ? [problem] : []
+    };
+    setSelectedLesson(tempLesson);
+    setLearningStage(problem.type === 'concept' ? 'quiz' : 'coding');
+    setActiveRoute(AppRoute.LEARN);
+    setSessionResults({ quiz: { results: {}, answers: {} }, coding: { results: {}, answers: {} } });
+  }, []);
+
   const loadUserProgressFromDB = useCallback(async (userId: string, email: string, name: string) => {
-    setIsProfileLoading(true);
+    if (loadingInProgress.current) return;
+    loadingInProgress.current = true;
+    setIsLoading(true);
     setDbError(null);
 
     try {
@@ -172,7 +185,8 @@ const App: React.FC = () => {
         completed_lesson_ids: profileData?.completed_lesson_ids || [],
         role: (email === ADMIN_EMAIL ? 'admin' : (profileData?.role || 'user')) as any,
         is_banned: profileData?.is_banned || false,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        theme: profileData?.theme || 'dark'
       };
 
       if (!profileData) {
@@ -190,65 +204,51 @@ const App: React.FC = () => {
       console.error("loadUserProgressFromDB Error:", err);
       setDbError(err.message || "데이터 로드 실패");
     } finally {
-      setIsProfileLoading(false);
-      setIsInitialLoading(false);
+      setIsLoading(false);
+      loadingInProgress.current = false;
     }
   }, []);
 
   const handleLogout = useCallback(async () => {
-    try {
-      setIsLoggedIn(false);
-      setUser(null);
-      setSelectedTrack(null);
-      setSelectedLesson(null);
-      setActiveRoute(AppRoute.HOME);
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.error("Logout Error:", err);
-      setIsLoggedIn(false);
-      setUser(null);
-    }
+    setIsLoggedIn(false);
+    setUser(null);
+    setSelectedTrack(null);
+    setSelectedLesson(null);
+    setActiveRoute(AppRoute.HOME);
+    await supabase.auth.signOut();
   }, []);
 
   useEffect(() => {
+    let mounted = true;
     const checkInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await loadUserProgressFromDB(
-          session.user.id, 
-          session.user.email || '', 
-          session.user.user_metadata?.full_name || '학습자'
-        );
-      } else {
-        setIsInitialLoading(false);
+      if (session?.user && mounted) {
+        await loadUserProgressFromDB(session.user.id, session.user.email || '', session.user.user_metadata?.full_name || '학습자');
+      } else if (mounted) {
+        setIsLoading(false);
       }
     };
     checkInitialSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-        loadUserProgressFromDB(
-          session.user.id, 
-          session.user.email || '', 
-          session.user.user_metadata?.full_name || '학습자'
-        );
-      } else if (event === 'SIGNED_OUT') {
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user && mounted) {
+        loadUserProgressFromDB(session.user.id, session.user.email || '', session.user.user_metadata?.full_name || '학습자');
+      } else if (event === 'SIGNED_OUT' && mounted) {
         setUser(null);
         setIsLoggedIn(false);
-        setIsInitialLoading(false);
+        setIsLoading(false);
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => { mounted = false; subscription.unsubscribe(); };
   }, [loadUserProgressFromDB]);
 
-  if (isInitialLoading || isProfileLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-6">
         <Loader2 className="animate-spin text-[#007AFF]" size={64} />
         <p className="text-white font-black text-xl tracking-tight">StepCode 환경 준비 중...</p>
+        <p className="text-gray-500 text-xs animate-pulse mt-4">오랫동안 로딩 중이라면 데이터베이스 정책 설정을 확인해 주세요.</p>
       </div>
     );
   }
@@ -258,8 +258,12 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center gap-6">
         <AlertCircle size={48} className="text-red-500" />
         <h2 className="text-2xl font-bold text-white">데이터 동기화 오류</h2>
-        <p className="text-gray-500">{dbError}</p>
-        <button onClick={() => window.location.reload()} className="px-8 py-3 bg-[#007AFF] text-white rounded-xl font-bold">다시 시도</button>
+        <div className="max-w-md bg-red-500/10 p-6 rounded-3xl border border-red-500/20 text-red-400 text-sm leading-relaxed">
+          {dbError}
+          <br /><br />
+          <p className="text-gray-500 text-xs italic">팁: 무한 루프(Infinite Recursion) 에러가 발생했다면, Supabase RLS 정책에서 조회를 이메일 직접 체크 방식으로 수정해야 합니다.</p>
+        </div>
+        <button onClick={() => window.location.reload()} className="px-8 py-3 bg-[#007AFF] text-white rounded-xl font-bold cursor-pointer">다시 시도</button>
       </div>
     );
   }
@@ -269,33 +273,26 @@ const App: React.FC = () => {
   }
 
   return (
-    <Layout 
-      activeRoute={activeRoute} 
-      setActiveRoute={setActiveRoute} 
-      user={user} 
-      onLogout={handleLogout}
-    >
+    <Layout activeRoute={activeRoute} setActiveRoute={setActiveRoute} user={user} onLogout={handleLogout}>
       <AnimatePresence mode="wait">
         <MotionDiv key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
           {activeRoute === AppRoute.HOME && (
             <div className="p-8 lg:p-12 max-w-7xl mx-auto pb-32">
               <header className="mb-16">
-                <h2 className="text-4xl lg:text-7xl font-black mb-4 tracking-tighter text-white">반가워요, {user.name}님!</h2>
+                <h2 className="text-4xl lg:text-7xl font-black mb-4 tracking-tighter">반가워요, {user.name}님!</h2>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 lg:gap-8">
                   <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-white/5">
                     <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center"><Target size={20} /></div>
-                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Progress</p><p className="text-sm font-bold text-white">{user.progress}%</p></div>
+                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Progress</p><p className="text-sm font-bold">{user.progress}%</p></div>
                   </div>
                   <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-white/5">
                     <div className="w-10 h-10 rounded-xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center"><Rocket size={20} /></div>
-                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Current Level</p><p className="text-sm font-bold text-white">Level {user.level}</p></div>
+                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Current Level</p><p className="text-sm font-bold">Level {user.level}</p></div>
                   </div>
                 </div>
               </header>
               <section className="mb-20">
-                <h3 className="flex items-center gap-3 text-xl font-bold text-white mb-8 border-l-4 border-purple-500 pl-6 uppercase tracking-widest">
-                  <Brain className="text-purple-400" size={24} /> 사고력 트랙
-                </h3>
+                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-purple-500 pl-6 uppercase tracking-widest"><Brain className="text-purple-400" size={24} /> 사고력 트랙</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {ALL_TRACKS.filter(t => t.category === 'tutorial').map(track => (
                     <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
@@ -308,9 +305,7 @@ const App: React.FC = () => {
                 </div>
               </section>
               <section className="mb-20">
-                <h3 className="flex items-center gap-3 text-xl font-bold text-white mb-8 border-l-4 border-[#007AFF] pl-6 uppercase tracking-widest">
-                  <Terminal className="text-[#007AFF]" size={24} /> 언어 트랙
-                </h3>
+                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-[#007AFF] pl-6 uppercase tracking-widest"><Terminal className="text-[#007AFF]" size={24} /> 언어 트랙</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {ALL_TRACKS.filter(t => t.category === 'language').map(track => (
                     <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
@@ -328,34 +323,26 @@ const App: React.FC = () => {
             <div className="flex flex-col h-full overflow-hidden">
               <div className="bg-black/40 border-b border-white/5 py-4 px-8 flex items-center justify-center gap-12 text-sm font-bold shrink-0">
                 {availableStages.map(s => (
-                  <button key={s.stage} onClick={() => setLearningStage(s.stage)} className={`flex items-center gap-3 ${learningStage === s.stage ? 'text-[#007AFF]' : 'text-gray-600'}`}>{s.icon} <span className="text-xs uppercase tracking-widest">{s.label}</span></button>
+                  <button key={s.stage} onClick={() => setLearningStage(s.stage)} className={`flex items-center gap-3 cursor-pointer ${learningStage === s.stage ? 'text-[#007AFF]' : 'text-gray-600'}`}>{s.icon} <span className="text-xs uppercase tracking-widest">{s.label}</span></button>
                 ))}
               </div>
               <div className="flex-1 flex overflow-hidden">
                 <div id="learn-scroll-container" className="flex-1 overflow-y-auto p-12 custom-scrollbar">
                   {learningStage === 'concept' && <CodeViewer lesson={selectedLesson} onFinishConcept={() => moveToNextStage([])} />}
-                  
                   {learningStage === 'quiz' && (
                     <ProblemSolving 
-                      problems={selectedLesson.conceptProblems} 
-                      type="concept" 
-                      savedResults={sessionResults.quiz.results}
-                      savedAnswers={sessionResults.quiz.answers}
+                      problems={selectedLesson.conceptProblems} type="concept" 
+                      savedResults={sessionResults.quiz.results} savedAnswers={sessionResults.quiz.answers}
                       onSaveProgress={(res, ans) => setSessionResults(prev => ({ ...prev, quiz: { results: res, answers: ans } }))}
-                      onBackToConcept={() => setLearningStage('concept')} 
-                      onFinish={missed => moveToNextStage(missed)} 
+                      onBackToConcept={() => setLearningStage('concept')} onFinish={missed => moveToNextStage(missed)} 
                     />
                   )}
-                  
                   {learningStage === 'coding' && (
                     <ProblemSolving 
-                      problems={selectedLesson.codingProblems} 
-                      type="coding" 
-                      savedResults={sessionResults.coding.results}
-                      savedAnswers={sessionResults.coding.answers}
+                      problems={selectedLesson.codingProblems} type="coding" 
+                      savedResults={sessionResults.coding.results} savedAnswers={sessionResults.coding.answers}
                       onSaveProgress={(res, ans) => setSessionResults(prev => ({ ...prev, coding: { results: res, answers: ans } }))}
-                      onBackToConcept={() => setLearningStage('concept')} 
-                      onFinish={missed => handleFinishLesson(missed)} 
+                      onBackToConcept={() => setLearningStage('concept')} onFinish={missed => handleFinishLesson(missed)} 
                     />
                   )}
                 </div>
@@ -364,25 +351,37 @@ const App: React.FC = () => {
           )}
           {activeRoute === AppRoute.CURRICULUM && (
             selectedTrack ? (
-              <Curriculum 
-                onSelectLesson={l => { setSelectedLesson(l); setLearningStage(l.pages?.length > 0 ? 'concept' : 'quiz'); setActiveRoute(AppRoute.LEARN); }} 
-                selectedTrack={selectedTrack} 
-                onChangeTrack={() => handleSelectTrack(null)} 
-                completed_lesson_ids={user.completed_lesson_ids} 
-              />
+              <Curriculum onSelectLesson={l => { setSelectedLesson(l); setLearningStage(l.pages?.length > 0 ? 'concept' : 'quiz'); setActiveRoute(AppRoute.LEARN); }} selectedTrack={selectedTrack} onChangeTrack={() => handleSelectTrack(null)} completed_lesson_ids={user.completed_lesson_ids} />
             ) : (
               <div className="h-full flex flex-col items-center justify-center p-8 text-center">
                 <BookOpen size={48} className="text-gray-600 mb-8" />
-                <h2 className="text-3xl font-black text-white mb-4">선택된 트랙이 없습니다</h2>
-                <button onClick={() => setActiveRoute(AppRoute.HOME)} className="px-10 py-5 bg-[#007AFF] text-white rounded-2xl font-black">홈으로 이동</button>
+                <h2 className="text-3xl font-black mb-4">선택된 트랙이 없습니다</h2>
+                <button onClick={() => setActiveRoute(AppRoute.HOME)} className="px-10 py-5 bg-[#007AFF] text-white rounded-2xl font-black cursor-pointer">홈으로 이동</button>
               </div>
             )
           )}
           {activeRoute === AppRoute.QUESTION && <QuestionPage user={user} />}
           {activeRoute === AppRoute.PLAYGROUND && <Playground />}
           {activeRoute === AppRoute.STUDY_GUIDE && <StudyGuide onStartPython={() => handleSelectTrack(ALL_TRACKS.find(t=>t.id==='py_basic')!)} onViewCurriculum={() => setActiveRoute(AppRoute.CURRICULUM)} onStartAlgorithm={() => handleSelectTrack(ALL_TRACKS.find(t=>t.id==='algo_tutorial')!)} />}
-          {activeRoute === AppRoute.GAP_FILLER && <GapFiller missed_concepts={user.missed_concepts} onStartReview={() => {}} />}
+          {activeRoute === AppRoute.GAP_FILLER && (
+            <GapFiller 
+              missed_concepts={user.missed_concepts || []} 
+              onStartReview={handleStartReview} 
+              onUpdateUser={async (updates) => {
+                const res = await syncProfileToDB(updates);
+                if (res?.success) {
+                  setUser(prev => prev ? { ...prev, ...updates } : null);
+                }
+                return res;
+              }} 
+            />
+          )}
+          {activeRoute === AppRoute.SETTINGS && <Settings user={user} onLogout={handleLogout} onUpdateUser={(updates) => {
+            setUser(prev => prev ? { ...prev, ...updates } : null);
+            syncProfileToDB(updates);
+          }} />}
           {activeRoute === AppRoute.ADMIN && user.role === 'admin' && <Admin />}
+          {activeRoute === AppRoute.NOTICE && <NoticePage user={user} />}
         </MotionDiv>
       </AnimatePresence>
     </Layout>

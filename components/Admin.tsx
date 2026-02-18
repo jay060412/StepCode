@@ -6,13 +6,12 @@ import {
   BarChart3, Loader2, RefreshCw, 
   MessageCircle, UserX, UserCheck, 
   Send, AlertCircle, Search, Filter, 
-  MessageSquare, Info, Database, Lock, ShieldAlert
+  MessageSquare, Info, Database, Lock, ShieldAlert, Trash2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SupportQuestion, UserProfile, UserRole } from '../types';
 import { FormattedText } from './FormattedText';
 
-// Fix for framer-motion intrinsic element type errors
 const MotionDiv = motion.div as any;
 
 interface UserStats {
@@ -43,7 +42,7 @@ export const Admin: React.FC = () => {
         .order('updated_at', { ascending: false });
 
       if (profileError) {
-        throw new Error(`프로필 로드 실패: ${profileError.message}\n(RLS SELECT 정책을 확인하세요)`);
+        throw new Error(`프로필 로드 실패: ${profileError.message}`);
       }
 
       if (profiles) {
@@ -95,6 +94,34 @@ export const Admin: React.FC = () => {
     );
   }, [questions, questionFilter]);
 
+  const handleDeleteQuestion = async (e: React.MouseEvent, questionId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!window.confirm('관리자 권한으로 이 질문을 영구 삭제하시겠습니까?')) return;
+    
+    const originalQuestions = [...questions];
+    setQuestions(prev => prev.filter(q => String(q.id) !== String(questionId)));
+
+    try {
+      const { data, error } = await supabase
+        .from('support_questions')
+        .delete()
+        .eq('id', questionId)
+        .select();
+        
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        throw new Error("관리자 권한 정책(RLS)에 의해 삭제가 거부되었습니다.");
+      }
+    } catch (err: any) {
+      setQuestions(originalQuestions);
+      console.error('Admin delete error:', err);
+      alert(`삭제 실패: ${err.message}`);
+    }
+  };
+
   const handleUpdateRole = async (userId: string, newRole: UserRole) => {
     try {
       const { error } = await supabase
@@ -102,15 +129,12 @@ export const Admin: React.FC = () => {
         .update({ role: newRole, updated_at: new Date().toISOString() })
         .eq('id', userId);
       
-      if (error) {
-        alert(`권한 변경 실패: ${error.message}\n\n[해결 방법]\nSupabase SQL Editor에서 profiles 테이블의 UPDATE 정책을 활성화해야 합니다.`);
-        return;
-      }
+      if (error) throw error;
       
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      alert('사용자 권한이 성공적으로 변경되었습니다.');
+      alert('권한이 성공적으로 변경되었습니다.');
     } catch (err: any) {
-      alert(err.message || '권한 변경 실패');
+      alert(`권한 변경 실패: ${err.message}`);
     }
   };
 
@@ -121,15 +145,12 @@ export const Admin: React.FC = () => {
         .update({ is_banned: !currentBan, updated_at: new Date().toISOString() })
         .eq('id', userId);
       
-      if (error) {
-        alert(`상태 업데이트 실패: ${error.message}\n\nSupabase RLS 정책 설정을 확인하세요.`);
-        return;
-      }
+      if (error) throw error;
 
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_banned: !currentBan } : u));
-      alert(currentBan ? '제재가 해제되었습니다.' : '해당 사용자가 학습 정지 처리되었습니다.');
+      alert(`사용자 상태가 ${!currentBan ? '정지' : '활성화'}로 변경되었습니다.`);
     } catch (err: any) {
-      alert(err.message || '상태 업데이트 실패');
+      alert(`상태 업데이트 실패: ${err.message}`);
     }
   };
 
@@ -163,8 +184,8 @@ export const Admin: React.FC = () => {
         return next;
       });
       alert('답변이 전송되었습니다.');
-    } catch (err) {
-      alert('답변 등록 실패');
+    } catch (err: any) {
+      alert(`답변 등록 실패: ${err.message}`);
     }
   };
 
@@ -172,21 +193,9 @@ export const Admin: React.FC = () => {
     return (
       <div className="p-12 flex flex-col items-center justify-center text-center gap-6">
         <AlertCircle size={48} className="text-red-500" />
-        <h2 className="text-2xl font-bold text-white">보안 정책 설정 필요</h2>
-        <div className="max-w-md text-gray-500 space-y-4">
-          <p>데이터베이스의 보안 정책(RLS)으로 인해 정보를 불러올 수 없습니다.</p>
-          <div className="p-6 bg-white/5 rounded-2xl text-left text-xs font-mono border border-white/10 space-y-4">
-            <p className="text-[#007AFF] font-bold"># 아래 명령어를 Supabase SQL Editor에 실행하세요:</p>
-            <div className="space-y-1 opacity-80">
-              <p>ALTER POLICY "Enable read for all authenticated" ON "public"."profiles"</p>
-              <p>USING (true);</p>
-              <br/>
-              <p>ALTER POLICY "Enable update for all authenticated" ON "public"."profiles"</p>
-              <p>USING (true) WITH CHECK (true);</p>
-            </div>
-          </div>
-        </div>
-        <button onClick={fetchAdminData} className="px-8 py-3 bg-[#007AFF] rounded-xl text-white font-bold flex items-center gap-2"><RefreshCw size={18} /> 다시 시도</button>
+        <h2 className="text-2xl font-bold text-white">데이터 로드 실패</h2>
+        <p className="text-gray-500">{error}</p>
+        <button type="button" onClick={fetchAdminData} className="px-8 py-3 bg-[#007AFF] rounded-xl text-white font-bold flex items-center gap-2 cursor-pointer"><RefreshCw size={18} /> 다시 시도</button>
       </div>
     );
   }
@@ -203,11 +212,11 @@ export const Admin: React.FC = () => {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex gap-1 p-1 glass rounded-2xl border-white/5 bg-white/5">
-            <button onClick={() => setActiveTab('stats')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'stats' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500'}`}>통계</button>
-            <button onClick={() => setActiveTab('users')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'users' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500'}`}>학습자 ({users.length})</button>
-            <button onClick={() => setActiveTab('questions')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'questions' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500'}`}>질문 ({questions.filter(q => !q.is_resolved).length})</button>
+            <button type="button" onClick={() => setActiveTab('stats')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'stats' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500'}`}>통계</button>
+            <button type="button" onClick={() => setActiveTab('users')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'users' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500'}`}>학습자</button>
+            <button type="button" onClick={() => setActiveTab('questions')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'questions' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500'}`}>질문</button>
           </div>
-          <button onClick={fetchAdminData} className="p-4 glass rounded-2xl text-white hover:bg-white/10 transition-all border-white/5">
+          <button type="button" onClick={fetchAdminData} className="p-4 glass rounded-2xl text-white hover:bg-white/10 transition-all border-white/5 cursor-pointer shadow-lg">
             <RefreshCw size={20} className={isLoading ? "animate-spin" : ""} />
           </button>
         </div>
@@ -216,7 +225,7 @@ export const Admin: React.FC = () => {
       {isLoading ? (
         <div className="py-32 flex flex-col items-center justify-center gap-6">
           <Loader2 className="animate-spin text-[#007AFF]" size={48} />
-          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">보안 데이터 연동 중...</p>
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">데이터 연동 중...</p>
         </div>
       ) : (
         <AnimatePresence mode="wait">
@@ -247,87 +256,50 @@ export const Admin: React.FC = () => {
 
           {activeTab === 'users' && (
             <MotionDiv key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between px-4">
-                <div className="relative w-full sm:w-96">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                  <input type="text" placeholder="이름 또는 이메일로 검색..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:border-[#007AFF] outline-none" />
-                </div>
-                <div className="flex items-center gap-2 text-yellow-500/80 text-[10px] font-bold uppercase">
-                  <ShieldAlert size={14} /> 권한 변경이 작동하지 않으면 Supabase 정책을 업데이트하세요.
-                </div>
+              <div className="relative w-full sm:w-96 ml-auto">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <input type="text" placeholder="이름 또는 이메일로 검색..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:border-[#007AFF] outline-none" />
               </div>
 
               <div className="glass rounded-[40px] border-white/5 overflow-hidden shadow-2xl">
-                <div className="overflow-x-auto custom-scrollbar">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-white/5 text-[10px] text-gray-500 uppercase tracking-widest border-b border-white/5">
-                      <tr>
-                        <th className="px-8 py-6">학습자</th>
-                        <th className="px-8 py-6">진도</th>
-                        <th className="px-8 py-6">권한 설정</th>
-                        <th className="px-8 py-6">계정 상태</th>
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-white/5 text-[10px] text-gray-500 uppercase tracking-widest border-b border-white/5">
+                    <tr>
+                      <th className="px-8 py-6">학습자</th>
+                      <th className="px-8 py-6">진도</th>
+                      <th className="px-8 py-6">권한 설정</th>
+                      <th className="px-8 py-6">상태</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredUsers.map(user => (
+                      <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-8 py-8">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-bold">{user.name?.[0]}</div>
+                            <div>
+                              <p className="font-bold text-white">{user.name}</p>
+                              <p className="text-xs text-gray-500">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-8 text-sm font-mono text-gray-400">{user.progress}% (Lv.{user.level})</td>
+                        <td className="px-8 py-8">
+                          <select value={user.role || 'user'} onChange={(e) => handleUpdateRole(user.id, e.target.value as UserRole)} className="bg-black border border-white/10 rounded-lg p-2 text-xs cursor-pointer text-white">
+                            <option value="user">User</option>
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </td>
+                        <td className="px-8 py-8">
+                          <button type="button" onClick={() => handleToggleBan(user.id, user.is_banned || false)} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase cursor-pointer transition-all ${user.is_banned ? 'bg-red-500 text-white' : 'glass text-gray-500 hover:bg-white/10'}`}>
+                            {user.is_banned ? '정지 해제' : '정지'}
+                          </button>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {filteredUsers.length > 0 ? filteredUsers.map(user => (
-                        <tr key={user.id} className="hover:bg-white/[0.02] transition-colors group">
-                          <td className="px-8 py-8">
-                            <div className="flex items-center gap-4">
-                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white shadow-xl ${user.is_banned ? 'bg-red-500/20 text-red-500' : 'bg-gradient-to-tr from-[#007AFF] to-cyan-400'}`}>
-                                {user.name?.[0] || '?'}
-                              </div>
-                              <div>
-                                <span className={`block font-bold text-lg leading-tight ${user.is_banned ? 'text-red-500 line-through opacity-50' : 'text-white'}`}>{user.name}</span>
-                                <span className="text-xs text-gray-500 font-light">{user.email}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-8 py-8">
-                            <div className="flex flex-col gap-1.5">
-                               <div className="flex items-center gap-2">
-                                  <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden">
-                                     <div className="h-full bg-green-400" style={{ width: `${user.progress}%` }} />
-                                  </div>
-                                  <span className="text-[10px] font-mono text-gray-400">{user.progress}%</span>
-                               </div>
-                               <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Lv.{user.level}</span>
-                            </div>
-                          </td>
-                          <td className="px-8 py-8">
-                            <select 
-                              value={user.role || 'user'} 
-                              onChange={(e) => handleUpdateRole(user.id, e.target.value as UserRole)}
-                              className="bg-black border border-white/10 rounded-xl text-[10px] font-black uppercase p-2.5 text-white outline-none focus:border-[#007AFF] transition-all cursor-pointer shadow-inner"
-                            >
-                              <option value="user">일반 학습자</option>
-                              <option value="staff">운영진</option>
-                              <option value="admin">최고 관리자</option>
-                            </select>
-                          </td>
-                          <td className="px-8 py-8">
-                            <button 
-                              onClick={() => handleToggleBan(user.id, user.is_banned || false)}
-                              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                user.is_banned 
-                                ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' 
-                                : 'glass text-gray-500 hover:text-red-400 border-white/10'
-                              }`}
-                            >
-                              {user.is_banned ? <UserCheck size={14} /> : <Lock size={14} />}
-                              {user.is_banned ? '정지 해제' : '학습 정지'}
-                            </button>
-                          </td>
-                        </tr>
-                      )) : (
-                        <tr>
-                          <td colSpan={4} className="py-20 text-center text-gray-600 font-light">
-                            데이터가 없습니다.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </MotionDiv>
           )}
@@ -335,34 +307,33 @@ export const Admin: React.FC = () => {
           {activeTab === 'questions' && (
             <MotionDiv key="questions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
               <div className="flex items-center gap-2 p-1.5 glass rounded-2xl border-white/5 w-fit">
-                <button onClick={() => setQuestionFilter('pending')} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${questionFilter === 'pending' ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20' : 'text-gray-500'}`}>Pending</button>
-                <button onClick={() => setQuestionFilter('resolved')} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${questionFilter === 'resolved' ? 'bg-green-500 text-black shadow-lg shadow-green-500/20' : 'text-gray-500'}`}>Resolved</button>
+                <button type="button" onClick={() => setQuestionFilter('pending')} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionFilter === 'pending' ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20' : 'text-gray-500 hover:text-white'}`}>Pending</button>
+                <button type="button" onClick={() => setQuestionFilter('resolved')} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionFilter === 'resolved' ? 'bg-green-500 text-black shadow-lg shadow-green-500/20' : 'text-gray-500 hover:text-white'}`}>Resolved</button>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {filteredQuestions.length > 0 ? filteredQuestions.map(q => (
-                  <MotionDiv 
-                    layout
-                    key={q.id} 
-                    className={`glass p-8 lg:p-10 rounded-[48px] border-white/5 bg-white/[0.01] flex flex-col gap-8 group transition-all ${!q.is_resolved ? 'border-yellow-500/20 bg-yellow-500/[0.02]' : 'border-green-500/10'}`}
-                  >
-                    <div className="flex items-center justify-between">
+                {filteredQuestions.map(q => (
+                  <MotionDiv layout key={q.id} className="glass p-8 rounded-[40px] border-white/5 bg-white/[0.01] flex flex-col gap-6 relative">
+                    <div className="flex items-start justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white font-black text-lg border border-white/10">
-                          {q.user_name?.[0] || '?'}
-                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-bold text-white">{q.user_name?.[0]}</div>
                         <div>
-                          <p className="text-lg font-bold text-white leading-tight">{q.user_name}</p>
-                          <p className="text-[10px] text-gray-600 font-mono tracking-tight">{new Date(q.created_at).toLocaleString()}</p>
+                          <p className="font-bold text-white">{q.user_name}</p>
+                          <p className="text-[10px] text-gray-600 font-mono">{new Date(q.created_at).toLocaleString()}</p>
                         </div>
                       </div>
-                      {!q.is_resolved && (
-                        <div className="px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-[10px] text-yellow-500 font-black uppercase tracking-widest">Waiting</div>
-                      )}
+                      <button 
+                        type="button"
+                        onClick={(e) => handleDeleteQuestion(e, q.id)} 
+                        className="p-3 text-gray-600 hover:text-red-500 transition-colors z-[100] cursor-pointer rounded-xl hover:bg-red-500/10 relative pointer-events-auto shadow-sm"
+                        title="영구 삭제"
+                      >
+                        <Trash2 size={20} className="pointer-events-none" />
+                      </button>
                     </div>
 
-                    <div className="bg-black/40 p-6 lg:p-8 rounded-3xl border border-white/5 relative shadow-inner">
-                      <p className="text-gray-300 leading-relaxed text-base italic font-light">"{q.content}"</p>
+                    <div className="bg-black/40 p-6 rounded-2xl border border-white/5">
+                      <p className="text-gray-300 leading-relaxed text-sm italic">"{q.content}"</p>
                     </div>
 
                     {!q.is_resolved ? (
@@ -371,32 +342,19 @@ export const Admin: React.FC = () => {
                           placeholder="답변을 작성하세요..."
                           value={answerInputs[q.id] || ''}
                           onChange={(e) => setAnswerInputs(prev => ({ ...prev, [q.id]: e.target.value }))}
-                          className="w-full h-40 bg-white/5 border border-white/10 rounded-3xl p-6 text-sm text-gray-200 outline-none focus:border-[#007AFF] transition-all resize-none custom-scrollbar"
+                          className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-[#007AFF]/50 transition-all text-white"
                         />
-                        <button 
-                          onClick={() => handleSubmitAnswer(q.id)}
-                          disabled={!answerInputs[q.id]?.trim()}
-                          className="w-full py-4 bg-[#007AFF] text-white rounded-2xl text-xs font-black flex items-center gap-3 shadow-2xl shadow-[#007AFF]/30 disabled:opacity-30"
-                        >
-                          <Send size={16} /> 답변 전송
+                        <button type="button" onClick={() => handleSubmitAnswer(q.id)} disabled={!answerInputs[q.id]?.trim()} className="w-full py-3 bg-[#007AFF] text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer hover:bg-[#007AFF]/80 transition-all disabled:opacity-30">
+                          <Send size={14} className="pointer-events-none" /> 답변 전송
                         </button>
                       </div>
                     ) : (
-                      <div className="p-6 lg:p-8 rounded-3xl glass-blue border-green-500/20 bg-green-500/[0.02] relative">
-                        <div className="text-sm text-gray-400 leading-relaxed">
-                           <FormattedText text={q.answer || ''} />
-                        </div>
+                      <div className="p-6 rounded-2xl glass-blue border-green-500/20 bg-green-500/[0.02]">
+                        <FormattedText text={q.answer || ''} />
                       </div>
                     )}
                   </MotionDiv>
-                )) : (
-                  <div className="col-span-full py-40 flex flex-col items-center justify-center text-center gap-6 glass rounded-[64px] border-dashed border-white/5">
-                    <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-gray-700">
-                      <Filter size={32} />
-                    </div>
-                    <p className="text-gray-500 text-xl font-light">해당하는 질문이 없습니다.</p>
-                  </div>
-                )}
+                ))}
               </div>
             </MotionDiv>
           )}

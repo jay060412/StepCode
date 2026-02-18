@@ -7,12 +7,37 @@ export interface UserProfile {
   email: string;
   level: number;
   progress: number;
-  missed_concepts: Problem[]; // DB: missed_concepts (jsonb)
-  last_track_id: string | null; // DB: last_track_id (text)
-  completed_lesson_ids: string[]; // DB: completed_lesson_ids (_text)
+  missed_concepts: Problem[]; 
+  last_track_id: string | null; 
+  completed_lesson_ids: string[]; 
   role?: UserRole;
   is_banned?: boolean;
   updated_at?: string;
+  theme?: 'dark' | 'light';
+  settings?: {
+    push: boolean;
+    email: boolean;
+    browser: boolean;
+  };
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  type: 'info' | 'success' | 'warning';
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface Notice {
+  id: string;
+  title: string;
+  content: string;
+  is_important: boolean;
+  created_at: string;
+  author_id?: string;
 }
 
 export interface SupportQuestion {
@@ -77,6 +102,7 @@ export interface Problem {
   type: 'concept' | 'coding';
   exampleInput?: string;
   exampleOutput?: string;
+  mastered?: boolean; 
 }
 
 export interface ChatMessage {
@@ -92,7 +118,9 @@ export enum AppRoute {
   PLAYGROUND = 'playground',
   ADMIN = 'admin',
   STUDY_GUIDE = 'study-guide',
-  QUESTION = 'question'
+  QUESTION = 'question',
+  SETTINGS = 'settings',
+  NOTICE = 'notice'
 }
 
 export interface UserAccount extends UserProfile {
