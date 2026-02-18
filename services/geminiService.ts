@@ -7,7 +7,7 @@
 
 export const askGemini = async (prompt: string, context?: string) => {
   try {
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return "AI 연결을 위한 API 키가 설정되지 않았습니다.";
     }
