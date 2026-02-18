@@ -1,16 +1,18 @@
 
 /**
  * StepCode AI Service (Powered by Groq API)
- * Model: gpt-oss-120b
+ * Model: openai/gpt-oss-120b
  * This service uses Groq's OpenAI-compatible endpoint.
  */
 
 export const askGemini = async (prompt: string, context?: string) => {
   try {
-    // 지침에 따라 API 키는 반드시 process.env.API_KEY에서 가져와야 합니다.
+    // 가이드라인에 따라 반드시 process.env.API_KEY를 사용해야 합니다.
     const apiKey = process.env.API_KEY;
+    
     if (!apiKey) {
-      return "AI 연결을 위한 API 키(API_KEY)가 설정되지 않았습니다. 환경 변수를 확인해주세요.";
+      console.error("API_KEY is missing in process.env");
+      return "AI 엔진 설정(API_KEY)이 완료되지 않았습니다. Netlify 환경 변수를 확인해주세요.";
     }
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -46,7 +48,7 @@ export const askGemini = async (prompt: string, context?: string) => {
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Groq API Error:", errorData);
-      return `Groq 엔진 오류: ${errorData.error?.message || "응답을 가져올 수 없습니다."}`;
+      return `엔진 응답 오류 (${response.status}): ${errorData.error?.message || "알 수 없는 오류"}`;
     }
 
     const data = await response.json();
@@ -69,7 +71,7 @@ export const getGeminiSpeech = async (text: string) => {
 
   window.speechSynthesis.cancel();
 
-  const cleanText = text.replace(/[*#`]/g, '');
+  const cleanText = text.replace(/[*#`]/g, ''); // 마크다운 기호 제거
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = 'ko-KR';
   utterance.rate = 1.0;
