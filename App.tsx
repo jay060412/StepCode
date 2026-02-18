@@ -346,7 +346,7 @@ const App: React.FC = () => {
           {activeRoute === AppRoute.STUDY_GUIDE && <StudyGuide onStartPython={() => handleSelectTrack(ALL_TRACKS.find(t=>t.id==='py_basic')!)} onViewCurriculum={() => setActiveRoute(AppRoute.CURRICULUM)} onStartAlgorithm={() => handleSelectTrack(ALL_TRACKS.find(t=>t.id==='algo_tutorial')!)} />}
           {activeRoute === AppRoute.GAP_FILLER && <GapFiller missed_concepts={user.missed_concepts} onStartReview={() => {}} />}
           {activeRoute === AppRoute.ADMIN && user.role === 'admin' && <Admin />}
-        </motion.div>
+        </MotionDiv>
       </AnimatePresence>
     </Layout>
   );
