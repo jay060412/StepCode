@@ -1,61 +1,55 @@
 
+import { GoogleGenAI } from "@google/genai";
+
 /**
- * StepCode AI Service (Powered by Groq API)
- * Model: openai/gpt-oss-120b
- * This service uses Groq's OpenAI-compatible endpoint.
+ * StepCode AI Service (Powered by Google Gemini API)
+ * Model: gemini-3-pro-preview
  */
 
 export const askGemini = async (prompt: string, context?: string) => {
   try {
-    // 가이드라인에 따라 반드시 process.env.API_KEY를 사용해야 합니다.
     const apiKey = process.env.API_KEY;
-    
     if (!apiKey) {
-      console.error("API_KEY is missing in process.env");
-      return "AI 엔진 설정(API_KEY)이 완료되지 않았습니다. Netlify 환경 변수를 확인해주세요.";
+      console.error("API_KEY is missing");
+      return "AI 엔진 설정(API_KEY)이 완료되지 않았습니다. Netlify 환경 변수에서 GROQ_API_KEY를 API_KEY로 이름을 바꾸고 다시 배포해주세요.";
     }
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
-        messages: [
-          {
-            role: "system",
-            content: `당신은 세계 최고의 코딩 교육 플랫폼 'StepCode'의 전담 AI 튜터입니다.
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: [
+        {
+          role: 'user',
+          parts: [{
+            text: `당신은 세계 최고의 코딩 교육 플랫폼 'StepCode'의 전담 AI 튜터입니다.
 학습자가 현재 보고 있는 화면 맥락(코드, 문제 등)이 제공되지만, 당신의 최우선 임무는 '사용자의 질문에 즉각적이고 직접적으로 답변하는 것'입니다.
 
 [운영 규칙]
 1. 화면 내용을 단순히 요약하거나 읊는 것은 절대 금지입니다.
 2. 사용자가 질문을 던지면, 그 질문에 대한 답을 가장 먼저, 명확하게 하십시오.
 3. 화면 맥락은 사용자가 "이 코드가 왜 이래?"라고 물었을 때 그 '이 코드'가 무엇인지 파악하는 용도로만 참고하십시오.
-4. 친절하고 전문적인 한국어를 사용하며, 마크다운(Markdown) 형식을 활용해 가독성을 높이십시오.`
-          },
-          {
-            role: "user",
-            content: `[현재 화면 맥락]\n${context || '정보 없음'}\n\n[학생의 질문]\n${prompt}`
-          }
-        ],
-        temperature: 0.6,
-        max_tokens: 2048
-      })
+4. 친절하고 전문적인 한국어를 사용하며, 마크다운(Markdown) 형식을 활용해 가독성을 높이십시오.
+
+[현재 화면 맥락]
+${context || '정보 없음'}
+
+[학생의 질문]
+${prompt}`
+          }],
+        }
+      ],
+      config: {
+        thinkingConfig: { thinkingBudget: 24576 } // 복잡한 코딩 추론을 위한 생각 예산 할당
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Groq API Error:", errorData);
-      return `엔진 응답 오류 (${response.status}): ${errorData.error?.message || "알 수 없는 오류"}`;
-    }
-
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || "답변을 생성할 수 없습니다.";
+    return response.text || "답변을 생성할 수 없습니다.";
 
   } catch (error) {
     console.error("AI Service Error:", error);
+    if (error instanceof Error && error.message.includes("API key not found")) {
+      return "API 키를 찾을 수 없습니다. Netlify 환경 변수 이름을 API_KEY로 설정했는지 확인해주세요.";
+    }
     return "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
   }
 };
@@ -71,7 +65,7 @@ export const getGeminiSpeech = async (text: string) => {
 
   window.speechSynthesis.cancel();
 
-  const cleanText = text.replace(/[*#`]/g, ''); // 마크다운 기호 제거
+  const cleanText = text.replace(/[*#`]/g, ''); 
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = 'ko-KR';
   utterance.rate = 1.0;

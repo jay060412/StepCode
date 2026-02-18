@@ -27,7 +27,7 @@ export const AIChat: React.FC<AIChatProps> = ({
   onToggleMinimize
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', content: '반가워요! 초고속 **Groq GPT-OSS-120B** 엔진으로 무장한 StepCode AI 튜터입니다. 궁금한 점은 무엇이든 물어보세요! 화면의 맥락을 완벽히 이해하고 직접 답해드릴게요.' }
+    { role: 'assistant', content: '반가워요! 차세대 **Gemini 3 Pro** 엔진으로 업그레이드된 StepCode AI 튜터입니다. 궁금한 점은 무엇이든 물어보세요! 코드의 맥락을 완벽히 이해하고 도와드릴게요.' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -83,7 +83,7 @@ export const AIChat: React.FC<AIChatProps> = ({
         </button>
         <div className="flex-1 flex flex-col items-center justify-center">
           <div className="[writing-mode:vertical-rl] rotate-180 text-gray-700 font-black uppercase tracking-[0.4em] text-[11px] py-10 select-none opacity-50">
-            Groq OSS 120B AI Assistant
+            Gemini 3 Pro AI Assistant
           </div>
         </div>
       </div>
@@ -104,7 +104,7 @@ export const AIChat: React.FC<AIChatProps> = ({
              <span className="font-bold text-sm block tracking-tight">StepCode AI Tutor</span>
              <div className="flex items-center gap-1.5">
                <span className="w-1.5 h-1.5 rounded-full bg-[#007AFF] animate-pulse" />
-               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Groq GPT-OSS-120B</span>
+               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Gemini 3 Pro</span>
              </div>
            </div>
         </div>
@@ -143,7 +143,7 @@ export const AIChat: React.FC<AIChatProps> = ({
         {isLoading && (
           <div className="flex items-center gap-2 p-4 bg-white/5 rounded-[20px] w-fit border border-white/5">
             <Loader2 size={16} className="animate-spin text-[#007AFF]" />
-            <span className="text-xs text-gray-500 font-medium">Groq 엔진 연산 중...</span>
+            <span className="text-xs text-gray-500 font-medium">Gemini 3 엔진 추론 중...</span>
           </div>
         )}
       </div>
