@@ -74,7 +74,7 @@ export const py_basic_stage1: Lesson = {
       id: 'py1_p3',
       title: '3. 여러 값 출력과 연산 출력',
       content:
-        'print(a, b)는 여러 값을 출력하는 방식이고, print(a + b)는 두 값을 더한 연산 결과를 출력합니다. 이 둘은 완전히 다른 동작입니다.\n(로직 흐름 추적에서 a, b변수가 중간에 없어지는건 이해를 돕기 위해서지 실제로는 a, b변수는 그대로 살아있습니다.)',
+        'print(a, b)는 여러 값을 출력하는 방식이고, print(a + b)는 두 값을 더한 연산 결과를 출력합니다. 이 둘은 완전히 다른 동작입니다.',
       code:
         'a = 3\nb = 5\nprint(a, b)\nprint(a + b)\n\nx = "3"\ny = "5"\nprint(x, y)\nprint(x + y)',
       exampleOutput: '3 5\n8\n3 5\n35',
@@ -84,10 +84,11 @@ export const py_basic_stage1: Lesson = {
         { "a": 3, "b": 5 },
         { "a": 3, "b": 5 },
         { "a": 3, "b": 5 },
-        { "x": "3" },
-        { "x": "3", "y": "5" },
-        { "x": "3", "y": "5" },
-        { "x": "3", "y": "5" }
+
+        { "a": 3, "b": 5, "x": "3" },
+        { "a": 3, "b": 5, "x": "3", "y": "5" },
+        { "a": 3, "b": 5, "x": "3", "y": "5" },
+        { "a": 3, "b": 5, "x": "3", "y": "5" }
       ],
       explanations: [
         {
@@ -150,13 +151,15 @@ export const py_basic_stage1: Lesson = {
       id: 'py1_p5',
       title: '5. f-string 출력',
       content:
-        'f-string은 문자열 앞에 f를 붙이고 {변수} 형태로 변수 값을 문자열 안에 직접 삽입하는 출력 방식입니다.',
+        'f-string은 문자열 앞에 f를 붙이고 {변수} 형태로 변수 값을 문자열 안에 직접 삽입하는 출력 방식입니다.\n1, 2, 3 모두같은 출력값이 나옵니다.',
       code:
-        'name = "지니"\nage = 20\nprint(f"이름은 {name}이고 나이는 {age}살입니다.")\nprint("이름은"+int())',
-      exampleOutput: '이름은 지니이고 나이는 20살입니다.',
-      traceFlow: [0, 1, 2],
+        'name = "지니"\nage = 20\nprint(f"이름은 {name}이고 나이는 {age}살입니다.")\nprint("이름은 "+name+"이고 나이는 "+str(age)+"살입니다.")\nprint("이름은 ", name, "이고 나이는 ", age, "살입니다.", sep="")',
+      exampleOutput: '이름은 지니이고 나이는 20살입니다.\n이름은 지니이고 나이는 20살입니다.\n이름은 지니이고 나이는 20살입니다.',
+      traceFlow: [0, 1, 2, 3, 4],
       variableHistory: [
         { "name": "지니" },
+        { "name": "지니", "age": 20 },
+        { "name": "지니", "age": 20 },
         { "name": "지니", "age": 20 },
         { "name": "지니", "age": 20 }
       ],
@@ -165,9 +168,25 @@ export const py_basic_stage1: Lesson = {
           id: 'ex9',
           codeLine: 2,
           title: 'f-string',
-          text: '중괄호 안의 변수가 실제 값으로 바뀌어 출력됩니다.',
+          text: '중괄호 { } 안의 변수가 실제 값으로 자동 변환되어 출력됩니다.',
           type: 'purple',
           badge: '1'
+        },
+        {
+          id: 'ex9-1',
+          codeLine: 3,
+          title: '문자열 + 연결',
+          text: '문자열과 변수를 +로 연결할 때 숫자는 str()로 변환해야 합니다.',
+          type: 'yellow',
+          badge: '2'
+        },
+        {
+          id: 'ex9-2',
+          codeLine: 4,
+          title: '콤마 출력',
+          text: 'print에서 콤마로 나열하면 자동 문자열 변환됩니다. sep=""는 공백 제거 옵션입니다.',
+          type: 'green',
+          badge: '3'
         }
       ]
     },
