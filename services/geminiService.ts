@@ -7,9 +7,10 @@
 
 export const askGemini = async (prompt: string, context?: string) => {
   try {
-    const apiKey = process.env.GROQ_API_KEY;
+    // 지침에 따라 API 키는 반드시 process.env.API_KEY에서 가져와야 합니다.
+    const apiKey = process.env.API_KEY;
     if (!apiKey) {
-      return "AI 연결을 위한 API 키가 설정되지 않았습니다.";
+      return "AI 연결을 위한 API 키(API_KEY)가 설정되지 않았습니다. 환경 변수를 확인해주세요.";
     }
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -58,7 +59,7 @@ export const askGemini = async (prompt: string, context?: string) => {
 };
 
 /**
- * 브라우저 표준 Web Speech API를 활용한 음성 합성 (Gemini 의존성 제거)
+ * 브라우저 표준 Web Speech API를 활용한 음성 합성
  */
 export const getGeminiSpeech = async (text: string) => {
   if (!('speechSynthesis' in window)) {
@@ -66,10 +67,9 @@ export const getGeminiSpeech = async (text: string) => {
     return null;
   }
 
-  // 기존에 재생 중인 음성이 있다면 중단
   window.speechSynthesis.cancel();
 
-  const cleanText = text.replace(/[*#`]/g, ''); // 마크다운 기호 제거
+  const cleanText = text.replace(/[*#`]/g, '');
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = 'ko-KR';
   utterance.rate = 1.0;
@@ -79,7 +79,6 @@ export const getGeminiSpeech = async (text: string) => {
   return null;
 };
 
-// 하위 호환성을 위해 함수 시그니처 유지 (Groq 환경에서는 사용되지 않음)
 export async function playPcmAudio(base64Data: string) {
   return null;
 }
