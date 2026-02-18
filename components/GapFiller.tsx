@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Target, CheckCircle2, Bot, HelpCircle, BrainCircuit, Terminal, ChevronRight } from 'lucide-react';
 import { Problem } from '../types';
 
+// Fix for framer-motion intrinsic element type errors
+const MotionDiv = motion.div as any;
+
 interface GapFillerProps {
   missed_concepts: Problem[];
   onStartReview: (problem: Problem) => void;
@@ -62,7 +65,7 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missed_concepts, onStartRe
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <AnimatePresence mode="popLayout">
           {filtered.map((prob) => (
-            <motion.div
+            <MotionDiv
               key={prob.id}
               layout
               initial={{ opacity: 0, scale: 0.95 }}
@@ -101,7 +104,7 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missed_concepts, onStartRe
               >
                 다시 풀어보기 <ChevronRight size={18} />
               </button>
-            </motion.div>
+            </MotionDiv>
           ))}
         </AnimatePresence>
       </div>

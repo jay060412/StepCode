@@ -6,6 +6,9 @@ import { HelpCircle, Terminal, Play, RotateCcw, Bot, CheckCircle2, Loader2, Acti
 import { askGemini } from '../services/geminiService';
 import { FormattedText } from './FormattedText';
 
+// Fix for framer-motion intrinsic element type errors
+const MotionDiv = motion.div as any;
+
 interface ProblemSolvingProps {
   problems: Problem[];
   onFinish: (missed: Problem[]) => void;
@@ -130,7 +133,7 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({ problems, onFini
   if (!currentProb) return null;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl mx-auto glass rounded-[40px] border-white/5 bg-black/60 overflow-hidden shadow-2xl mb-20 relative z-10">
+    <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl mx-auto glass rounded-[40px] border-white/5 bg-black/60 overflow-hidden shadow-2xl mb-20 relative z-10">
       <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
         <div className="flex items-center gap-5">
           <div className={`p-4 rounded-[20px] ${type === 'concept' ? 'bg-[#007AFF]/20 text-[#007AFF]' : 'bg-cyan-500/20 text-cyan-400'}`}>
@@ -210,7 +213,7 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({ problems, onFini
         </div>
 
         {aiFeedback ? (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 p-10 glass-blue border-[#007AFF]/20 rounded-[40px] flex flex-col gap-8 relative z-20">
+          <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 p-10 glass-blue border-[#007AFF]/20 rounded-[40px] flex flex-col gap-8 relative z-20">
              <div className="flex-1">
                 <div className="text-lg text-gray-300 leading-relaxed"><FormattedText text={aiFeedback} /></div>
                 <div className="mt-10 flex justify-end">
@@ -223,7 +226,7 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({ problems, onFini
                   </button>
                 </div>
              </div>
-          </motion.div>
+          </MotionDiv>
         ) : (
           <div className="mt-16 flex justify-end gap-5 items-center">
              <button onClick={() => { setUserAnswer(''); setOutput([]); }} className="p-5 glass rounded-2xl text-gray-600 hover:text-white transition-colors"><RotateCcw size={24} /></button>
@@ -233,6 +236,6 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({ problems, onFini
           </div>
         )}
       </div>
-    </motion.div>
+    </MotionDiv>
   );
 };

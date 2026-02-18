@@ -4,11 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lesson, ExplanationBlock } from '../types';
 import { ChevronLeft, ChevronRight, CheckCircle2, PlayCircle, Terminal, Sparkles, Variable, BookOpen, Quote, Maximize2, Minimize2 } from 'lucide-react';
 
-interface CodeViewerProps {
-  lesson: Lesson;
-  onFinishConcept: () => void;
-  onPageChange?: (index: number) => void;
-}
+// Fix for framer-motion intrinsic element type errors
+const MotionDiv = motion.div as any;
 
 const COLOR_MAP: Record<ExplanationBlock['type'], string> = {
   yellow: '#FEF08A',
@@ -27,6 +24,13 @@ const BG_MAP: Record<ExplanationBlock['type'], string> = {
   orange: 'rgba(251, 146, 60, 0.12)',
   green: 'rgba(74, 222, 128, 0.12)'
 };
+
+// Define CodeViewerProps interface
+interface CodeViewerProps {
+  lesson: Lesson;
+  onFinishConcept: () => void;
+  onPageChange?: (pageIndex: number) => void;
+}
 
 export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept, onPageChange }) => {
   const [pageIndex, setPageIndex] = useState(0);
@@ -96,7 +100,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
   return (
     <div className="w-full max-w-[1600px] mx-auto space-y-8 lg:space-y-12 pb-10 blur-fix">
       {/* 1. 최상단 타이틀 영역 */}
-      <motion.div 
+      <MotionDiv 
         key={`header-${pageIndex}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -109,10 +113,10 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
             <p className="text-gray-500 text-[10px] lg:text-xs font-bold uppercase tracking-[0.3em] ml-1">Observation & Logical Deduction</p>
           </div>
         </div>
-      </motion.div>
+      </MotionDiv>
 
       {/* 2. 상단 핵심 내용 요약 (전체 너비) */}
-      <motion.div 
+      <MotionDiv 
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         className="glass p-8 lg:p-12 rounded-[32px] lg:rounded-[40px] border-white/10 bg-[#0c0c0c] shadow-2xl relative overflow-hidden"
@@ -135,16 +139,16 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
             핵심 개념을 먼저 파악한 후 아래 코드를 관찰해보세요.
           </div>
         </div>
-      </motion.div>
+      </MotionDiv>
 
       {/* 3. 하단 레이아웃: 확장 모드에 따라 grid-cols 가변 적용 */}
-      <motion.div 
+      <MotionDiv 
         layout
         className={`grid grid-cols-1 ${isWide ? 'xl:grid-cols-1 gap-16' : 'xl:grid-cols-5 gap-8 lg:gap-12'} items-start`}
       >
         
         {/* [Left Column] Code & Logical Tracing & Output */}
-        <motion.div 
+        <MotionDiv 
           layout
           className={`${isWide ? 'xl:col-span-1' : 'xl:col-span-3'} space-y-8 ${isWide ? '' : 'sticky top-4'}`}
         >
@@ -201,7 +205,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
 
                         <AnimatePresence>
                           {isActive && currentVars && (
-                            <motion.div 
+                            <MotionDiv 
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, x: 10 }}
@@ -214,13 +218,13 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                                   <span className="ml-2">{JSON.stringify(val)}</span>
                                 </span>
                               ))}
-                            </motion.div>
+                            </MotionDiv>
                           )}
                         </AnimatePresence>
 
                         <AnimatePresence>
                           {explanation && (
-                            <motion.div 
+                            <MotionDiv 
                               initial={{ width: 0, opacity: 0 }} 
                               animate={{ width: '115%', opacity: 1 }}
                               className="absolute inset-y-0 -left-6 rounded-2xl -z-10 blur-[1px]"
@@ -230,7 +234,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                         </AnimatePresence>
                         <AnimatePresence>
                           {isActive && (
-                            <motion.div 
+                            <MotionDiv 
                               layoutId="trace-glow-current"
                               className="absolute inset-y-0 -left-8 -right-32 bg-[#007AFF]/25 border-l-[5px] border-[#007AFF] -z-10 blur-[2px]"
                               initial={{ opacity: 0 }}
@@ -249,7 +253,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
 
           {/* 터미널 출력 영역 */}
           <AnimatePresence mode="wait">
-            <motion.div 
+            <MotionDiv 
               key={`result-${pageIndex}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -262,19 +266,19 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                </div>
                <div className="font-mono text-xl lg:text-3xl text-green-400 bg-black/60 p-8 lg:p-12 rounded-[24px] border border-white/5 whitespace-pre-wrap min-h-[120px] flex items-center shadow-inner overflow-hidden">
                  {currentPage.exampleOutput ? (
-                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full">
+                   <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full">
                      {currentPage.exampleOutput}
-                   </motion.div>
+                   </MotionDiv>
                  ) : (
                    <span className="text-gray-700 italic flex items-center gap-4 text-sm lg:text-base"><Sparkles size={20} /> 코드 실행 결과가 이곳에 출력됩니다.</span>
                  )}
                </div>
-            </motion.div>
+            </MotionDiv>
           </AnimatePresence>
-        </motion.div>
+        </MotionDiv>
 
         {/* [Right Column] Detailed Analysis */}
-        <motion.div 
+        <MotionDiv 
           layout
           className={`${isWide ? 'xl:col-span-1' : 'xl:col-span-2'} space-y-6 lg:space-y-8`}
         >
@@ -288,7 +292,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
            <div className={`space-y-6 lg:space-y-8 ${isWide ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 !space-y-0' : ''}`}>
               <AnimatePresence mode="popLayout">
                 {currentPage.explanations?.map((exp, i) => (
-                  <motion.div
+                  <MotionDiv
                     key={exp.id}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -307,12 +311,12 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                       <h5 className="font-black text-lg lg:text-xl mb-2 lg:mb-3" style={{ color: COLOR_MAP[exp.type] }}>{exp.title}</h5>
                       <p className="text-gray-400 leading-relaxed text-sm lg:text-lg font-light">{exp.text}</p>
                     </div>
-                  </motion.div>
+                  </MotionDiv>
                 ))}
               </AnimatePresence>
            </div>
-        </motion.div>
-      </motion.div>
+        </MotionDiv>
+      </MotionDiv>
 
       {/* Footer Navigation */}
       <div className="flex flex-col items-center gap-10 pt-16 border-t border-white/5">
@@ -342,7 +346,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
 
         <AnimatePresence>
           {isLastPage && (
-            <motion.div
+            <MotionDiv
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               className="w-full flex justify-center pb-20"
@@ -353,7 +357,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
               >
                 검증 단계로 이동 (개념 퀴즈) <CheckCircle2 size={32} className="group-hover:rotate-12 transition-transform" />
               </button>
-            </motion.div>
+            </MotionDiv>
           )}
         </AnimatePresence>
       </div>

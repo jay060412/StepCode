@@ -4,6 +4,10 @@ import { motion } from 'framer-motion';
 import { Lesson, Track } from '../types';
 import { CheckCircle2, Play, Lock, ChevronRight, RefreshCw, Brain } from 'lucide-react';
 
+// Fix for framer-motion intrinsic element type errors
+const MotionDiv = motion.div as any;
+const MotionButton = motion.button as any;
+
 interface CurriculumProps {
   onSelectLesson: (lesson: Lesson) => void;
   selectedTrack: Track;
@@ -52,7 +56,7 @@ export const Curriculum: React.FC<CurriculumProps> = ({ onSelectLesson, selected
           <p className="text-sm lg:text-base text-gray-500 font-light">이 트랙의 단계를 따라가며 전문성을 쌓으세요.</p>
         </div>
         
-        <motion.div 
+        <MotionDiv 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           className="glass-blue border-[#007AFF]/30 p-4 lg:p-6 rounded-[24px] lg:rounded-[32px] flex items-center gap-4 min-w-full lg:min-w-[340px] relative z-20"
@@ -62,15 +66,15 @@ export const Curriculum: React.FC<CurriculumProps> = ({ onSelectLesson, selected
             <span className="text-[8px] lg:text-[10px] text-[#007AFF] font-bold uppercase tracking-widest block mb-1">Active Track</span>
             <h4 className="text-lg lg:text-xl font-bold text-white truncate leading-none">{selectedTrack.title}</h4>
           </div>
-          <motion.button 
+          <MotionButton 
             whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
             whileTap={{ scale: 0.9 }}
             onClick={onChangeTrack}
             className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl text-white transition-all border border-white/10 cursor-pointer shadow-lg"
           >
             <RefreshCw size={20} />
-          </motion.button>
-        </motion.div>
+          </MotionButton>
+        </MotionDiv>
       </div>
 
       <div className="glass rounded-[40px] border-white/5 overflow-hidden shadow-2xl">

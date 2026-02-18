@@ -6,6 +6,9 @@ import { supabase } from '../lib/supabase';
 import { UserProfile, SupportQuestion } from '../types';
 import { FormattedText } from './FormattedText';
 
+// Fix for framer-motion intrinsic element type errors
+const MotionDiv = motion.div as any;
+
 interface QuestionPageProps {
   user: UserProfile;
 }
@@ -92,7 +95,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-        <motion.div 
+        <MotionDiv 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="glass p-8 lg:p-10 rounded-[40px] border-white/10 bg-white/[0.02] shadow-2xl"
@@ -118,7 +121,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
               질문 제출하기
             </button>
           </form>
-        </motion.div>
+        </MotionDiv>
 
         <div className="space-y-8">
           <div className="flex items-center justify-between px-2">
@@ -132,7 +135,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
               </div>
             ) : myQuestions.length > 0 ? (
               myQuestions.map((q) => (
-                <motion.div 
+                <MotionDiv 
                   key={q.id}
                   className="glass p-6 lg:p-8 rounded-[32px] border-white/5 bg-white/[0.01] flex flex-col gap-4"
                 >
@@ -155,7 +158,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                       </div>
                     </div>
                   )}
-                </motion.div>
+                </MotionDiv>
               ))
             ) : (
               <div className="py-20 text-center text-gray-700 italic glass rounded-[32px] border-dashed border-white/5">

@@ -5,6 +5,10 @@ import { Code2, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2, KeyRoun
 import { UserAccount } from '../types';
 import { supabase } from '../lib/supabase';
 
+// Fix for framer-motion intrinsic element type errors
+const MotionDiv = motion.div as any;
+const MotionH1 = motion.h1 as any;
+
 interface AuthProps {
   onLoginSuccess: (user: UserAccount) => void;
 }
@@ -62,7 +66,6 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
         }
 
         if (data.user) {
-          // [Fix] Fixed property names to match UserProfile/UserAccount interface (snake_case).
           onLoginSuccess({
             id: data.user.id,
             name: data.user.user_metadata?.full_name || '학습자',
@@ -91,7 +94,6 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
 
         if (data.user) {
           if (data.session) {
-            // [Fix] Fixed property names to match UserProfile/UserAccount interface (snake_case).
             onLoginSuccess({
               id: data.user.id,
               name: name.trim(),
@@ -116,7 +118,6 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
   };
 
   const handleVerifyOtp = async () => {
-    // [Request] 인증코드 8자리 검증
     if (verificationCode.length < 8) {
       setError('8자리 인증 코드를 정확히 입력해주세요.');
       return;
@@ -141,7 +142,6 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
         
         if (retryError) throw verifyError;
         if (retryData.user) {
-          // [Fix] Fixed property names to match UserProfile/UserAccount interface (snake_case).
           onLoginSuccess({
             id: retryData.user.id,
             name: retryData.user.user_metadata?.full_name || name || '학습자',
@@ -157,7 +157,6 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
       }
 
       if (data.user) {
-        // [Fix] Fixed property names to match UserProfile/UserAccount interface (snake_case).
         onLoginSuccess({
           id: data.user.id,
           name: data.user.user_metadata?.full_name || name || '학습자',
@@ -188,7 +187,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
       <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-purple-600/10 blur-[140px] rounded-full" />
 
       <LayoutGroup>
-        <motion.div layout transition={smoothSpring} className="w-full max-w-[420px] z-10">
+        <MotionDiv layout transition={smoothSpring} className="w-full max-w-[420px] z-10">
           <div className="text-center mb-10">
             <div className="w-20 h-20 bg-[#007AFF] rounded-[24px] mx-auto mb-6 flex items-center justify-center shadow-2xl text-white">
               <Code2 size={40} />
@@ -197,13 +196,13 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
             <p className="text-gray-400 text-sm">직관적인 코딩 학습의 시작</p>
           </div>
 
-          <motion.div layout className="glass p-8 rounded-[40px] border-white/10 bg-white/[0.02] shadow-2xl overflow-hidden">
+          <MotionDiv layout className="glass p-8 rounded-[40px] border-white/10 bg-white/[0.02] shadow-2xl overflow-hidden">
             {authStage === 'input' ? (
               <>
                 <div className="flex gap-4 mb-8 p-1 bg-white/5 rounded-2xl relative">
                   <button type="button" onClick={() => setIsLoginView(true)} className={`flex-1 py-3 rounded-xl text-sm font-bold z-10 transition-colors ${isLoginView ? 'text-white' : 'text-gray-500'}`}>로그인</button>
                   <button type="button" onClick={() => setIsLoginView(false)} className={`flex-1 py-3 rounded-xl text-sm font-bold z-10 transition-colors ${!isLoginView ? 'text-white' : 'text-gray-500'}`}>회원가입</button>
-                  <motion.div layoutId="tab-bg" className="absolute inset-y-1 bg-white/10 rounded-xl shadow-inner" style={{ width: 'calc(50% - 4px)', left: isLoginView ? 4 : 'calc(50% + 0px)' }} />
+                  <MotionDiv layoutId="tab-bg" className="absolute inset-y-1 bg-white/10 rounded-xl shadow-inner" style={{ width: 'calc(50% - 4px)', left: isLoginView ? 4 : 'calc(50% + 0px)' }} />
                 </div>
 
                 <form onSubmit={handleAuth} className="flex flex-col gap-4">
@@ -259,8 +258,8 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                 </button>
               </div>
             )}
-          </motion.div>
-        </motion.div>
+          </MotionDiv>
+        </MotionDiv>
       </LayoutGroup>
     </div>
   );

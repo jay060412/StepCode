@@ -1,89 +1,85 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
-
-// [Fix] Obtained exclusively from the environment variable process.env.API_KEY.
-const getApiKey = () => {
-  return process.env.API_KEY || '';
-};
+/**
+ * StepCode AI Service (Powered by Groq API)
+ * Model: gpt-oss-120b
+ * This service uses Groq's OpenAI-compatible endpoint.
+ */
 
 export const askGemini = async (prompt: string, context?: string) => {
   try {
-    const apiKey = getApiKey();
+    const apiKey = process.env.API_KEY;
     if (!apiKey) {
-      return "AI 연결을 위해 API 키가 필요합니다.";
+      return "AI 연결을 위한 API 키가 설정되지 않았습니다.";
     }
-    // [Fix] Initialize with new GoogleGenAI({ apiKey: process.env.API_KEY })
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `You are StepCode AI Assistant, an expert Python educator. 
-      Answer in Korean. Format clearly with markdown.
-      Context: ${context || 'General Python'}.
-      User: ${prompt}`,
-    });
-    // [Fix] Use the .text property (not a method).
-    return response.text || "답변을 생성할 수 없습니다.";
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    return "죄송합니다. 현재 AI 답변이 어렵습니다.";
-  }
-};
 
-export const getGeminiSpeech = async (text: string) => {
-  try {
-    const apiKey = getApiKey();
-    if (!apiKey) return null;
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `읽어주세요: ${text}` }] }],
-      config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' },
-          },
-        },
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
       },
+      body: JSON.stringify({
+        model: "openai/gpt-oss-120b",
+        messages: [
+          {
+            role: "system",
+            content: `당신은 세계 최고의 코딩 교육 플랫폼 'StepCode'의 전담 AI 튜터입니다.
+학습자가 현재 보고 있는 화면 맥락(코드, 문제 등)이 제공되지만, 당신의 최우선 임무는 '사용자의 질문에 즉각적이고 직접적으로 답변하는 것'입니다.
+
+[운영 규칙]
+1. 화면 내용을 단순히 요약하거나 읊는 것은 절대 금지입니다.
+2. 사용자가 질문을 던지면, 그 질문에 대한 답을 가장 먼저, 명확하게 하십시오.
+3. 화면 맥락은 사용자가 "이 코드가 왜 이래?"라고 물었을 때 그 '이 코드'가 무엇인지 파악하는 용도로만 참고하십시오.
+4. 친절하고 전문적인 한국어를 사용하며, 마크다운(Markdown) 형식을 활용해 가독성을 높이십시오.`
+          },
+          {
+            role: "user",
+            content: `[현재 화면 맥락]\n${context || '정보 없음'}\n\n[학생의 질문]\n${prompt}`
+          }
+        ],
+        temperature: 0.6,
+        max_tokens: 2048
+      })
     });
 
-    // [Fix] Access output audio bytes from response.
-    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || null;
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Groq API Error:", errorData);
+      return `Groq 엔진 오류: ${errorData.error?.message || "응답을 가져올 수 없습니다."}`;
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || "답변을 생성할 수 없습니다.";
+
   } catch (error) {
-    return null;
+    console.error("AI Service Error:", error);
+    return "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
   }
 };
 
-// [Fix] Standard helper to decode and play PCM audio from base64.
-export async function playPcmAudio(base64Data: string) {
-  try {
-    const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtxClass) return null;
-    const audioCtx = new AudioCtxClass({ sampleRate: 24000 });
-    
-    // Decoding base64 manually
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    
-    const dataInt16 = new Int16Array(bytes.buffer);
-    const frameCount = dataInt16.length;
-    const buffer = audioCtx.createBuffer(1, frameCount, 24000);
-    const channelData = buffer.getChannelData(0);
-    
-    // Convert PCM16 to Float32
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i] / 32768.0;
-    }
-    
-    const source = audioCtx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioCtx.destination);
-    source.start();
-    return source;
-  } catch (e) {
+/**
+ * 브라우저 표준 Web Speech API를 활용한 음성 합성 (Gemini 의존성 제거)
+ */
+export const getGeminiSpeech = async (text: string) => {
+  if (!('speechSynthesis' in window)) {
+    console.warn("이 브라우저는 음성 합성을 지원하지 않습니다.");
     return null;
   }
+
+  // 기존에 재생 중인 음성이 있다면 중단
+  window.speechSynthesis.cancel();
+
+  const cleanText = text.replace(/[*#`]/g, ''); // 마크다운 기호 제거
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = 'ko-KR';
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  window.speechSynthesis.speak(utterance);
+  return null;
+};
+
+// 하위 호환성을 위해 함수 시그니처 유지 (Groq 환경에서는 사용되지 않음)
+export async function playPcmAudio(base64Data: string) {
+  return null;
 }

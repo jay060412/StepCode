@@ -5,6 +5,11 @@ import { AppRoute, UserProfile } from '../types';
 import { User, Bell, ChevronRight, LogOut, ChevronLeft, PanelLeftClose, PanelLeftOpen, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Fix for framer-motion intrinsic element type errors
+const MotionAside = motion.aside as any;
+const MotionButton = motion.button as any;
+const MotionH1 = motion.h1 as any;
+
 interface LayoutProps {
   children: React.ReactNode;
   activeRoute: AppRoute;
@@ -27,14 +32,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
   return (
     <div className="flex h-[100dvh] w-screen bg-[#050505] text-white overflow-hidden flex-col lg:flex-row">
       {/* Sidebar Navigation - [PC Only] */}
-      <motion.aside 
+      <MotionAside 
         initial={false}
         animate={{ width: isSidebarCollapsed ? 80 : 256 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="hidden lg:flex border-r border-white/5 bg-black flex-col shrink-0 relative z-20"
       >
         {/* Sidebar Toggle Floating Button */}
-        <motion.button
+        <MotionButton
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           initial={false}
           animate={{ x: isSidebarCollapsed ? 40 : 12 }}
@@ -43,7 +48,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
           title={isSidebarCollapsed ? "메뉴 확장" : "메뉴 축소"}
         >
           {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </motion.button>
+        </MotionButton>
 
         <div className="p-8 flex items-center justify-center lg:justify-start gap-3 h-20">
           <div 
@@ -53,14 +58,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
             <div className="w-8 h-8 bg-[#007AFF] rounded-lg shrink-0 flex items-center justify-center font-black text-white text-xl">S</div>
             <AnimatePresence mode="wait">
               {!isSidebarCollapsed && (
-                <motion.h1 
+                <MotionH1 
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   className="text-2xl font-bold bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent whitespace-nowrap"
                 >
                   StepCode<span className="text-[#007AFF]">.</span>
-                </motion.h1>
+                </MotionH1>
               )}
             </AnimatePresence>
           </div>
@@ -105,7 +110,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
             {!isSidebarCollapsed && <span>로그아웃</span>}
           </button>
         </div>
-      </motion.aside>
+      </MotionAside>
 
       <main className="flex-1 flex flex-col relative overflow-hidden pb-16 lg:pb-0">
         <header className="h-16 lg:h-20 border-b border-white/5 flex items-center justify-between px-6 lg:px-8 bg-black/50 backdrop-blur-md z-10 shrink-0">

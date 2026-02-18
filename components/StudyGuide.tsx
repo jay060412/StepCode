@@ -8,6 +8,9 @@ import {
   MessageSquareCode
 } from 'lucide-react';
 
+// Fix for framer-motion intrinsic element type errors
+const MotionDiv = motion.div as any;
+
 interface StudyGuideProps {
   onStartPython: () => void;
   onViewCurriculum: () => void;
@@ -67,7 +70,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
 
   return (
     <div className="p-6 lg:p-12 max-w-7xl mx-auto pb-32 h-full overflow-y-auto custom-scrollbar scroll-smooth">
-      <motion.div 
+      <MotionDiv 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-16 lg:mb-24"
@@ -82,7 +85,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         <p className="text-gray-500 text-lg lg:text-xl font-light max-w-2xl mx-auto leading-relaxed">
           StepCode는 <span className="text-white font-medium">관찰-검증-구현</span>의 반복을 통해 <br className="hidden lg:block"/> 단순 암기가 아닌 프로그래밍적 사고력을 길러줍니다.
         </p>
-      </motion.div>
+      </MotionDiv>
 
       <div className="mb-24 lg:mb-32">
         <div className="flex flex-wrap justify-center gap-3 lg:gap-4 mb-10">
@@ -107,13 +110,13 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Screen Simulation</span>
             </div>
 
-            <motion.div
+            <MotionDiv
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               className="relative group overflow-hidden"
             >
               <AnimatePresence mode="wait">
-                <motion.div
+                <MotionDiv
                   key={activeTab}
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -191,10 +194,10 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
                       </div>
                     )}
                   </div>
-                </motion.div>
+                </MotionDiv>
               </AnimatePresence>
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-[#007AFF]/10 blur-[40px] rounded-full -z-10" />
-            </motion.div>
+            </MotionDiv>
           </div>
 
           <div className="space-y-12">
@@ -212,7 +215,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
 
             <div className="space-y-6">
               {studyStages[activeTab].points.map((point, i) => (
-                <motion.div 
+                <MotionDiv 
                   key={i}
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -221,7 +224,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
                 >
                   <div className={`mt-1.5 w-2 h-2 rounded-full ${studyStages[activeTab].color} shrink-0`} />
                   <span className="text-gray-300 text-base lg:text-lg font-light leading-snug">{point}</span>
-                </motion.div>
+                </MotionDiv>
               ))}
             </div>
           </div>
@@ -235,7 +238,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <motion.div 
+          <MotionDiv 
             whileHover={{ y: -5 }}
             className="glass p-10 lg:p-14 rounded-[50px] border-white/5 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent flex flex-col items-center text-center group"
           >
@@ -261,9 +264,9 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
             >
               사고력 트랙으로 시작하기 <Rocket size={20} />
             </button>
-          </motion.div>
+          </MotionDiv>
 
-          <motion.div 
+          <MotionDiv 
             whileHover={{ y: -5 }}
             className="glass p-10 lg:p-14 rounded-[50px] border-white/5 bg-gradient-to-br from-[#007AFF]/10 via-transparent to-transparent flex flex-col items-center text-center group"
           >
@@ -289,7 +292,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
             >
               파이썬 트랙 바로가기 <Rocket size={20} />
             </button>
-          </motion.div>
+          </MotionDiv>
         </div>
       </div>
 
@@ -312,7 +315,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         })}
       </div>
 
-      <motion.div 
+      <MotionDiv 
         whileInView={{ opacity: 1, y: 0 }}
         initial={{ opacity: 0, y: 30 }}
         viewport={{ once: true }}
@@ -333,7 +336,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
             커리큘럼 전체 보기
           </button>
         </div>
-      </motion.div>
+      </MotionDiv>
     </div>
   );
 };

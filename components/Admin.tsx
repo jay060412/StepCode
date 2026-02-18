@@ -12,6 +12,9 @@ import { supabase } from '../lib/supabase';
 import { SupportQuestion, UserProfile, UserRole } from '../types';
 import { FormattedText } from './FormattedText';
 
+// Fix for framer-motion intrinsic element type errors
+const MotionDiv = motion.div as any;
+
 interface UserStats {
   totalUsers: number;
   avgProgress: number;
@@ -218,7 +221,7 @@ export const Admin: React.FC = () => {
       ) : (
         <AnimatePresence mode="wait">
           {activeTab === 'stats' && (
-            <motion.div key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MotionDiv key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="glass p-10 rounded-[40px] border-white/5 bg-gradient-to-br from-[#007AFF]/10 to-transparent">
                 <Users className="text-[#007AFF] mb-6" size={32} />
                 <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">총 학습자</p>
@@ -239,11 +242,11 @@ export const Admin: React.FC = () => {
                 <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">평균 레벨</p>
                 <h4 className="text-5xl font-black text-white tracking-tighter">Lv.{stats.avgLevel}</h4>
               </div>
-            </motion.div>
+            </MotionDiv>
           )}
 
           {activeTab === 'users' && (
-            <motion.div key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+            <MotionDiv key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between px-4">
                 <div className="relative w-full sm:w-96">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
@@ -326,11 +329,11 @@ export const Admin: React.FC = () => {
                   </table>
                 </div>
               </div>
-            </motion.div>
+            </MotionDiv>
           )}
 
           {activeTab === 'questions' && (
-            <motion.div key="questions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
+            <MotionDiv key="questions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
               <div className="flex items-center gap-2 p-1.5 glass rounded-2xl border-white/5 w-fit">
                 <button onClick={() => setQuestionFilter('pending')} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${questionFilter === 'pending' ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20' : 'text-gray-500'}`}>Pending</button>
                 <button onClick={() => setQuestionFilter('resolved')} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${questionFilter === 'resolved' ? 'bg-green-500 text-black shadow-lg shadow-green-500/20' : 'text-gray-500'}`}>Resolved</button>
@@ -338,7 +341,7 @@ export const Admin: React.FC = () => {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {filteredQuestions.length > 0 ? filteredQuestions.map(q => (
-                  <motion.div 
+                  <MotionDiv 
                     layout
                     key={q.id} 
                     className={`glass p-8 lg:p-10 rounded-[48px] border-white/5 bg-white/[0.01] flex flex-col gap-8 group transition-all ${!q.is_resolved ? 'border-yellow-500/20 bg-yellow-500/[0.02]' : 'border-green-500/10'}`}
@@ -385,7 +388,7 @@ export const Admin: React.FC = () => {
                         </div>
                       </div>
                     )}
-                  </motion.div>
+                  </MotionDiv>
                 )) : (
                   <div className="col-span-full py-40 flex flex-col items-center justify-center text-center gap-6 glass rounded-[64px] border-dashed border-white/5">
                     <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-gray-700">
@@ -395,7 +398,7 @@ export const Admin: React.FC = () => {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </MotionDiv>
           )}
         </AnimatePresence>
       )}

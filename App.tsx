@@ -17,6 +17,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PlayCircle, HelpCircle, Target, Loader2, Brain, Terminal, ChevronRight, Rocket, AlertCircle, RefreshCw, BookOpen } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
+// Fix for framer-motion intrinsic element type errors
+const MotionDiv = motion.div as any;
+
 type LearningStage = 'concept' | 'quiz' | 'coding';
 
 const ADMIN_EMAIL = 'jay447233@gmail.com';
@@ -180,7 +183,6 @@ const App: React.FC = () => {
       await supabase.auth.signOut();
       
       // 3. 새로고침 없이 루트로 이동 (SPA 방식)
-      // 만약 필요하다면 window.location.assign('/')를 사용할 수 있으나 
       // 상태 초기화만으로도 <Auth /> 컴포넌트가 렌더링되므로 충분합니다.
     } catch (err) {
       console.error("Logout Error:", err);
@@ -256,7 +258,7 @@ const App: React.FC = () => {
       onLogout={handleLogout}
     >
       <AnimatePresence mode="wait">
-        <motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+        <MotionDiv key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
           {activeRoute === AppRoute.HOME && (
             <div className="p-8 lg:p-12 max-w-7xl mx-auto pb-32">
               <header className="mb-16">
@@ -278,12 +280,12 @@ const App: React.FC = () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {ALL_TRACKS.filter(t => t.category === 'tutorial').map(track => (
-                    <motion.div key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
+                    <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
                       <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-white shadow-xl mb-6"><Brain size={28} /></div>
                       <h4 className="text-2xl font-bold mb-3 group-hover:text-white">{track.title}</h4>
                       <p className="text-sm text-gray-500 leading-relaxed mb-8 h-12 line-clamp-2">{track.description}</p>
                       <div className="flex items-center gap-2 text-[#007AFF] text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
-                    </motion.div>
+                    </MotionDiv>
                   ))}
                 </div>
               </section>
@@ -293,12 +295,12 @@ const App: React.FC = () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {ALL_TRACKS.filter(t => t.category === 'language').map(track => (
-                    <motion.div key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
+                    <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
                       <div className="mb-6">{track.iconType === 'python' ? <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3776AB] to-[#FFD43B]/20 flex items-center justify-center font-black text-white shadow-xl text-xl">Py</div> : track.iconType === 'c' ? <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5C5C5C] to-[#004482] flex items-center justify-center font-black text-white shadow-xl text-2xl">C</div> : <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-white shadow-xl"><Brain size={24} /></div>}</div>
                       <h4 className="text-2xl font-bold mb-3 group-hover:text-white">{track.title}</h4>
                       <p className="text-sm text-gray-500 leading-relaxed mb-8 h-12 line-clamp-2">{track.description}</p>
                       <div className="flex items-center gap-2 text-[#007AFF] text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
-                    </motion.div>
+                    </MotionDiv>
                   ))}
                 </div>
               </section>
@@ -317,9 +319,9 @@ const App: React.FC = () => {
                   {learningStage === 'quiz' && <ProblemSolving problems={selectedLesson.conceptProblems} type="concept" onFinish={missed => moveToNextStage(missed)} />}
                   {learningStage === 'coding' && <ProblemSolving problems={selectedLesson.codingProblems} type="coding" onFinish={missed => handleFinishLesson(missed)} />}
                 </div>
-                <motion.div animate={{ width: isAiMinimized ? 72 : 320 }} className="hidden lg:block border-l border-white/5 bg-black/20 shrink-0 overflow-hidden">
+                <MotionDiv animate={{ width: isAiMinimized ? 72 : 320 }} className="hidden lg:block border-l border-white/5 bg-black/20 shrink-0 overflow-hidden">
                   <AIChat currentLesson={selectedLesson} currentStage={learningStage} isMinimized={isAiMinimized} onToggleMinimize={() => setIsAiMinimized(!isAiMinimized)} />
-                </motion.div>
+                </MotionDiv>
               </div>
             </div>
           )}
