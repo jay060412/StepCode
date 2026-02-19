@@ -15,7 +15,7 @@ import { NoticePage } from './components/NoticePage';
 import { AppRoute, UserProfile, Lesson, Track, Problem } from './types';
 import { ALL_TRACKS } from './contentData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlayCircle, HelpCircle, Target, Loader2, Brain, Terminal, ChevronRight, Rocket, AlertCircle, RefreshCw, BookOpen } from 'lucide-react';
+import { PlayCircle, HelpCircle, Target, Loader2, Brain, Terminal, ChevronRight, Rocket, AlertCircle, RefreshCw, BookOpen, LogOut } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
 const MotionDiv = motion.div as any;
@@ -248,6 +248,7 @@ const App: React.FC = () => {
     setSelectedTrack(null);
     setSelectedLesson(null);
     setActiveRoute(AppRoute.HOME);
+    setDbError(null); // 에러 상태도 초기화
     await supabase.auth.signOut();
   }, []);
 
@@ -288,14 +289,32 @@ const App: React.FC = () => {
 
   if (dbError) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center gap-6">
-        <AlertCircle size={48} className="text-red-500" />
-        <h2 className="text-2xl font-bold text-white">동기화 오류 발생</h2>
-        <p className="text-gray-400 text-sm max-w-md">{dbError}</p>
-        <div className="flex flex-col gap-3">
-          <p className="text-xs text-yellow-500/70 italic">도움말: Supabase SQL Editor에서 theme 컬럼을 추가했는지 확인하세요.</p>
-          <button onClick={() => window.location.reload()} className="px-8 py-3 bg-[#007AFF] text-white rounded-xl font-bold cursor-pointer hover:scale-105 active:scale-95 transition-all">다시 시도</button>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center gap-8">
+        <div className="w-20 h-20 bg-red-500/10 rounded-[30px] flex items-center justify-center text-red-500 mb-2">
+          <AlertCircle size={48} />
         </div>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-black text-white">동기화 오류 발생</h2>
+          <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">{dbError}</p>
+        </div>
+        
+        <div className="flex flex-col gap-4 w-full max-w-xs">
+          <button 
+            onClick={() => window.location.reload()} 
+            className="w-full py-4 bg-[#007AFF] text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#007AFF]/20"
+          >
+            <RefreshCw size={18} /> 다시 시도
+          </button>
+          
+          <button 
+            onClick={handleLogout} 
+            className="w-full py-4 glass text-gray-400 border-white/10 rounded-2xl font-bold flex items-center justify-center gap-3 hover:text-white hover:bg-white/10 transition-all"
+          >
+            <LogOut size={18} /> 로그인 화면으로 가기
+          </button>
+        </div>
+
+        <p className="text-[10px] text-gray-600 italic">도움말: 새 가입 후 이 오류가 지속되면 관리자에게 SQL 실행을 요청하세요.</p>
       </div>
     );
   }
