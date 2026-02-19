@@ -138,15 +138,27 @@ export const Admin: React.FC = () => {
     if (!window.confirm(`[주의] '${userName}' 학습자의 모든 학습 데이터(프로필)를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
     
     try {
-      // 1. 프로필 삭제 (연관된 RLS 정책에 따라 처리됨)
-      const { error } = await supabase.from('profiles').delete().eq('id', userId);
+      // RLS 정책 확인을 위해 select() 추가하여 실제 삭제 여부 확인
+      const { data, error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId)
+        .select();
+
       if (error) throw error;
+      
+      // 삭제된 데이터가 없다면 권한 문제일 가능성이 큼
+      if (!data || data.length === 0) {
+        throw new Error('데이터베이스 권한 정책(RLS)에 의해 삭제가 거부되었습니다. 관리자 권한을 확인하세요.');
+      }
       
       setUsers(prev => prev.filter(u => u.id !== userId));
       alert('학습자 데이터가 성공적으로 삭제되었습니다.');
-      fetchAdminData(); // 스탯 업데이트
+      // 통계 재계산
+      fetchAdminData();
     } catch (err: any) {
-      alert(`삭제 실패: ${err.message}`);
+      console.error('Admin Delete Error:', err);
+      alert(`삭제 실패: ${err.message}\n\n(참고: Supabase SQL Editor에서 DELETE 정책을 설정해야 합니다.)`);
     }
   };
 
@@ -172,7 +184,7 @@ export const Admin: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 text-[#007AFF] text-[10px] font-black uppercase tracking-widest mb-4">
             <ShieldCheck size={12} /> System Admin Mode
           </div>
-          <h2 className="text-4xl lg:text-7xl font-black tracking-tighter mb-2 text-white">관리 센터</h2>
+          <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-2 text-white">관리 센터</h2>
           <p className="text-gray-500 font-light">전체 학습 데이터 및 시스템 정책을 관리합니다.</p>
         </div>
         <div className="flex items-center gap-4">
@@ -235,6 +247,7 @@ export const Admin: React.FC = () => {
             <MotionDiv key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               <div className="relative w-full sm:w-96 ml-auto">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                {/* FIX: Use setUserSearch setter instead of userSearch state variable */}
                 <input type="text" placeholder="검색..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:border-[#007AFF] outline-none" />
               </div>
 

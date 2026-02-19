@@ -103,15 +103,28 @@ export const Settings: React.FC<SettingsProps> = ({ user, onLogout, onUpdateUser
 
     setIsDeleting(true);
     try {
-      // 1. 프로필 정보 삭제
-      const { error: profileError } = await supabase.from('profiles').delete().eq('id', user.id);
+      // 1. 프로필 정보 삭제 (RLS 정책에 의해 본인만 가능)
+      // select()를 사용하여 실제 삭제가 일어났는지 확인
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id)
+        .select();
+
       if (profileError) throw profileError;
 
-      // 2. 로그아웃 처리 (Auth 삭제는 클라이언트 단에서 직접 불가능하므로 로그아웃 후 안내)
-      alert('학습 데이터가 삭제되었습니다. 보안을 위해 계정 자체의 완전 삭제는 고객센터를 통해 요청하시거나 관리자가 처리할 수 있습니다. 즉시 로그아웃됩니다.');
+      if (!data || data.length === 0) {
+        throw new Error('데이터 삭제 권한이 없거나 이미 삭제된 계정입니다. (RLS 정책 확인 필요)');
+      }
+
+      // 2. 완전 탈퇴 성공 안내 및 로그아웃
+      alert('모든 학습 데이터가 성공적으로 삭제되었습니다. 이용해 주셔서 감사합니다.');
+      
+      // onLogout 내부에 supabase.auth.signOut()이 포함되어 있어야 합니다.
       onLogout();
     } catch (err: any) {
-      alert(`삭제 실패: ${err.message}`);
+      console.error('Account Delete Error:', err);
+      alert(`탈퇴 실패: ${err.message}\n\n(참고: Supabase SQL Editor에서 DELETE 정책이 설정되어 있는지 확인하세요.)`);
     } finally {
       setIsDeleting(false);
     }

@@ -39,7 +39,8 @@ export const AIChat: React.FC<AIChatProps> = ({
       if (messages.length === 0) {
         setMessages([{ 
           role: 'assistant', 
-          content: '반가워요! 초고속 **Groq Llama 3.3 70B** 엔진이 준비되었습니다. 학습 중 궁금한 점은 무엇이든 물어보세요!' 
+          // Updated engine name to Gemini 3 Pro
+          content: '반가워요! 강력한 **Gemini 3 Pro** 엔진이 준비되었습니다. 학습 중 궁금한 점은 무엇이든 물어보세요!' 
         }]);
       }
     } else {
@@ -76,7 +77,7 @@ export const AIChat: React.FC<AIChatProps> = ({
       setStatus('error');
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: '앗, Groq API 설정에 문제가 발생했습니다. Netlify의 API_KEY 설정을 확인해주세요.' 
+        content: '앗, Gemini API 설정에 문제가 발생했습니다. Netlify의 API_KEY 설정을 확인해주세요.' 
       }]);
     } else {
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
@@ -125,11 +126,12 @@ export const AIChat: React.FC<AIChatProps> = ({
              )}
            </div>
            <div>
-             <span className="font-bold text-sm block tracking-tight text-white">Groq AI Tutor</span>
+             <span className="font-bold text-sm block tracking-tight text-white">Gemini AI Tutor</span>
              <div className="flex items-center gap-1.5">
                <Zap size={10} className={status === 'online' ? 'text-orange-400' : 'text-gray-600'} />
                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                 {status === 'online' ? 'Llama 3.3 70B Active' : status === 'error' ? 'Engine Error' : 'Connecting...'}
+                 {/* Updated engine status label */}
+                 {status === 'online' ? 'Gemini 3 Pro Active' : status === 'error' ? 'Engine Error' : 'Connecting...'}
                </span>
              </div>
            </div>
@@ -181,7 +183,7 @@ export const AIChat: React.FC<AIChatProps> = ({
         {isLoading && (
           <div className="flex items-center gap-2 p-4 bg-white/5 rounded-[20px] w-fit border border-white/5">
             <Loader2 size={16} className="animate-spin text-orange-500" />
-            <span className="text-xs text-gray-500 font-medium">Groq LPU 추론 중...</span>
+            <span className="text-xs text-gray-500 font-medium">Gemini Thinking...</span>
           </div>
         )}
       </div>
