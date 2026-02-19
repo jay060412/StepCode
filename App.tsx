@@ -70,14 +70,13 @@ const App: React.FC = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return { error: 'No session' };
-      const { solved_concepts, ...validUpdates } = updates;
       
       const { error } = await supabase
         .from('profiles')
-        .update({ ...validUpdates, updated_at: new Date().toISOString() })
+        .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', session.user.id);
         
-      if (error) return { error: error.message };
+      if (error) throw error;
       return { success: true };
     } catch (err: any) {
       console.error("DB Sync Error:", err);
@@ -166,6 +165,7 @@ const App: React.FC = () => {
     setDbError(null);
 
     try {
+      // 1. 프로필 데이터 조회
       const { data: profileData, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
@@ -174,6 +174,7 @@ const App: React.FC = () => {
       
       if (fetchError) throw fetchError;
 
+      // 2. 기본 사용자 구조 준비
       const userData: UserProfile = {
         id: userId,
         name: profileData?.name || name || '학습자',
@@ -189,8 +190,18 @@ const App: React.FC = () => {
         theme: profileData?.theme || 'dark'
       };
 
+      // 3. 프로필이 없으면 '즉시' 생성 시도 (업서트 로직 강화)
       if (!profileData) {
-        await supabase.from('profiles').upsert(userData);
+        console.log("프로필 누락 감지: 신규 생성 중...");
+        const { error: insertError } = await supabase.from('profiles').insert(userData);
+        // 이미 트리거에 의해 생성되었을 수도 있으므로 에러가 나도 진행 (Conflict 방지)
+        if (insertError && !insertError.message.includes('duplicate key')) {
+          throw insertError;
+        }
+      } else if (email === ADMIN_EMAIL && profileData.role !== 'admin') {
+        // 관리자 권한 강제 동기화
+        await supabase.from('profiles').update({ role: 'admin' }).eq('id', userId);
+        userData.role = 'admin';
       }
 
       setUser(userData);
@@ -201,7 +212,7 @@ const App: React.FC = () => {
         if (track) setSelectedTrack(track);
       }
     } catch (err: any) {
-      console.error("loadUserProgressFromDB Error:", err);
+      console.error("프로필 동기화 오류:", err);
       setDbError(err.message || "데이터 로드 실패");
     } finally {
       setIsLoading(false);
@@ -248,7 +259,7 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-6">
         <Loader2 className="animate-spin text-[#007AFF]" size={64} />
         <p className="text-white font-black text-xl tracking-tight">StepCode 환경 준비 중...</p>
-        <p className="text-gray-500 text-xs animate-pulse mt-4">오랫동안 로딩 중이라면 데이터베이스 정책 설정을 확인해 주세요.</p>
+        <p className="text-gray-500 text-xs animate-pulse mt-4">데이터 동기화 및 보안 정책 확인 중</p>
       </div>
     );
   }
@@ -257,12 +268,8 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center gap-6">
         <AlertCircle size={48} className="text-red-500" />
-        <h2 className="text-2xl font-bold text-white">데이터 동기화 오류</h2>
-        <div className="max-w-md bg-red-500/10 p-6 rounded-3xl border border-red-500/20 text-red-400 text-sm leading-relaxed">
-          {dbError}
-          <br /><br />
-          <p className="text-gray-500 text-xs italic">팁: 무한 루프(Infinite Recursion) 에러가 발생했다면, Supabase RLS 정책에서 조회를 이메일 직접 체크 방식으로 수정해야 합니다.</p>
-        </div>
+        <h2 className="text-2xl font-bold text-white">동기화 오류 발생</h2>
+        <p className="text-gray-400 text-sm max-w-md">{dbError}</p>
         <button onClick={() => window.location.reload()} className="px-8 py-3 bg-[#007AFF] text-white rounded-xl font-bold cursor-pointer">다시 시도</button>
       </div>
     );
@@ -279,25 +286,25 @@ const App: React.FC = () => {
           {activeRoute === AppRoute.HOME && (
             <div className="p-8 lg:p-12 max-w-7xl mx-auto pb-32">
               <header className="mb-16">
-                <h2 className="text-4xl lg:text-7xl font-black mb-4 tracking-tighter">반가워요, {user.name}님!</h2>
+                <h2 className="text-4xl lg:text-7xl font-black mb-4 tracking-tighter text-main">반가워요, {user.name}님!</h2>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 lg:gap-8">
                   <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-white/5">
                     <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center"><Target size={20} /></div>
-                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Progress</p><p className="text-sm font-bold">{user.progress}%</p></div>
+                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Progress</p><p className="text-sm font-bold">{user.progress || 0}%</p></div>
                   </div>
                   <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-white/5">
                     <div className="w-10 h-10 rounded-xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center"><Rocket size={20} /></div>
-                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Current Level</p><p className="text-sm font-bold">Level {user.level}</p></div>
+                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Current Level</p><p className="text-sm font-bold">Level {user.level || 1}</p></div>
                   </div>
                 </div>
               </header>
               <section className="mb-20">
-                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-purple-500 pl-6 uppercase tracking-widest"><Brain className="text-purple-400" size={24} /> 사고력 트랙</h3>
+                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-purple-500 pl-6 uppercase tracking-widest text-main"><Brain className="text-purple-400" size={24} /> 사고력 트랙</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {ALL_TRACKS.filter(t => t.category === 'tutorial').map(track => (
                     <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
                       <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-white shadow-xl mb-6"><Brain size={28} /></div>
-                      <h4 className="text-2xl font-bold mb-3 group-hover:text-white">{track.title}</h4>
+                      <h4 className="text-2xl font-bold mb-3 group-hover:text-white text-main">{track.title}</h4>
                       <p className="text-sm text-gray-500 leading-relaxed mb-8 h-12 line-clamp-2">{track.description}</p>
                       <div className="flex items-center gap-2 text-[#007AFF] text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
                     </MotionDiv>
@@ -305,12 +312,12 @@ const App: React.FC = () => {
                 </div>
               </section>
               <section className="mb-20">
-                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-[#007AFF] pl-6 uppercase tracking-widest"><Terminal className="text-[#007AFF]" size={24} /> 언어 트랙</h3>
+                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-[#007AFF] pl-6 uppercase tracking-widest text-main"><Terminal className="text-[#007AFF]" size={24} /> 언어 트랙</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {ALL_TRACKS.filter(t => t.category === 'language').map(track => (
                     <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
                       <div className="mb-6">{track.iconType === 'python' ? <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3776AB] to-[#FFD43B]/20 flex items-center justify-center font-black text-white shadow-xl text-xl">Py</div> : track.iconType === 'c' ? <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5C5C5C] to-[#004482] flex items-center justify-center font-black text-white shadow-xl text-2xl">C</div> : <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-white shadow-xl"><Brain size={24} /></div>}</div>
-                      <h4 className="text-2xl font-bold mb-3 group-hover:text-white">{track.title}</h4>
+                      <h4 className="text-2xl font-bold mb-3 group-hover:text-white text-main">{track.title}</h4>
                       <p className="text-sm text-gray-500 leading-relaxed mb-8 h-12 line-clamp-2">{track.description}</p>
                       <div className="flex items-center gap-2 text-[#007AFF] text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
                     </MotionDiv>
@@ -355,7 +362,7 @@ const App: React.FC = () => {
             ) : (
               <div className="h-full flex flex-col items-center justify-center p-8 text-center">
                 <BookOpen size={48} className="text-gray-600 mb-8" />
-                <h2 className="text-3xl font-black mb-4">선택된 트랙이 없습니다</h2>
+                <h2 className="text-3xl font-black mb-4 text-main">선택된 트랙이 없습니다</h2>
                 <button onClick={() => setActiveRoute(AppRoute.HOME)} className="px-10 py-5 bg-[#007AFF] text-white rounded-2xl font-black cursor-pointer">홈으로 이동</button>
               </div>
             )

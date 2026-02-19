@@ -205,7 +205,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onLogout, onUpdateUser
                   <span className="text-sm font-bold text-gray-400">화면 테마 ({user.theme === 'light' ? '라이트' : '다크'})</span>
                 </div>
                 <button onClick={toggleTheme} className="w-12 h-6 bg-white/10 rounded-full relative transition-colors border border-white/10">
-                  <motion.div animate={{ x: user.theme === 'light' ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1" />
+                  {/* Use MotionDiv cast as any to bypass StrictMode/TypeScript animate property issues */}
+                  <MotionDiv animate={{ x: user.theme === 'light' ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1" />
                 </button>
               </div>
 
@@ -255,7 +256,8 @@ export const Settings: React.FC<SettingsProps> = ({ user, onLogout, onUpdateUser
                         onClick={() => handleUpdateSettings(item.key as any, !user.settings?.[item.key as keyof typeof user.settings])}
                         className={`w-10 h-5 rounded-full relative transition-colors ${user.settings?.[item.key as keyof typeof user.settings] ? 'bg-[#007AFF]' : 'bg-gray-700'}`}
                       >
-                        <motion.div animate={{ x: user.settings?.[item.key as keyof typeof user.settings] ? 22 : 2 }} className="w-3 h-3 bg-white rounded-full absolute top-1" />
+                        {/* Use MotionDiv cast as any to bypass StrictMode/TypeScript animate property issues */}
+                        <MotionDiv animate={{ x: user.settings?.[item.key as keyof typeof user.settings] ? 22 : 2 }} className="w-3 h-3 bg-white rounded-full absolute top-1" />
                       </button>
                     </div>
                   ))}
