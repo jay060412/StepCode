@@ -172,9 +172,16 @@ const App: React.FC = () => {
         .eq('id', userId)
         .maybeSingle();
       
-      if (fetchError) throw fetchError;
+      // 스키마 캐시 오류가 발생할 수 있으므로 에러 핸들링 강화
+      if (fetchError) {
+        if (fetchError.message.includes('column') && fetchError.message.includes('not find')) {
+          console.warn("DB 스키마 불일치 감지. 관리자가 SQL을 실행해야 합니다.");
+        } else {
+          throw fetchError;
+        }
+      }
 
-      // 2. 기본 사용자 구조 준비
+      // 2. 기본 데이터 구조 (DB에 없을 경우 대비)
       const userData: UserProfile = {
         id: userId,
         name: profileData?.name || name || '학습자',
@@ -187,19 +194,34 @@ const App: React.FC = () => {
         role: (email === ADMIN_EMAIL ? 'admin' : (profileData?.role || 'user')) as any,
         is_banned: profileData?.is_banned || false,
         updated_at: new Date().toISOString(),
-        theme: profileData?.theme || 'dark'
+        theme: profileData?.theme || 'dark',
+        settings: profileData?.settings || { push: true, email: false, browser: true }
       };
 
-      // 3. 프로필이 없으면 '즉시' 생성 시도 (업서트 로직 강화)
+      // 3. 프로필이 없으면 신규 생성
       if (!profileData) {
-        console.log("프로필 누락 감지: 신규 생성 중...");
-        const { error: insertError } = await supabase.from('profiles').insert(userData);
-        // 이미 트리거에 의해 생성되었을 수도 있으므로 에러가 나도 진행 (Conflict 방지)
+        console.log("새 프로필 생성 중...");
+        
+        // 오류 방지를 위해 DB에 확실히 존재하는 필수 필드만 먼저 Insert 시도
+        const essentialData = {
+          id: userId,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+          level: 1,
+          progress: 0
+        };
+
+        const { error: insertError } = await supabase.from('profiles').insert(essentialData);
+        
         if (insertError && !insertError.message.includes('duplicate key')) {
+          // 컬럼이 아예 없어서 나는 에러인 경우 사용자에게 알림
+          if (insertError.message.includes('column')) {
+            throw new Error(`데이터베이스 구조 업데이트가 필요합니다. 관리자에게 문의하세요. (${insertError.message})`);
+          }
           throw insertError;
         }
       } else if (email === ADMIN_EMAIL && profileData.role !== 'admin') {
-        // 관리자 권한 강제 동기화
         await supabase.from('profiles').update({ role: 'admin' }).eq('id', userId);
         userData.role = 'admin';
       }
@@ -212,8 +234,8 @@ const App: React.FC = () => {
         if (track) setSelectedTrack(track);
       }
     } catch (err: any) {
-      console.error("프로필 동기화 오류:", err);
-      setDbError(err.message || "데이터 로드 실패");
+      console.error("Profile sync process failed:", err);
+      setDbError(err.message || "데이터 동기화 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
       loadingInProgress.current = false;
@@ -270,7 +292,10 @@ const App: React.FC = () => {
         <AlertCircle size={48} className="text-red-500" />
         <h2 className="text-2xl font-bold text-white">동기화 오류 발생</h2>
         <p className="text-gray-400 text-sm max-w-md">{dbError}</p>
-        <button onClick={() => window.location.reload()} className="px-8 py-3 bg-[#007AFF] text-white rounded-xl font-bold cursor-pointer">다시 시도</button>
+        <div className="flex flex-col gap-3">
+          <p className="text-xs text-yellow-500/70 italic">도움말: Supabase SQL Editor에서 theme 컬럼을 추가했는지 확인하세요.</p>
+          <button onClick={() => window.location.reload()} className="px-8 py-3 bg-[#007AFF] text-white rounded-xl font-bold cursor-pointer hover:scale-105 active:scale-95 transition-all">다시 시도</button>
+        </div>
       </div>
     );
   }

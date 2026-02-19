@@ -7,7 +7,7 @@ import {
   MessageCircle, UserX, UserCheck, 
   Send, AlertCircle, Search, Filter, 
   MessageSquare, Info, Database, Lock, ShieldAlert, Trash2,
-  ExternalLink, HelpCircle, Inbox, CheckCircle
+  ExternalLink, HelpCircle, Inbox, CheckCircle, Settings
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SupportQuestion, UserProfile, UserRole } from '../types';
@@ -337,6 +337,30 @@ export const Admin: React.FC = () => {
 
           {activeTab === 'system' && (
             <MotionDiv key="system" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
+               {/* 테마 오류 해결 가이드 추가 */}
+               <div className="p-10 glass rounded-[48px] border-white/10 bg-gradient-to-br from-[#007AFF]/10 to-transparent">
+                  <div className="flex items-center gap-4 mb-6">
+                    <Settings className="text-[#007AFF]" size={32} />
+                    <h3 className="text-2xl font-black text-white">'theme' 컬럼 오류 해결 (Schema Cache)</h3>
+                  </div>
+                  <p className="text-gray-400 leading-relaxed mb-8">
+                    신규 기능인 화면 테마(라이트/다크)를 사용하기 위해 데이터베이스에 새로운 컬럼이 필요합니다.<br/>
+                    Supabase <strong>SQL Editor</strong>에 아래 코드를 복사하여 실행하면 즉시 해결됩니다.
+                  </p>
+                  
+                  <div className="bg-black/60 p-6 rounded-2xl font-mono text-xs text-green-400 border border-white/5 mb-8 overflow-x-auto">
+                    <pre className="whitespace-pre-wrap">
+{`-- 테마 및 설정 컬럼 추가
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS theme text DEFAULT 'dark';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS settings jsonb DEFAULT '{"push": true, "email": false, "browser": true}'::jsonb;`}
+                    </pre>
+                  </div>
+                  
+                  <a href="https://supabase.com/dashboard/project/cysrtusjyexbhlzmrhgl/sql/new" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-6 py-3 bg-[#007AFF] text-white rounded-xl text-sm font-bold transition-all shadow-lg hover:scale-105 active:scale-95">
+                    Supabase SQL Editor 열기 <ExternalLink size={14} />
+                  </a>
+               </div>
+
                <div className="p-10 glass rounded-[48px] border-white/10 bg-gradient-to-br from-yellow-500/10 to-transparent">
                   <div className="flex items-center gap-4 mb-6">
                     <ShieldAlert className="text-yellow-500" size={32} />
