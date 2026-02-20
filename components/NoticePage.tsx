@@ -85,12 +85,22 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
     try {
-      const { error: deleteError } = await supabase.from('notices').delete().eq('id', id);
+      const { data, error: deleteError } = await supabase
+        .from('notices')
+        .delete()
+        .eq('id', id)
+        .select();
+
       if (deleteError) throw deleteError;
+
+      if (!data || data.length === 0) {
+        throw new Error('데이터베이스 권한 정책(RLS)에 의해 삭제가 거부되었습니다. 관리자 권한을 확인하세요.');
+      }
+
       setNotices(prev => prev.filter(n => n.id !== id));
       alert('삭제되었습니다.');
     } catch (err: any) {
-      alert(`삭제 실패: ${err.message}`);
+      alert(`삭제 실패: ${err.message}\n\n(참고: Supabase SQL Editor에서 DELETE 정책을 설정해야 합니다.)`);
     }
   };
 

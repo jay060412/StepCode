@@ -104,11 +104,22 @@ export const Admin: React.FC = () => {
     e.preventDefault();
     if (!window.confirm('질문을 삭제하시겠습니까?')) return;
     try {
-      const { error } = await supabase.from('support_questions').delete().eq('id', questionId);
+      const { data, error } = await supabase
+        .from('support_questions')
+        .delete()
+        .eq('id', questionId)
+        .select();
+
       if (error) throw error;
+
+      if (!data || data.length === 0) {
+        throw new Error('데이터베이스 권한 정책(RLS)에 의해 삭제가 거부되었습니다. 관리자 권한을 확인하세요.');
+      }
+
       setQuestions(prev => prev.filter(q => q.id !== questionId));
+      alert('질문이 삭제되었습니다.');
     } catch (err: any) {
-      alert(`삭제 실패: ${err.message}`);
+      alert(`삭제 실패: ${err.message}\n\n(참고: Supabase SQL Editor에서 DELETE 정책을 설정해야 합니다.)`);
     }
   };
 
