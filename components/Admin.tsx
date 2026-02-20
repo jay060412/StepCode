@@ -146,30 +146,27 @@ export const Admin: React.FC = () => {
   };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
-    if (!window.confirm(`[주의] '${userName}' 학습자의 모든 학습 데이터(프로필)를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+    if (!window.confirm(`[주의] '${userName}' 학습자의 계정 및 모든 데이터를 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
     
     try {
-      // RLS 정책 확인을 위해 select() 추가하여 실제 삭제 여부 확인
-      const { data, error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId)
-        .select();
+      setIsLoading(true);
+      const response = await fetch(`/api/admin/delete-user/${userId}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
-      
-      // 삭제된 데이터가 없다면 권한 문제일 가능성이 큼
-      if (!data || data.length === 0) {
-        throw new Error('데이터베이스 권한 정책(RLS)에 의해 삭제가 거부되었습니다. 관리자 권한을 확인하세요.');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || '삭제 요청 실패');
       }
       
       setUsers(prev => prev.filter(u => u.id !== userId));
-      alert('학습자 데이터가 성공적으로 삭제되었습니다.');
-      // 통계 재계산
+      alert('학습자 계정과 데이터가 성공적으로 삭제되었습니다.');
       fetchAdminData();
     } catch (err: any) {
       console.error('Admin Delete Error:', err);
-      alert(`삭제 실패: ${err.message}\n\n(참고: Supabase SQL Editor에서 DELETE 정책을 설정해야 합니다.)`);
+      alert(`삭제 실패: ${err.message}\n\n(참고: 서버에 SUPABASE_SERVICE_ROLE_KEY가 설정되어 있어야 합니다.)`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
