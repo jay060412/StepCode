@@ -2,7 +2,12 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { exec } from "child_process";
+import fs from "fs";
+import path from "path";
+import { promisify } from "util";
 
+const execAsync = promisify(exec);
 dotenv.config();
 
 async function startServer() {
@@ -11,13 +16,65 @@ async function startServer() {
 
   app.use(express.json());
 
+  // API routes
+  app.post("/api/execute/c", async (req, res) => {
+    const { code, inputs = [] } = req.body;
+    const tempDir = path.join(process.cwd(), "temp");
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+
+    const fileName = `code_${Date.now()}`;
+    const cPath = path.join(tempDir, `${fileName}.c`);
+    const outPath = path.join(tempDir, `${fileName}.out`);
+
+    try {
+      fs.writeFileSync(cPath, code);
+
+      // Try TCC first
+      let compileCmd = `tcc -o ${outPath} ${cPath}`;
+      let compileSuccess = false;
+      let compileError = "";
+
+      try {
+        await execAsync(compileCmd);
+        compileSuccess = true;
+      } catch (e: any) {
+        compileError = e.stderr || e.message;
+        // Fallback to Clang
+        try {
+          compileCmd = `clang -o ${outPath} ${cPath}`;
+          await execAsync(compileCmd);
+          compileSuccess = true;
+        } catch (e2: any) {
+          compileError = e2.stderr || e2.message;
+        }
+      }
+
+      if (!compileSuccess) {
+        return res.json({ success: false, error: `Compilation Error:\n${compileError}` });
+      }
+
+      // Execute with inputs (simple one-shot for now as per "fetch" request)
+      // In a real Docker env, we'd use 'docker run'
+      const inputStr = inputs.join("\n");
+      const { stdout, stderr } = await execAsync(`echo "${inputStr}" | ${outPath}`);
+
+      res.json({ success: true, stdout, stderr });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    } finally {
+      // Cleanup
+      [cPath, outPath].forEach(p => {
+        if (fs.existsSync(p)) fs.unlinkSync(p);
+      });
+    }
+  });
+
   // Supabase Admin Client (Service Role Key required)
   const supabaseAdmin = createClient(
     process.env.VITE_SUPABASE_URL || 'https://cysrtusjyexbhlzmrhgl.supabase.co',
     process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   );
 
-  // API routes
   app.delete("/api/admin/delete-user/:id", async (req, res) => {
     const { id } = req.params;
     

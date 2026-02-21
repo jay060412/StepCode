@@ -176,6 +176,7 @@ export const Playground: React.FC<PlaygroundProps> = ({ user }) => {
   }, [user, fetchSnippets]);
 
   const handleLangChange = (newLang: Language) => {
+    if (isExecuting) stopCode();
     setLang(newLang);
     setIsLangOpen(false);
     if (newLang === 'c') {
@@ -317,50 +318,87 @@ __transformed_code__ = __transform_code__(js.user_code)
         }
       }
     } else if (lang === 'c') {
-      const systemInstruction = `You are a strict C language terminal (GCC 13.2). 
-Your task is to act ONLY as the output terminal of the provided C code.
+      const inputs: string[] = [];
+      
+      const runServerSide = async (currentInputs: string[]) => {
+        try {
+          const response = await fetch('/api/execute/c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, inputs: currentInputs })
+          });
+          const data = await response.json();
+          if (data.success) {
+            return { type: 'success', output: data.stdout + (data.stderr || '') };
+          } else {
+            return { type: 'error', message: data.error };
+          }
+        } catch (e) {
+          return { type: 'error', message: 'Server connection failed' };
+        }
+      };
 
-STRICT RULES:
-1. ONLY output what the program would print to stdout/stderr.
-2. NEVER explain the code. NEVER provide "Tutor's Notes" or "Debugging Tips".
-3. If the code needs input (scanf, etc.), output EXACTLY: "[INPUT_REQUIRED: prompt_text]".
-4. If the user provides empty input for a function that requires non-empty input (like scanf %s), simply output "[INPUT_REQUIRED: ...]" again to wait for valid input. DO NOT explain why.
-5. If there is a crash or error, output ONLY the GCC error message.
-6. When the program ends, output "[EXECUTION_FINISHED]".
-7. NO MARKDOWN, NO FORMATTING, ONLY RAW TEXT.`;
+      const systemInstruction = `Strict C terminal (Clang 17).
+Output ONLY the terminal text. No explanations. No markdown.
+If input is needed, output "[INPUT_REQUIRED: prompt]".
+When finished, output "[EXECUTION_FINISHED]".`;
 
-      const prompt = `Code to execute:\n${code}`;
+      const getSimulation = async (currentInputs: string[]) => {
+        const inputContext = currentInputs.length > 0 
+          ? `\nUser has already provided these inputs in order:\n${currentInputs.map((inp, i) => `${i+1}. "${inp}"`).join('\n')}\n\nPlease simulate the execution using these inputs.`
+          : "";
+        
+        const prompt = `Code:\n${code}${inputContext}\n\nExecute and show the terminal output.`;
+        return await askGemini(prompt, "C Terminal Mode", systemInstruction);
+      };
 
       try {
-        let currentSimulation = await askGemini(prompt, "C Terminal Mode", systemInstruction);
+        // First, try real execution on the server
+        const result = await runServerSide(inputs);
         
-        while (currentSimulation.includes("[INPUT_REQUIRED:")) {
-          const promptMatch = currentSimulation.match(/\[INPUT_REQUIRED: (.*?)\]/);
-          const promptText = promptMatch ? promptMatch[1] : "Input required";
+        if (result.type === 'success') {
+          outputBufferRef.current = result.output;
+          setOutput(result.output);
+        } else {
+          // Fallback to AI simulation if server-side execution fails (e.g., no compiler in sandbox)
+          let currentSimulation = await getSimulation(inputs);
           
-          const parts = currentSimulation.split(/\[INPUT_REQUIRED:.*?\]/);
-          outputBufferRef.current += parts[0];
-          setOutput(outputBufferRef.current);
-          
-          const userInput = await new Promise<string>((resolve) => {
-            setIsWaitingForInput(true);
-            inputResolveRef.current = resolve;
-          });
-          
-          const nextPrompt = `USER INPUT: "${userInput}"
-ACTION: Continue execution. 
-REMINDER: DO NOT EXPLAIN. ONLY OUTPUT PROGRAM STDOUT. 
-If still waiting for input, repeat "[INPUT_REQUIRED: ...]".
+          while (currentSimulation.includes("[INPUT_REQUIRED:")) {
+            const parts = currentSimulation.split(/\[INPUT_REQUIRED:.*?\]/);
+            setOutput(parts[0]);
+            outputBufferRef.current = parts[0];
+            
+            const userInput = await new Promise<string>((resolve) => {
+              setIsWaitingForInput(true);
+              inputResolveRef.current = resolve;
+            });
 
-Current state:
-${currentSimulation}`;
-          currentSimulation = await askGemini(nextPrompt, "C Terminal Mode", systemInstruction);
+            if (!inputResolveRef.current && !isExecuting) break;
+            
+            inputs.push(userInput);
+            outputBufferRef.current += userInput + "\n";
+            setOutput(outputBufferRef.current);
+
+            // Try server-side again with new input
+            const nextResult = await runServerSide(inputs);
+            if (nextResult.type === 'success') {
+              currentSimulation = nextResult.output;
+              break; // Exit loop and show final output
+            } else {
+              currentSimulation = await getSimulation(inputs);
+            }
+            
+            if (!isExecuting) break;
+          }
+          
+          if (isExecuting) {
+            const finalOutput = currentSimulation.replace("[EXECUTION_FINISHED]", "");
+            setOutput(finalOutput);
+            outputBufferRef.current = finalOutput;
+          }
         }
-        
-        outputBufferRef.current += currentSimulation.replace("[EXECUTION_FINISHED]", "");
-        setOutput(outputBufferRef.current);
       } catch (e) {
-        setOutput("시뮬레이션 중 오류가 발생했습니다.");
+        setOutput("실행 중 오류가 발생했습니다.");
       }
     }
     setIsExecuting(false);

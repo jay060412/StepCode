@@ -1,5 +1,5 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 
 /**
  * StepCode Service - Gemini AI Implementation
@@ -16,6 +16,7 @@ export const askGemini = async (prompt: string, context?: string, systemInstruct
       contents: context ? `Context: ${context}\n\nUser Question: ${prompt}` : prompt,
       config: {
         systemInstruction: systemInstruction || "You are a professional coding tutor. Answer the student's questions clearly and provide helpful debugging tips. Use markdown for code formatting.",
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
       }
     });
     
