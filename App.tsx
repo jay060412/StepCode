@@ -412,7 +412,7 @@ const App: React.FC = () => {
             )
           )}
           {activeRoute === AppRoute.QUESTION && <QuestionPage user={user} />}
-          {activeRoute === AppRoute.PLAYGROUND && <Playground />}
+          {activeRoute === AppRoute.PLAYGROUND && <Playground user={user} />}
           {activeRoute === AppRoute.STUDY_GUIDE && <StudyGuide onStartPython={() => handleSelectTrack(ALL_TRACKS.find(t=>t.id==='py_basic')!)} onViewCurriculum={() => setActiveRoute(AppRoute.CURRICULUM)} onStartAlgorithm={() => handleSelectTrack(ALL_TRACKS.find(t=>t.id==='algo_tutorial')!)} />}
           {activeRoute === AppRoute.GAP_FILLER && (
             <GapFiller 

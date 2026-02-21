@@ -1,12 +1,18 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal, Play, RotateCcw, Loader2, Sparkles, Code2, ChevronDown } from 'lucide-react';
+import { Terminal, Play, RotateCcw, Loader2, Sparkles, Code2, ChevronDown, Save, FolderOpen, Trash2, X } from 'lucide-react';
 import { askGemini } from '../services/geminiService';
+import { supabase } from '../lib/supabase';
+import { UserProfile, PlaygroundSnippet } from '../types';
 
 type Language = 'python' | 'c';
 
-export const Playground: React.FC = () => {
+interface PlaygroundProps {
+  user?: UserProfile;
+}
+
+export const Playground: React.FC<PlaygroundProps> = ({ user }) => {
   const [lang, setLang] = useState<Language>('python');
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [code, setCode] = useState('name = input("이름을 입력하세요: ")\nprint(f"안녕, {name}님!")');
@@ -19,12 +25,81 @@ export const Playground: React.FC = () => {
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const outputBufferRef = useRef<string>('');
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
-  const [inputPrompt, setInputPrompt] = useState('');
   const [inputValue, setInputValue] = useState('');
   const inputResolveRef = useRef<((value: string) => void) | null>(null);
   const outputEndRef = useRef<HTMLDivElement>(null);
+
+  // Save/Load states
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
+  const [snippetTitle, setSnippetTitle] = useState('');
+  const [snippets, setSnippets] = useState<PlaygroundSnippet[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingSnippets, setIsLoadingSnippets] = useState(false);
   
   const lineCount = Math.max(15, code.split('\n').length + 3);
+
+  const fetchSnippets = useCallback(async () => {
+    if (!user) return;
+    setIsLoadingSnippets(true);
+    try {
+      const { data, error } = await supabase
+        .from('playground_snippets')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      setSnippets(data || []);
+    } catch (err) {
+      console.error('Error fetching snippets:', err);
+    } finally {
+      setIsLoadingSnippets(false);
+    }
+  }, [user]);
+
+  const handleSaveSnippet = async () => {
+    if (!user || !snippetTitle.trim()) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from('playground_snippets').insert([
+        {
+          user_id: user.id,
+          title: snippetTitle.trim(),
+          code,
+          language: lang
+        }
+      ]);
+      if (error) throw error;
+      alert('코드가 저장되었습니다.');
+      setIsSaveModalOpen(false);
+      setSnippetTitle('');
+      fetchSnippets();
+    } catch (err: any) {
+      alert(`저장 실패: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteSnippet = async (id: string) => {
+    if (!window.confirm('정말로 이 코드를 삭제하시겠습니까?')) return;
+    try {
+      const { error } = await supabase.from('playground_snippets').delete().eq('id', id);
+      if (error) throw error;
+      setSnippets(prev => prev.filter(s => s.id !== id));
+    } catch (err: any) {
+      alert(`삭제 실패: ${err.message}`);
+    }
+  };
+
+  const handleLoadSnippet = (snippet: PlaygroundSnippet) => {
+    if (window.confirm('현재 작성 중인 코드가 덮어씌워집니다. 계속하시겠습니까?')) {
+      setCode(snippet.code);
+      setLang(snippet.language as Language);
+      setIsLoadModalOpen(false);
+      setOutput('');
+      outputBufferRef.current = '';
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Tab') {
@@ -36,7 +111,6 @@ export const Playground: React.FC = () => {
       const newValue = value.substring(0, start) + "    " + value.substring(end);
       setCode(newValue);
       
-      // Selection update needs to happen after state update
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 4;
@@ -52,7 +126,6 @@ export const Playground: React.FC = () => {
       setInputValue('');
       setIsWaitingForInput(false);
       
-      // Add the input to the output log
       outputBufferRef.current += value + "\n";
       setOutput(outputBufferRef.current);
       
@@ -61,14 +134,12 @@ export const Playground: React.FC = () => {
     }
   };
 
-  // 스크롤 동기화
   useEffect(() => {
     if (outputEndRef.current) {
       outputEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [output, isWaitingForInput]);
 
-  // Pyodide 초기화 및 입출력 설정
   useEffect(() => {
     if (lang === 'python') {
       const initPyodide = async () => {
@@ -79,7 +150,6 @@ export const Playground: React.FC = () => {
               indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/"
             });
 
-            // 1. 표준 출력(Stdout) 및 에러(Stderr) 설정
             const handleOutput = (text: string) => {
               outputBufferRef.current += text;
               setOutput(outputBufferRef.current);
@@ -98,6 +168,12 @@ export const Playground: React.FC = () => {
       initPyodide();
     }
   }, [lang]);
+
+  useEffect(() => {
+    if (user) {
+      fetchSnippets();
+    }
+  }, [user, fetchSnippets]);
 
   const handleLangChange = (newLang: Language) => {
     setLang(newLang);
@@ -133,7 +209,6 @@ export const Playground: React.FC = () => {
 
     if (lang === 'python' && pyodideRef.current) {
       try {
-        // 1. 비동기 입력을 위한 JS 함수 노출
         (window as any).handle_output = (text: string) => {
           outputBufferRef.current += text;
           setOutput(outputBufferRef.current);
@@ -146,7 +221,6 @@ export const Playground: React.FC = () => {
           });
         };
 
-        // 2. 파이썬 코드 변환 및 실행 준비
         const wrapperCode = `
 import ast
 import js
@@ -212,8 +286,6 @@ def __transform_code__(user_code):
         transformed_tree = transformer.visit(tree)
         ast.fix_missing_locations(transformed_tree)
         
-        # 최상위 레벨의 코드를 async 함수로 감싸서 실행할 수 있게 함
-        # ast.unparse는 Python 3.9+에서 지원
         code_str = ast.unparse(transformed_tree)
         return code_str
     except Exception as e:
@@ -229,7 +301,6 @@ __transformed_code__ = __transform_code__(js.user_code)
         if (transformedCode.startsWith("# Error")) {
             await pyodideRef.current.runPythonAsync(code);
         } else {
-            // 변환된 코드가 await를 포함하므로 runPythonAsync로 실행
             await pyodideRef.current.runPythonAsync(transformedCode);
         }
         
@@ -240,17 +311,54 @@ __transformed_code__ = __transform_code__(js.user_code)
         const errorMsg = e.message;
         setOutput(outputBufferRef.current + `\n❌ Error: ${errorMsg}`);
         
-        // 에러 라인 파싱
         const lineMatch = errorMsg.match(/line (\d+)/);
         if (lineMatch) {
           setErrorLine(parseInt(lineMatch[1]));
         }
       }
     } else if (lang === 'c') {
-      const prompt = `C언어 코드를 시뮬레이션 해주세요:\n${code}`;
+      const systemInstruction = `You are a strict C language terminal (GCC 13.2). 
+Your task is to act ONLY as the output terminal of the provided C code.
+
+STRICT RULES:
+1. ONLY output what the program would print to stdout/stderr.
+2. NEVER explain the code. NEVER provide "Tutor's Notes" or "Debugging Tips".
+3. If the code needs input (scanf, etc.), output EXACTLY: "[INPUT_REQUIRED: prompt_text]".
+4. If the user provides empty input for a function that requires non-empty input (like scanf %s), simply output "[INPUT_REQUIRED: ...]" again to wait for valid input. DO NOT explain why.
+5. If there is a crash or error, output ONLY the GCC error message.
+6. When the program ends, output "[EXECUTION_FINISHED]".
+7. NO MARKDOWN, NO FORMATTING, ONLY RAW TEXT.`;
+
+      const prompt = `Code to execute:\n${code}`;
+
       try {
-        const result = await askGemini(prompt, "C Language Simulation Mode");
-        setOutput(result);
+        let currentSimulation = await askGemini(prompt, "C Terminal Mode", systemInstruction);
+        
+        while (currentSimulation.includes("[INPUT_REQUIRED:")) {
+          const promptMatch = currentSimulation.match(/\[INPUT_REQUIRED: (.*?)\]/);
+          const promptText = promptMatch ? promptMatch[1] : "Input required";
+          
+          const parts = currentSimulation.split(/\[INPUT_REQUIRED:.*?\]/);
+          outputBufferRef.current += parts[0];
+          setOutput(outputBufferRef.current);
+          
+          const userInput = await new Promise<string>((resolve) => {
+            setIsWaitingForInput(true);
+            inputResolveRef.current = resolve;
+          });
+          
+          const nextPrompt = `USER INPUT: "${userInput}"
+ACTION: Continue execution. 
+REMINDER: DO NOT EXPLAIN. ONLY OUTPUT PROGRAM STDOUT. 
+If still waiting for input, repeat "[INPUT_REQUIRED: ...]".
+
+Current state:
+${currentSimulation}`;
+          currentSimulation = await askGemini(nextPrompt, "C Terminal Mode", systemInstruction);
+        }
+        
+        outputBufferRef.current += currentSimulation.replace("[EXECUTION_FINISHED]", "");
+        setOutput(outputBufferRef.current);
       } catch (e) {
         setOutput("시뮬레이션 중 오류가 발생했습니다.");
       }
@@ -286,7 +394,9 @@ __transformed_code__ = __transform_code__(js.user_code)
           <h2 className="text-xl lg:text-4xl font-bold tracking-tight truncate">연습장</h2>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-           <button onClick={() => setCode('')} className="p-2.5 lg:p-4 glass rounded-xl lg:rounded-2xl text-gray-500 hover:text-white transition-all shrink-0"><RotateCcw size={18} /></button>
+           <button onClick={() => { fetchSnippets(); setIsLoadModalOpen(true); }} className="p-2.5 lg:p-4 glass rounded-xl lg:rounded-2xl text-gray-500 hover:text-[#007AFF] transition-all shrink-0" title="불러오기"><FolderOpen size={18} /></button>
+           <button onClick={() => setIsSaveModalOpen(true)} className="p-2.5 lg:p-4 glass rounded-xl lg:rounded-2xl text-gray-500 hover:text-green-500 transition-all shrink-0" title="저장하기"><Save size={18} /></button>
+           <button onClick={() => setCode('')} className="p-2.5 lg:p-4 glass rounded-xl lg:rounded-2xl text-gray-500 hover:text-white transition-all shrink-0" title="초기화"><RotateCcw size={18} /></button>
            {isExecuting ? (
              <button onClick={stopCode} className="flex-1 sm:flex-none px-6 lg:px-10 py-2.5 lg:py-4 bg-red-500 text-white rounded-xl lg:rounded-2xl font-bold flex items-center justify-center gap-2 lg:gap-3 shadow-2xl active:scale-95 transition-all text-sm lg:text-base">
                <RotateCcw size={18} /> 중지
@@ -361,6 +471,66 @@ __transformed_code__ = __transform_code__(js.user_code)
            </div>
         </div>
       </div>
+
+      {/* Save Modal */}
+      <AnimatePresence>
+        {isSaveModalOpen && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSaveModalOpen(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md glass p-8 rounded-[32px] border-white/10 bg-[#0a0a0a] shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-6">코드 저장하기</h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Snippet Title</label>
+                  <input value={snippetTitle} onChange={e => setSnippetTitle(e.target.value)} placeholder="코드의 이름을 입력하세요" className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white outline-none focus:border-[#007AFF]/50 transition-all" />
+                </div>
+                <button onClick={handleSaveSnippet} disabled={isSaving || !snippetTitle.trim()} className="w-full py-4 bg-[#007AFF] text-white rounded-xl font-black shadow-xl hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                  {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} 저장 완료
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Load Modal */}
+      <AnimatePresence>
+        {isLoadModalOpen && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsLoadModalOpen(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-2xl glass p-8 rounded-[32px] border-white/10 bg-[#0a0a0a] shadow-2xl max-h-[80vh] flex flex-col">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-black text-white">저장된 코드 불러오기</h3>
+                <button onClick={() => setIsLoadModalOpen(false)} className="p-2 text-gray-500 hover:text-white transition-all"><X size={24} /></button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+                {isLoadingSnippets ? (
+                  <div className="py-20 flex flex-col items-center justify-center gap-4">
+                    <Loader2 size={32} className="animate-spin text-[#007AFF]" />
+                    <p className="text-sm text-gray-500 font-bold">목록을 불러오는 중...</p>
+                  </div>
+                ) : snippets.length === 0 ? (
+                  <div className="py-20 text-center text-gray-500 italic">저장된 코드가 없습니다.</div>
+                ) : (
+                  snippets.map(s => (
+                    <div key={s.id} className="group flex items-center justify-between p-5 glass rounded-2xl border-white/5 hover:bg-white/5 transition-all">
+                      <div className="cursor-pointer flex-1" onClick={() => handleLoadSnippet(s)}>
+                        <h4 className="text-white font-bold mb-1">{s.title}</h4>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${s.language === 'python' ? 'bg-blue-500/10 text-blue-400' : 'bg-green-500/10 text-green-400'}`}>{s.language}</span>
+                          <span className="text-[10px] text-gray-600 font-medium">{new Date(s.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <button onClick={() => handleDeleteSnippet(s.id)} className="p-3 text-gray-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={18} /></button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

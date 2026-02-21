@@ -72,6 +72,16 @@ export interface CommunityComment {
   created_at: string;
 }
 
+export interface PlaygroundSnippet {
+  id: string;
+  user_id: string;
+  title: string;
+  code: string;
+  language: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ConceptPage {
   id: string;
   title: string;

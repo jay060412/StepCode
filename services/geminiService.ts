@@ -6,16 +6,16 @@ import { GoogleGenAI } from "@google/genai";
  * @google/genai SDK를 사용하여 AI 채점 및 인터랙션을 처리합니다.
  */
 
-export const askGemini = async (prompt: string, context?: string) => {
+export const askGemini = async (prompt: string, context?: string, systemInstruction?: string) => {
   // AI 인스턴스를 매 호출 시 생성하여 최신 환경 변수 반영
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview', // Complex task (coding tutor)
+      model: 'gemini-3-flash-preview', // Use flash for faster/more available response
       contents: context ? `Context: ${context}\n\nUser Question: ${prompt}` : prompt,
       config: {
-        systemInstruction: "You are a professional coding tutor. Answer the student's questions clearly and provide helpful debugging tips. Use markdown for code formatting.",
+        systemInstruction: systemInstruction || "You are a professional coding tutor. Answer the student's questions clearly and provide helpful debugging tips. Use markdown for code formatting.",
       }
     });
     
