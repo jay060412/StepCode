@@ -6,11 +6,11 @@ import {
   BarChart3, Loader2, RefreshCw, 
   MessageCircle, UserX, UserCheck, 
   Send, AlertCircle, Search, Filter, 
-  MessageSquare, Info, Database, Lock, ShieldAlert, Trash2,
+  MessageSquare, Info, Database, Lock, ShieldAlert, Trash2, Edit3, Save,
   ExternalLink, HelpCircle, Inbox, CheckCircle, Settings, UserMinus
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { SupportQuestion, UserProfile, UserRole } from '../types';
+import { SupportQuestion, UserProfile, UserRole, CommunityQuestion } from '../types';
 import { FormattedText } from './FormattedText';
 
 const MotionDiv = motion.div as any;
@@ -26,12 +26,17 @@ export const Admin: React.FC = () => {
   const [stats, setStats] = useState<UserStats>({ totalUsers: 0, avgProgress: 0, avgLevel: 0, activeToday: 0 });
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [questions, setQuestions] = useState<SupportQuestion[]>([]);
+  const [communityQuestions, setCommunityQuestions] = useState<CommunityQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'questions'>('stats');
   const [userSearch, setUserSearch] = useState('');
-  const [questionSubTab, setQuestionSubTab] = useState<'pending' | 'resolved'>('pending');
+  const [questionSubTab, setQuestionSubTab] = useState<'pending' | 'resolved' | 'community'>('pending');
   const [answerInputs, setAnswerInputs] = useState<Record<string, string>>({});
+  
+  const [editingCommunityId, setEditingCommunityId] = useState<string | null>(null);
+  const [editCommunityTitle, setEditCommunityTitle] = useState('');
+  const [editCommunityContent, setEditCommunityContent] = useState('');
 
   const fetchAdminData = useCallback(async () => {
     setIsLoading(true);
@@ -77,6 +82,14 @@ export const Admin: React.FC = () => {
       if (qError) throw qError;
       setQuestions(qData || []);
 
+      const { data: cData, error: cError } = await supabase
+        .from('community_questions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (cError) throw cError;
+      setCommunityQuestions(cData || []);
+
     } catch (err: any) {
       console.error("Admin Data Fetch Error:", err);
       setError(err.message || '데이터 연동 중 오류 발생');
@@ -119,7 +132,46 @@ export const Admin: React.FC = () => {
       setQuestions(prev => prev.filter(q => q.id !== questionId));
       alert('질문이 삭제되었습니다.');
     } catch (err: any) {
-      alert(`삭제 실패: ${err.message}\n\n(참고: Supabase SQL Editor에서 DELETE 정책을 설정해야 합니다.)`);
+      alert(`삭제 실패: ${err.message}`);
+    }
+  };
+
+  const handleDeleteCommunityQuestion = async (id: string) => {
+    if (!window.confirm('정말로 이 커뮤니티 질문을 삭제하시겠습니까?')) return;
+    try {
+      const { error } = await supabase.from('community_questions').delete().eq('id', id);
+      if (error) throw error;
+      setCommunityQuestions(prev => prev.filter(q => q.id !== id));
+      alert('커뮤니티 질문이 삭제되었습니다.');
+    } catch (err: any) {
+      alert(`삭제 실패: ${err.message}`);
+    }
+  };
+
+  const handleStartEditCommunity = (q: CommunityQuestion) => {
+    setEditingCommunityId(q.id);
+    setEditCommunityTitle(q.title);
+    setEditCommunityContent(q.content);
+  };
+
+  const handleUpdateCommunity = async (id: string) => {
+    if (!editCommunityTitle.trim() || !editCommunityContent.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('community_questions')
+        .update({
+          title: editCommunityTitle.trim(),
+          content: editCommunityContent.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      if (error) throw error;
+      
+      setCommunityQuestions(prev => prev.map(q => q.id === id ? { ...q, title: editCommunityTitle.trim(), content: editCommunityContent.trim() } : q));
+      setEditingCommunityId(null);
+      alert('수정되었습니다.');
+    } catch (err: any) {
+      alert(`수정 실패: ${err.message}`);
     }
   };
 
@@ -216,16 +268,6 @@ export const Admin: React.FC = () => {
         <AnimatePresence mode="wait">
           {activeTab === 'stats' && (
             <div className="space-y-8">
-              {stats.totalUsers < 3 && (
-                <MotionDiv initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-6 glass border-yellow-500/30 bg-yellow-500/5 rounded-3xl flex items-center gap-4">
-                   <div className="w-10 h-10 rounded-xl bg-yellow-500/20 text-yellow-500 flex items-center justify-center shrink-0"><AlertCircle size={20} /></div>
-                   <div className="flex-1">
-                      <p className="text-sm font-bold text-yellow-500">데이터 불일치 감지</p>
-                      <p className="text-xs text-gray-400 leading-relaxed">Auth에는 유저가 있지만, 프로필 테이블에는 {stats.totalUsers}명만 등록되어 있습니다. 해당 유저가 처음 로그인을 완료해야 프로필이 생성되어 집계됩니다.</p>
-                   </div>
-                </MotionDiv>
-              )}
-
               <MotionDiv key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="glass p-10 rounded-[40px] border-white/5 bg-gradient-to-br from-[#007AFF]/10 to-transparent">
                   <Users className="text-[#007AFF] mb-6" size={32} />
@@ -299,10 +341,59 @@ export const Admin: React.FC = () => {
               <div className="flex items-center gap-2 p-1.5 glass rounded-2xl border-white/5 w-fit bg-white/5">
                 <button onClick={() => setQuestionSubTab('pending')} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionSubTab === 'pending' ? 'bg-orange-500 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}><Inbox size={14} /> 답변 대기 ({pendingQuestions.length})</button>
                 <button onClick={() => setQuestionSubTab('resolved')} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionSubTab === 'resolved' ? 'bg-green-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}><CheckCircle size={14} /> 답변 완료 ({resolvedQuestions.length})</button>
+                <button onClick={() => setQuestionSubTab('community')} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionSubTab === 'community' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}><Users size={14} /> 커뮤니티 ({communityQuestions.length})</button>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {displayQuestions.length === 0 ? (
+                {questionSubTab === 'community' ? (
+                  communityQuestions.length === 0 ? (
+                    <div className="col-span-full py-32 text-center glass rounded-[48px] border-dashed border-white/5">
+                      <MessageSquare size={48} className="mx-auto text-gray-800 mb-4 opacity-20" />
+                      <p className="text-gray-500">등록된 커뮤니티 질문이 없습니다.</p>
+                    </div>
+                  ) : (
+                    communityQuestions.map(q => (
+                      <div key={q.id} className="glass p-8 rounded-[40px] border-white/5 flex flex-col gap-6 relative transition-all group overflow-hidden bg-white/[0.01]">
+                        <div className="flex justify-between items-start relative z-10">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg bg-[#007AFF]">{q.user_name?.[0]}</div>
+                            <div><p className="font-bold text-white">{q.user_name}</p><p className="text-[10px] text-gray-500">{new Date(q.created_at).toLocaleString()}</p></div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => handleStartEditCommunity(q)} className="p-3 text-gray-700 hover:text-[#007AFF] transition-colors cursor-pointer rounded-xl hover:bg-white/5"><Edit3 size={20} /></button>
+                            <button onClick={() => handleDeleteCommunityQuestion(q.id)} className="p-3 text-gray-700 hover:text-red-500 transition-colors cursor-pointer rounded-xl hover:bg-red-500/10"><Trash2 size={20} /></button>
+                          </div>
+                        </div>
+                        
+                        {editingCommunityId === q.id ? (
+                          <div className="space-y-4 relative z-10">
+                            <input 
+                              value={editCommunityTitle}
+                              onChange={e => setEditCommunityTitle(e.target.value)}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white outline-none"
+                              placeholder="제목"
+                            />
+                            <textarea 
+                              value={editCommunityContent}
+                              onChange={e => setEditCommunityContent(e.target.value)}
+                              className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none custom-scrollbar"
+                              placeholder="내용"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <button onClick={() => setEditingCommunityId(null)} className="px-4 py-2 glass rounded-xl text-xs font-bold text-gray-500 cursor-pointer">취소</button>
+                              <button onClick={() => handleUpdateCommunity(q.id)} className="px-4 py-2 bg-[#007AFF] text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"><Save size={12} /> 저장</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-3 relative z-10">
+                            <h4 className="text-lg font-bold text-white">{q.title}</h4>
+                            <div className="bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner"><p className="text-gray-300 text-sm leading-relaxed italic">"{q.content}"</p></div>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )
+                ) : displayQuestions.length === 0 ? (
                   <div className="col-span-full py-32 text-center glass rounded-[48px] border-dashed border-white/5">
                     <MessageSquare size={48} className="mx-auto text-gray-800 mb-4 opacity-20" />
                     <p className="text-gray-500">해당하는 질문이 없습니다.</p>

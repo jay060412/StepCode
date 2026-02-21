@@ -52,6 +52,16 @@ export interface SupportQuestion {
   answered_at?: string;
 }
 
+export interface CommunityQuestion {
+  id: string;
+  user_id: string;
+  user_name: string;
+  title: string;
+  content: string;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface ConceptPage {
   id: string;
   title: string;
