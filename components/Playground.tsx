@@ -360,9 +360,14 @@ When finished, output "[EXECUTION_FINISHED]".`;
           outputBufferRef.current = result.output;
           setOutput(result.output);
         } else {
-          // Fallback to AI simulation if server-side execution fails (e.g., no compiler in sandbox)
+          // Fallback to AI simulation if server-side execution fails
+          // Cloudflare Pages 등 정적 호스팅 환경에서는 서버 API가 없으므로 이쪽으로 분기됩니다.
           let currentSimulation = await getSimulation(inputs);
           
+          if (currentSimulation === "INVALID_API_KEY" || currentSimulation === "ENGINE_CONFIG_ERROR") {
+            throw new Error("AI 엔진 초기화 실패. API 키 설정을 확인해주세요.");
+          }
+
           while (currentSimulation.includes("[INPUT_REQUIRED:")) {
             const parts = currentSimulation.split(/\[INPUT_REQUIRED:.*?\]/);
             setOutput(parts[0]);
@@ -379,11 +384,11 @@ When finished, output "[EXECUTION_FINISHED]".`;
             outputBufferRef.current += userInput + "\n";
             setOutput(outputBufferRef.current);
 
-            // Try server-side again with new input
+            // Try server-side again with new input, then fallback to AI
             const nextResult = await runServerSide(inputs);
             if (nextResult.type === 'success') {
               currentSimulation = nextResult.output;
-              break; // Exit loop and show final output
+              break;
             } else {
               currentSimulation = await getSimulation(inputs);
             }
@@ -397,8 +402,8 @@ When finished, output "[EXECUTION_FINISHED]".`;
             outputBufferRef.current = finalOutput;
           }
         }
-      } catch (e) {
-        setOutput("실행 중 오류가 발생했습니다.");
+      } catch (e: any) {
+        setOutput(`실행 중 오류가 발생했습니다: ${e.message || '알 수 없는 오류'}`);
       }
     }
     setIsExecuting(false);
