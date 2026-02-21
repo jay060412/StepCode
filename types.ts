@@ -62,6 +62,16 @@ export interface CommunityQuestion {
   updated_at?: string;
 }
 
+export interface CommunityComment {
+  id: string;
+  question_id: string;
+  user_id: string;
+  user_name: string;
+  content: string;
+  parent_id: string | null;
+  created_at: string;
+}
+
 export interface ConceptPage {
   id: string;
   title: string;

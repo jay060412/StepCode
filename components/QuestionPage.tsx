@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, MessageSquare, Clock, CheckCircle2, AlertCircle, Loader2, Sparkles, Bot, ShieldAlert, Trash2, Edit3, X, Save, Plus, Users, Shield } from 'lucide-react';
+import { Send, MessageSquare, Clock, CheckCircle2, AlertCircle, Loader2, Sparkles, Bot, ShieldAlert, Trash2, Edit3, X, Save, Plus, Users, Shield, CornerDownRight, Reply } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { UserProfile, SupportQuestion, CommunityQuestion } from '../types';
+import { UserProfile, SupportQuestion, CommunityQuestion, CommunityComment } from '../types';
 import { FormattedText } from './FormattedText';
 
 const MotionDiv = motion.div as any;
@@ -25,11 +25,33 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
   // Data states
   const [mySupportQuestions, setMySupportQuestions] = useState<SupportQuestion[]>([]);
   const [communityQuestions, setCommunityQuestions] = useState<CommunityQuestion[]>([]);
+  const [comments, setComments] = useState<Record<string, CommunityComment[]>>({});
   
+  // Comment input states
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [replyingTo, setReplyingTo] = useState<{questionId: string, commentId: string | null} | null>(null);
+
   // Edit states
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
+
+  // Detail view state
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+
+  const fetchComments = async (questionId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('community_comments')
+        .select('*')
+        .eq('question_id', questionId)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      setComments(prev => ({ ...prev, [questionId]: data || [] }));
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -52,6 +74,13 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
           throw error;
         }
         setCommunityQuestions(data || []);
+        
+        // Fetch comments for all questions
+        if (data) {
+          for (const q of data) {
+            fetchComments(q.id);
+          }
+        }
       }
     } catch (err) {
       console.error('Error fetching questions:', err);
@@ -112,6 +141,30 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
     }
   };
 
+  const handleCommentSubmit = async (questionId: string) => {
+    const commentContent = commentInputs[questionId];
+    if (!commentContent?.trim()) return;
+
+    try {
+      const { error } = await supabase.from('community_comments').insert([
+        {
+          question_id: questionId,
+          user_id: user.id,
+          user_name: user.name || 'Anonymous',
+          content: commentContent.trim(),
+          parent_id: replyingTo?.questionId === questionId ? replyingTo.commentId : null
+        }
+      ]);
+      if (error) throw error;
+
+      setCommentInputs(prev => ({ ...prev, [questionId]: '' }));
+      setReplyingTo(null);
+      await fetchComments(questionId);
+    } catch (err: any) {
+      alert(`댓글 등록 실패: ${err.message}`);
+    }
+  };
+
   const handleDelete = async (questionId: string, table: 'support_questions' | 'community_questions') => {
     if (!window.confirm('정말로 이 질문을 삭제하시겠습니까?')) return;
     
@@ -125,6 +178,17 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
       await fetchData();
     } catch (err: any) {
       alert(`삭제 실패: ${err.message}`);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string, questionId: string) => {
+    if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
+    try {
+      const { error } = await supabase.from('community_comments').delete().eq('id', commentId);
+      if (error) throw error;
+      await fetchComments(questionId);
+    } catch (err: any) {
+      alert(`댓글 삭제 실패: ${err.message}`);
     }
   };
 
@@ -219,9 +283,10 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                   layout
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="glass p-8 rounded-[40px] border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all flex flex-col gap-6 group"
+                  onClick={() => setSelectedQuestionId(q.id)}
+                  className="glass p-8 rounded-[40px] border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all flex flex-col gap-6 group cursor-pointer relative overflow-hidden"
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start relative z-10">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-[#007AFF]/20 text-[#007AFF] flex items-center justify-center font-bold">
                         {q.user_name[0]}
@@ -232,38 +297,24 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                       </div>
                     </div>
                     {q.user_id === user.id && (
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => handleStartEdit(q)} className="p-2 text-gray-500 hover:text-[#007AFF] transition-all cursor-pointer"><Edit3 size={16} /></button>
                         <button onClick={() => handleDelete(q.id, 'community_questions')} className="p-2 text-gray-500 hover:text-red-500 transition-all cursor-pointer"><Trash2 size={16} /></button>
                       </div>
                     )}
                   </div>
 
-                  {editingId === q.id ? (
-                    <div className="space-y-4">
-                      <input 
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        className="w-full bg-black/40 border border-[#007AFF]/30 rounded-xl p-4 text-sm text-white outline-none"
-                        placeholder="제목"
-                      />
-                      <textarea 
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        className="w-full h-32 bg-black/40 border border-[#007AFF]/30 rounded-2xl p-4 text-sm text-white outline-none"
-                        placeholder="내용"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => setEditingId(null)} className="px-4 py-2 glass rounded-xl text-xs font-bold text-gray-500 cursor-pointer">취소</button>
-                        <button onClick={() => handleUpdate(q.id, 'community_questions')} className="px-4 py-2 bg-[#007AFF] text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"><Save size={12} /> 저장</button>
-                      </div>
+                  <div className="space-y-3 relative z-10">
+                    <h4 className="text-xl font-bold text-white leading-tight line-clamp-1">{q.title}</h4>
+                    <p className="text-sm text-gray-400 font-light line-clamp-2 leading-relaxed">{q.content}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-2 relative z-10">
+                    <div className="flex items-center gap-2 text-[#007AFF] text-[10px] font-black uppercase tracking-widest">
+                      <MessageSquare size={14} /> 답변 {comments[q.id]?.length || 0}
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <h4 className="text-xl font-bold text-white leading-tight">{q.title}</h4>
-                      <p className="text-sm text-gray-400 font-light line-clamp-3 leading-relaxed">{q.content}</p>
-                    </div>
-                  )}
+                    <div className="text-[10px] font-bold text-gray-500 group-hover:text-white transition-colors">자세히 보기 →</div>
+                  </div>
                 </MotionDiv>
               ))
             ) : (
@@ -396,6 +447,131 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                   질문 제출하기
                 </button>
               </form>
+            </MotionDiv>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Community Question Detail Modal */}
+      <AnimatePresence>
+        {selectedQuestionId && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+            <MotionDiv 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedQuestionId(null)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            />
+            <MotionDiv 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-4xl glass p-8 lg:p-12 rounded-[48px] border-white/10 bg-[#0a0a0a] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+            >
+              <button 
+                onClick={() => setSelectedQuestionId(null)}
+                className="absolute top-8 right-8 p-3 text-gray-500 hover:text-white transition-all cursor-pointer z-50"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="overflow-y-auto custom-scrollbar pr-4">
+                {communityQuestions.find(q => q.id === selectedQuestionId) && (
+                  <div className="space-y-10">
+                    {/* Question Header */}
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-[#007AFF]/20 text-[#007AFF] flex items-center justify-center font-black text-2xl shadow-lg">
+                        {communityQuestions.find(q => q.id === selectedQuestionId)!.user_name[0]}
+                      </div>
+                      <div>
+                        <p className="text-white font-black text-xl">{communityQuestions.find(q => q.id === selectedQuestionId)!.user_name}</p>
+                        <p className="text-xs text-gray-500 font-medium">{new Date(communityQuestions.find(q => q.id === selectedQuestionId)!.created_at).toLocaleString()}</p>
+                      </div>
+                    </div>
+
+                    {/* Question Content */}
+                    <div className="space-y-6">
+                      <h3 className="text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
+                        {communityQuestions.find(q => q.id === selectedQuestionId)!.title}
+                      </h3>
+                      <div className="bg-white/[0.02] p-8 rounded-[32px] border border-white/5">
+                        <p className="text-gray-300 text-lg font-light leading-relaxed whitespace-pre-wrap">
+                          {communityQuestions.find(q => q.id === selectedQuestionId)!.content}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Comments Section */}
+                    <div className="space-y-8 pt-6 border-t border-white/5">
+                      <div className="flex items-center gap-3">
+                        <MessageSquare size={24} className="text-[#007AFF]" />
+                        <h5 className="text-xl font-bold text-white">답변 {comments[selectedQuestionId]?.length || 0}</h5>
+                      </div>
+
+                      <div className="space-y-6 pl-2 lg:pl-8 border-l-2 border-white/5">
+                        {comments[selectedQuestionId]?.map((c) => (
+                          <div key={c.id} className={`flex flex-col gap-3 ${c.parent_id ? 'ml-10 mt-2' : ''}`}>
+                            <div className="flex items-start gap-4 group">
+                              {c.parent_id && <CornerDownRight size={20} className="text-gray-600 mt-2 shrink-0" />}
+                              <div className="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                                {c.user_name[0]}
+                              </div>
+                              <div className="flex-1 bg-white/[0.03] p-5 rounded-3xl border border-white/5 group-hover:bg-white/[0.05] transition-all">
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-sm font-bold text-[#007AFF]">{c.user_name}</span>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-xs text-gray-600">{new Date(c.created_at).toLocaleString()}</span>
+                                    {c.user_id === user.id && (
+                                      <button onClick={() => handleDeleteComment(c.id, selectedQuestionId)} className="text-gray-600 hover:text-red-500 transition-colors cursor-pointer"><Trash2 size={14} /></button>
+                                    )}
+                                  </div>
+                                </div>
+                                <p className="text-base text-gray-300 font-light leading-relaxed">{c.content}</p>
+                                {!c.parent_id && (
+                                  <button 
+                                    onClick={() => setReplyingTo({questionId: selectedQuestionId, commentId: c.id})}
+                                    className="mt-3 text-xs font-bold text-gray-500 hover:text-[#007AFF] flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <Reply size={14} /> 답글 달기
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Comment Input */}
+                      <div className="mt-12 space-y-4 sticky bottom-0 bg-[#0a0a0a] pt-4">
+                        {replyingTo?.questionId === selectedQuestionId && (
+                          <div className="flex items-center justify-between bg-[#007AFF]/10 px-5 py-3 rounded-2xl border border-[#007AFF]/20">
+                            <span className="text-sm text-[#007AFF] font-bold flex items-center gap-2">
+                              <Reply size={16} /> 답글 작성 중...
+                            </span>
+                            <button onClick={() => setReplyingTo(null)} className="text-gray-500 hover:text-white"><X size={16} /></button>
+                          </div>
+                        )}
+                        <div className="flex gap-4">
+                          <textarea 
+                            value={commentInputs[selectedQuestionId] || ''}
+                            onChange={(e) => setCommentInputs(prev => ({ ...prev, [selectedQuestionId]: e.target.value }))}
+                            placeholder="답변이나 의견을 남겨주세요..."
+                            className="flex-1 bg-white/5 border border-white/10 rounded-[24px] p-5 text-base text-white outline-none focus:border-[#007AFF]/50 transition-all resize-none h-24 custom-scrollbar"
+                          />
+                          <button 
+                            onClick={() => handleCommentSubmit(selectedQuestionId)}
+                            disabled={!commentInputs[selectedQuestionId]?.trim()}
+                            className="px-8 bg-[#007AFF] text-white rounded-[24px] font-black hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-30 cursor-pointer flex items-center justify-center"
+                          >
+                            <Send size={24} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </MotionDiv>
           </div>
         )}
