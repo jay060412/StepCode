@@ -14,7 +14,57 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+  // Proxy route for external compiler to avoid Mixed Content (HTTPS -> HTTP) issues
+  app.post("/api/external-execute", async (req, res) => {
+    const { code, inputs = [] } = req.body;
+    const externalUrl = process.env.VITE_EXTERNAL_COMPILER_URL || 'http://play.wrd.kr:25860';
+    
+    // AbortController를 사용하여 10초 타임아웃 설정
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 컴파일 시간이 걸릴 수 있으므로 15초
+    
+    try {
+      console.log(`Forwarding request to: ${externalUrl}/execute`);
+      const response = await fetch(`${externalUrl}/execute`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ code, inputs }),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+      
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        console.error("External server returned non-JSON response:", text);
+        return res.status(response.status).json({
+          success: false,
+          error: `외부 서버 응답 형식 오류 (상태 코드: ${response.status}). 서버 콘솔을 확인해주세요.`
+        });
+      }
+      
+      res.status(response.status).json(data);
+    } catch (error: any) {
+      clearTimeout(timeout);
+      console.error("Proxy error:", error);
+      const isTimeout = error.name === 'AbortError';
+      res.status(500).json({ 
+        success: false, 
+        error: isTimeout ? "외부 서버 응답 시간 초과 (15초)" : `외부 컴파일 서버 연결 실패: ${error.message}` 
+      });
+    }
+  });
 
   // API routes
   app.post("/api/execute/c", async (req, res) => {
@@ -29,38 +79,47 @@ async function startServer() {
     try {
       fs.writeFileSync(cPath, code);
 
-      // Try TCC
-      let compileCmd = `tcc -o ${outPath} ${cPath}`;
-      let compileSuccess = false;
-      let compileError = "";
+      // Try compilers in order: TCC -> Clang -> GCC
+      const compilers = [
+        { name: "TCC", cmd: (out: string, src: string) => `tcc -o ${out} ${src}` },
+        { name: "Clang", cmd: (out: string, src: string) => `clang -o ${out} ${src}` },
+        { name: "GCC", cmd: (out: string, src: string) => `gcc -o ${out} ${src}` }
+      ];
 
-      try {
-        await execAsync(compileCmd);
-        compileSuccess = true;
-      } catch (e: any) {
-        compileError = e.stderr || e.message;
-        // Fallback to Clang if TCC fails or is missing
+      let compileSuccess = false;
+      let lastError = "";
+      let usedCompiler = "";
+
+      for (const compiler of compilers) {
         try {
-          compileCmd = `clang -o ${outPath} ${cPath}`;
-          await execAsync(compileCmd);
+          await execAsync(compiler.cmd(outPath, cPath));
           compileSuccess = true;
-        } catch (e2: any) {
-          compileError = `TCC Error: ${compileError}\nClang Error: ${e2.stderr || e2.message}`;
+          usedCompiler = compiler.name;
+          break;
+        } catch (e: any) {
+          lastError += `${compiler.name} Error: ${e.stderr || e.message}\n`;
         }
       }
 
       if (!compileSuccess) {
-        return res.json({ success: false, error: `Compilation Error:\n${compileError}` });
+        return res.json({ 
+          success: false, 
+          error: `모든 컴파일러 시도 실패:\n${lastError}\n\n서버에 컴파일러가 설치되어 있는지 확인해주세요.` 
+        });
       }
 
-      // Execute with inputs (simple one-shot for now as per "fetch" request)
-      // In a real Docker env, we'd use 'docker run'
+      // Execute with inputs
       const inputStr = inputs.join("\n");
-      const { stdout, stderr } = await execAsync(`echo "${inputStr}" | ${outPath}`);
+      // Use a timeout to prevent infinite loops
+      const { stdout, stderr } = await execAsync(`echo "${inputStr}" | ${outPath}`, { timeout: 5000 });
 
-      res.json({ success: true, stdout, stderr });
+      res.json({ success: true, stdout, stderr, compiler: usedCompiler });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      const isTimeout = error.signal === 'SIGTERM';
+      res.json({ 
+        success: false, 
+        error: isTimeout ? "실행 시간 초과 (무한 루프 가능성)" : error.message 
+      });
     } finally {
       // Cleanup
       [cPath, outPath].forEach(p => {

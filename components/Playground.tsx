@@ -322,85 +322,33 @@ __transformed_code__ = __transform_code__(js.user_code)
       
       const runServerSide = async (currentInputs: string[]) => {
         try {
-          const response = await fetch('/api/execute/c', {
+          // 브라우저의 Mixed Content 차단을 피하기 위해 백엔드 프록시(/api/external-execute)를 거쳐서 호출합니다.
+          const response = await fetch('/api/external-execute', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code, inputs: currentInputs })
           });
           const data = await response.json();
           if (data.success) {
-            return { type: 'success', output: data.stdout + (data.stderr || '') };
+            return { type: 'success', output: data.stdout + (data.stderr || ''), compiler: data.compiler };
           } else {
             return { type: 'error', message: data.error };
           }
         } catch (e) {
-          return { type: 'error', message: 'Server connection failed' };
+          return { type: 'error', message: '컴파일 서버 연결 실패 (백엔드 프록시 오류)' };
         }
       };
 
-      const systemInstruction = `Strict C terminal (TCC - Tiny C Compiler).
-Output ONLY the terminal text. No explanations. No markdown.
-If input is needed, output "[INPUT_REQUIRED: prompt]".
-When finished, output "[EXECUTION_FINISHED]".`;
-
-      const getSimulation = async (currentInputs: string[]) => {
-        const inputContext = currentInputs.length > 0 
-          ? `\nUser has already provided these inputs in order:\n${currentInputs.map((inp, i) => `${i+1}. "${inp}"`).join('\n')}\n\nPlease simulate the execution using these inputs.`
-          : "";
-        
-        const prompt = `Code:\n${code}${inputContext}\n\nExecute and show the terminal output.`;
-        return await askGemini(prompt, "C Terminal Mode", systemInstruction);
-      };
-
       try {
-        // First, try real execution on the server
+        // 실제 서버에서 컴파일 및 실행 시도
         const result = await runServerSide(inputs);
         
         if (result.type === 'success') {
           outputBufferRef.current = result.output;
           setOutput(result.output);
         } else {
-          // Fallback to AI simulation if server-side execution fails
-          // Cloudflare Pages 등 정적 호스팅 환경에서는 서버 API가 없으므로 이쪽으로 분기됩니다.
-          let currentSimulation = await getSimulation(inputs);
-          
-          if (currentSimulation === "INVALID_API_KEY" || currentSimulation === "ENGINE_CONFIG_ERROR") {
-            throw new Error("AI 엔진 초기화 실패. API 키 설정을 확인해주세요.");
-          }
-
-          while (currentSimulation.includes("[INPUT_REQUIRED:")) {
-            const parts = currentSimulation.split(/\[INPUT_REQUIRED:.*?\]/);
-            setOutput(parts[0]);
-            outputBufferRef.current = parts[0];
-            
-            const userInput = await new Promise<string>((resolve) => {
-              setIsWaitingForInput(true);
-              inputResolveRef.current = resolve;
-            });
-
-            if (!inputResolveRef.current && !isExecuting) break;
-            
-            inputs.push(userInput);
-            outputBufferRef.current += userInput + "\n";
-            setOutput(outputBufferRef.current);
-
-            // Try server-side again with new input, then fallback to AI
-            const nextResult = await runServerSide(inputs);
-            if (nextResult.type === 'success') {
-              currentSimulation = nextResult.output;
-              break;
-            } else {
-              currentSimulation = await getSimulation(inputs);
-            }
-            
-            if (!isExecuting) break;
-          }
-          
-          if (isExecuting) {
-            const finalOutput = currentSimulation.replace("[EXECUTION_FINISHED]", "");
-            setOutput(finalOutput);
-            outputBufferRef.current = finalOutput;
-          }
+          // 컴파일 또는 실행 실패 시 에러 메시지만 출력 (AI 폴백 제거)
+          setOutput(`❌ 오류 발생:\n${result.message}`);
         }
       } catch (e: any) {
         setOutput(`실행 중 오류가 발생했습니다: ${e.message || '알 수 없는 오류'}`);

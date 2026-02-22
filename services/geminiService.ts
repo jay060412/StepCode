@@ -8,7 +8,15 @@ import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 
 export const askGemini = async (prompt: string, context?: string, systemInstruction?: string) => {
   // AI 인스턴스를 매 호출 시 생성하여 최신 환경 변수 반영
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  // process.env.GEMINI_API_KEY 또는 process.env.API_KEY 중 존재하는 것을 사용
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  
+  if (!apiKey) {
+    console.error("Gemini API Key is missing in the environment.");
+    return "INVALID_API_KEY";
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   try {
     const response = await ai.models.generateContent({
