@@ -338,7 +338,7 @@ __transformed_code__ = __transform_code__(js.user_code)
         }
       };
 
-      const systemInstruction = `Strict C terminal (Clang 17).
+      const systemInstruction = `Strict C terminal (TCC - Tiny C Compiler).
 Output ONLY the terminal text. No explanations. No markdown.
 If input is needed, output "[INPUT_REQUIRED: prompt]".
 When finished, output "[EXECUTION_FINISHED]".`;

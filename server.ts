@@ -29,7 +29,7 @@ async function startServer() {
     try {
       fs.writeFileSync(cPath, code);
 
-      // Try TCC first
+      // Try TCC
       let compileCmd = `tcc -o ${outPath} ${cPath}`;
       let compileSuccess = false;
       let compileError = "";
@@ -39,13 +39,13 @@ async function startServer() {
         compileSuccess = true;
       } catch (e: any) {
         compileError = e.stderr || e.message;
-        // Fallback to Clang
+        // Fallback to Clang if TCC fails or is missing
         try {
           compileCmd = `clang -o ${outPath} ${cPath}`;
           await execAsync(compileCmd);
           compileSuccess = true;
         } catch (e2: any) {
-          compileError = e2.stderr || e2.message;
+          compileError = `TCC Error: ${compileError}\nClang Error: ${e2.stderr || e2.message}`;
         }
       }
 
