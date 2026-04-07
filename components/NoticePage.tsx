@@ -108,7 +108,7 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
     <div className="p-6 lg:p-12 max-w-5xl mx-auto pb-32">
       <header className="mb-12 flex items-center justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 text-[#007AFF] text-[10px] font-black uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-accent/10 border border-orange-accent/20 text-orange-accent text-[10px] font-black uppercase tracking-widest mb-4">
             <Megaphone size={12} /> Latest Announcements
           </div>
           <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-4 text-main">공지사항</h2>
@@ -119,7 +119,7 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
         {isAdmin && (
           <button 
             onClick={() => setIsWriteMode(true)}
-            className="p-4 bg-[#007AFF] text-white rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all"
+            className="p-4 bg-orange-accent text-white rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all"
           >
             <Plus size={24} />
           </button>
@@ -147,9 +147,9 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm"
           >
-            <div className="w-full max-w-2xl glass p-8 lg:p-10 rounded-[48px] border-white/10 bg-card shadow-3xl overflow-y-auto max-h-[90vh]">
+            <div className="w-full max-w-2xl glass p-8 lg:p-10 rounded-[48px] border-black/10 bg-white shadow-3xl overflow-y-auto max-h-[90vh]">
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-2xl font-black text-main">새 공지 작성</h3>
                 <button onClick={() => setIsWriteMode(false)} className="p-2 text-gray-500 hover:text-main transition-colors"><X size={24} /></button>
@@ -162,7 +162,7 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
                     value={newTitle}
                     onChange={e => setNewTitle(e.target.value)}
                     placeholder="공지 제목을 입력하세요..."
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-main outline-none focus:border-[#007AFF]/50"
+                    className="w-full bg-black/5 border border-black/10 rounded-2xl p-4 text-sm text-main outline-none focus:border-orange-accent/50"
                     required
                   />
                 </div>
@@ -172,7 +172,7 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
                     value={newContent}
                     onChange={e => setNewContent(e.target.value)}
                     placeholder="내용을 입력하세요..."
-                    className="w-full h-48 bg-white/5 border border-white/10 rounded-3xl p-6 text-sm text-main outline-none focus:border-[#007AFF]/50 resize-none custom-scrollbar"
+                    className="w-full h-48 bg-black/5 border border-black/10 rounded-3xl p-6 text-sm text-main outline-none focus:border-orange-accent/50 resize-none custom-scrollbar"
                     required
                   />
                 </div>
@@ -182,14 +182,14 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
                     id="important" 
                     checked={isImportant}
                     onChange={e => setIsImportant(e.target.checked)}
-                    className="accent-[#007AFF] w-4 h-4"
+                    className="accent-orange-accent w-4 h-4"
                   />
                   <label htmlFor="important" className="text-sm font-bold text-gray-400 cursor-pointer">중요 공지로 고정 (상단 노출)</label>
                 </div>
                 <button 
                   type="submit"
                   disabled={isSubmitting || !newTitle.trim() || !newContent.trim()}
-                  className="w-full py-5 bg-[#007AFF] text-white rounded-2xl font-black shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 hover:bg-[#007AFF]/90 transition-all"
+                  className="w-full py-5 bg-orange-accent text-white rounded-2xl font-black shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 hover:bg-orange-accent/90 transition-all"
                 >
                   {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                   공지 등록하기
@@ -203,7 +203,7 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
       <div className="space-y-6">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4 text-gray-500">
-            <Loader2 size={32} className="animate-spin text-[#007AFF]" />
+            <Loader2 size={32} className="animate-spin text-orange-accent" />
             <p className="text-xs font-bold uppercase tracking-widest">데이터 로드 중...</p>
           </div>
         ) : notices.length > 0 ? (
@@ -212,13 +212,13 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
               key={notice.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className={`glass p-8 lg:p-10 rounded-[40px] border-white/5 bg-white/[0.01] flex flex-col gap-6 relative group overflow-hidden ${notice.is_important ? 'border-l-4 border-l-[#007AFF]' : ''}`}
+              className={`glass p-8 lg:p-10 rounded-[40px] border-black/5 bg-white flex flex-col gap-6 relative group overflow-hidden ${notice.is_important ? 'border-l-4 border-l-orange-accent' : ''}`}
             >
               <div className="flex items-start justify-between">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     {notice.is_important && (
-                      <span className="px-3 py-1 bg-[#007AFF]/10 text-[#007AFF] text-[10px] font-black uppercase tracking-widest rounded-full border border-[#007AFF]/20 flex items-center gap-1.5">
+                      <span className="px-3 py-1 bg-orange-accent/10 text-orange-accent text-[10px] font-black uppercase tracking-widest rounded-full border border-orange-accent/20 flex items-center gap-1.5">
                         <Pin size={10} /> Important
                       </span>
                     )}
@@ -238,7 +238,7 @@ export const NoticePage: React.FC<NoticePageProps> = ({ user }) => {
             </MotionDiv>
           ))
         ) : (
-          <div className="py-32 text-center glass rounded-[48px] border-dashed border-white/5">
+          <div className="py-32 text-center glass rounded-[48px] border-dashed border-black/5">
             {!error && (
               <>
                 <Database size={48} className="mx-auto text-gray-700 mb-6" />

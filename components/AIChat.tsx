@@ -158,20 +158,20 @@ export const AIChat: React.FC<AIChatProps> = ({
           <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
             {m.role === 'assistant' && (
               <span className="text-[10px] font-bold text-gray-600 mb-2 ml-1 uppercase tracking-widest flex items-center gap-1">
-                <Sparkles size={10} className="text-orange-500" /> AI Response
+                <Sparkles size={10} className="text-orange-accent" /> AI Response
               </span>
             )}
             <div className={`relative max-w-[92%] p-5 rounded-[24px] text-sm leading-relaxed shadow-sm ${
               m.role === 'user' 
-              ? 'bg-[#007AFF] text-white rounded-tr-none' 
-              : 'glass text-gray-300 rounded-tl-none border-orange-500/10'
+              ? 'bg-orange-accent text-white rounded-tr-none' 
+              : 'glass text-gray-300 rounded-tl-none border-orange-accent/10'
             }`}>
               {m.role === 'assistant' ? (
                 <>
                   <FormattedText text={m.content} />
                   <button 
                     onClick={() => handleSpeak(m.content)}
-                    className="mt-3 p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-500 hover:text-orange-500 transition-all"
+                    className="mt-3 p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-500 hover:text-orange-accent transition-all"
                   >
                     <Volume2 size={14} />
                   </button>

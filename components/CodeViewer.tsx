@@ -87,7 +87,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
         <p className="text-sm lg:text-base">이 레슨의 개념 학습 자료가 아직 준비되지 않았습니다.</p>
         <button 
           onClick={onFinishConcept} 
-          className="py-4 lg:py-6 px-10 lg:px-16 bg-[#007AFF] text-white rounded-[24px] lg:rounded-[30px] text-lg lg:text-xl font-bold hover:scale-105 transition-all shadow-2xl active:scale-95"
+          className="py-4 lg:py-6 px-10 lg:px-16 bg-orange-accent text-white rounded-[24px] lg:rounded-[30px] text-lg lg:text-xl font-bold hover:scale-105 transition-all shadow-2xl active:scale-95"
         >
           다음 단계로 이동
         </button>
@@ -104,34 +104,34 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
         key={`header-${pageIndex}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass p-8 lg:p-10 rounded-[32px] lg:rounded-[40px] border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-r from-white/[0.02] to-transparent shadow-xl"
+        className="glass p-8 lg:p-10 rounded-[32px] lg:rounded-[40px] border-black/5 flex flex-col sm:flex-row items-center justify-between gap-6 bg-white shadow-xl"
       >
         <div className="flex items-center gap-6">
-          <span className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-[#007AFF] flex items-center justify-center text-white text-2xl lg:text-3xl font-black shrink-0 shadow-lg shadow-[#007AFF]/20">{pageIndex + 1}</span>
+          <span className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-orange-accent flex items-center justify-center text-white text-2xl lg:text-3xl font-black shrink-0 shadow-lg shadow-orange-accent/20">{pageIndex + 1}</span>
           <div>
-            <h3 className="text-2xl lg:text-4xl font-black tracking-tighter text-white mb-1 lg:mb-2">{cleanTitle}</h3>
-            <p className="text-gray-500 text-[10px] lg:text-xs font-bold uppercase tracking-[0.3em] ml-1">Observation & Logical Deduction</p>
+            <h3 className="text-2xl lg:text-4xl font-black tracking-tighter text-main mb-1 lg:mb-2">{cleanTitle}</h3>
+            <p className="text-gray-500 text-[10px] lg:text-xs font-bold uppercase tracking-[0.3em] ml-1">Observation & Logical Tracing</p>
           </div>
         </div>
       </MotionDiv>
 
-      {/* 2. 상단 핵심 내용 요약 (전체 너비) */}
+      {/* 2. 개념 설명 영역 */}
       <MotionDiv 
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass p-8 lg:p-12 rounded-[32px] lg:rounded-[40px] border-white/10 bg-[#0c0c0c] shadow-2xl relative overflow-hidden"
+        className="glass p-8 lg:p-12 rounded-[32px] lg:rounded-[40px] border-black/10 bg-white shadow-2xl relative overflow-hidden"
       >
-        <div className="absolute -top-4 -left-4 p-8 opacity-5 text-[#007AFF] rotate-12">
+        <div className="absolute -top-4 -left-4 p-8 opacity-5 text-orange-accent rotate-12">
           <Quote size={100} />
         </div>
         <div className="relative z-10 space-y-5">
-          <div className="flex items-center gap-3 text-[#007AFF]">
-             <div className="w-8 h-8 rounded-lg bg-[#007AFF]/10 flex items-center justify-center">
-               <BookOpen size={18} />
+          <div className="flex items-center gap-3 text-orange-accent">
+             <div className="w-8 h-8 rounded-lg bg-orange-accent/10 flex items-center justify-center">
+                <BookOpen size={18} />
              </div>
              <span className="text-[10px] lg:text-xs font-black uppercase tracking-[0.3em]">Learning Objectives</span>
           </div>
-          <p className="text-xl lg:text-2xl text-white/90 font-medium leading-relaxed lg:leading-relaxed whitespace-pre-line border-l-4 border-[#007AFF] pl-8 lg:pl-10">
+          <p className="text-xl lg:text-2xl text-main/90 font-medium leading-relaxed lg:leading-relaxed whitespace-pre-line border-l-4 border-orange-accent pl-8 lg:pl-10">
             {currentPage.content}
           </p>
           <div className="flex items-center gap-2 text-gray-600 text-[10px] font-bold uppercase tracking-widest pl-10">
@@ -152,33 +152,33 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
           layout
           className={`${isWide ? 'xl:col-span-1' : 'xl:col-span-3'} space-y-8 ${isWide ? '' : 'sticky top-4'}`}
         >
-          <div className="glass rounded-[32px] lg:rounded-[40px] border-white/10 bg-[#0a0a0a] overflow-hidden relative shadow-inner">
-            <div className="px-8 py-5 bg-white/[0.03] border-b border-white/5 flex items-center justify-between">
+          <div className="glass rounded-[32px] lg:rounded-[40px] border-black/10 bg-white overflow-hidden relative shadow-inner">
+            <div className="px-8 py-5 bg-black/[0.03] border-b border-black/5 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                 <Terminal size={18} className="text-[#007AFF]" />
+                 <Terminal size={18} className="text-orange-accent" />
                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Live Code Environment</span>
               </div>
               <div className="flex items-center gap-3">
                 {/* 확장 토글 버튼 */}
                 <button 
                   onClick={() => setIsWide(!isWide)}
-                  className="p-2.5 glass rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all border-white/5"
+                  className="p-2.5 glass rounded-xl text-gray-400 hover:text-main hover:bg-black/10 transition-all border-black/5"
                   title={isWide ? "축소하기" : "넓게 보기"}
                 >
                   {isWide ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
                 </button>
 
-                <div className="h-6 w-px bg-white/10 mx-1" />
+                <div className="h-6 w-px bg-black/10 mx-1" />
 
                 <button 
                   onClick={startTrace}
                   disabled={isTracing}
-                  className="group flex items-center gap-3 px-6 py-2.5 bg-[#007AFF] text-white rounded-xl font-bold transition-all disabled:opacity-50 hover:scale-105 active:scale-95 shadow-lg shadow-[#007AFF]/20"
+                  className="group flex items-center gap-3 px-6 py-2.5 bg-orange-accent text-white rounded-xl font-bold transition-all disabled:opacity-50 hover:scale-105 active:scale-95 shadow-lg shadow-orange-accent/20"
                 >
                   <PlayCircle size={18} className={isTracing ? "animate-spin" : "group-hover:scale-110 transition-transform"} />
                   <span className="text-xs">{isTracing ? "Executing..." : "로직 흐름 추적"}</span>
                 </button>
-                <div className="hidden sm:flex gap-1.5 ml-2 border-l border-white/10 pl-4">
+                <div className="hidden sm:flex gap-1.5 ml-2 border-l border-black/10 pl-4">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/40" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/40" />
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 border border-green-500/40" />
@@ -193,8 +193,8 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                   const isActive = activeLine === idx;
                   
                   const textColorClass = !isTracing 
-                    ? 'text-white' 
-                    : (isActive ? 'text-white font-bold' : 'text-gray-800');
+                    ? 'text-main' 
+                    : (isActive ? 'text-main font-bold' : 'text-gray-400');
 
                   return (
                     <div key={`${pageIndex}-${idx}`} className={`relative flex items-center gap-4 transition-all duration-300 ${isActive ? 'pl-6 lg:pl-10' : ''}`}>
@@ -209,11 +209,11 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, x: 10 }}
-                              className="flex items-center gap-3 px-5 py-2 bg-[#007AFF]/20 border border-[#007AFF]/40 rounded-full shadow-lg"
+                              className="flex items-center gap-3 px-5 py-2 bg-orange-accent/20 border border-orange-accent/40 rounded-full shadow-lg"
                             >
-                              <Variable size={16} className="text-[#007AFF]" />
+                              <Variable size={16} className="text-orange-accent" />
                               {Object.entries(currentVars).map(([key, val]) => (
-                                <span key={key} className="text-sm lg:text-base font-bold text-white">
+                                <span key={key} className="text-sm lg:text-base font-bold text-main">
                                   <span className="text-gray-500 font-normal">{key}:</span>
                                   <span className="ml-2">{JSON.stringify(val)}</span>
                                 </span>
@@ -236,7 +236,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                           {isActive && (
                             <MotionDiv 
                               layoutId="trace-glow-current"
-                              className="absolute inset-y-0 -left-8 -right-32 bg-[#007AFF]/25 border-l-[5px] border-[#007AFF] -z-10 blur-[2px]"
+                              className="absolute inset-y-0 -left-8 -right-32 bg-orange-accent/25 border-l-[5px] border-orange-accent -z-10 blur-[2px]"
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
@@ -258,13 +258,13 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="glass rounded-[32px] border-white/10 bg-black/40 p-8 lg:p-10 shadow-xl"
+              className="glass rounded-[32px] border-black/10 bg-black/5 p-8 lg:p-10 shadow-xl"
             >
                <div className="flex items-center gap-3 mb-6">
-                 <Terminal size={20} className="text-green-400" />
+                 <Terminal size={20} className="text-teal-accent" />
                  <span className="text-[10px] lg:text-xs font-black uppercase tracking-widest text-gray-500">Virtual Output Terminal</span>
                </div>
-               <div className="font-mono text-xl lg:text-3xl text-green-400 bg-black/60 p-8 lg:p-12 rounded-[24px] border border-white/5 whitespace-pre-wrap min-h-[120px] flex items-center shadow-inner overflow-hidden">
+               <div className="font-mono text-xl lg:text-3xl text-teal-accent bg-black/5 p-8 lg:p-12 rounded-[24px] border border-black/5 whitespace-pre-wrap min-h-[120px] flex items-center shadow-inner overflow-hidden">
                  {currentPage.exampleOutput ? (
                    <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full">
                      {currentPage.exampleOutput}
@@ -283,10 +283,10 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
           className={`${isWide ? 'xl:col-span-1' : 'xl:col-span-2'} space-y-6 lg:space-y-8`}
         >
            <div className="flex items-center gap-3 px-4">
-              <div className="p-2 bg-[#007AFF]/10 rounded-lg text-[#007AFF]">
+              <div className="p-2 bg-orange-accent/10 rounded-lg text-orange-accent">
                 <Sparkles size={20} />
               </div>
-              <h4 className="text-lg lg:text-xl font-black text-white tracking-tight uppercase">Detail Logic Analysis</h4>
+              <h4 className="text-lg lg:text-xl font-black text-main tracking-tight uppercase">Detail Logic Analysis</h4>
            </div>
            
            <div className={`space-y-6 lg:space-y-8 ${isWide ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 !space-y-0' : ''}`}>
@@ -304,12 +304,12 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
                          {exp.badge}
                        </div>
                        {i < (currentPage.explanations?.length || 0) - 1 && !isWide && (
-                         <div className="w-0.5 h-12 lg:h-16 bg-white/5 my-2" />
+                         <div className="w-0.5 h-12 lg:h-16 bg-black/5 my-2" />
                        )}
                     </div>
-                    <div className="flex-1 p-6 lg:p-8 rounded-[32px] glass-blue border-white/5 relative group-hover:border-[#007AFF]/30 group-hover:bg-[#007AFF]/5 transition-all shadow-xl blur-fix h-full">
+                    <div className="flex-1 p-6 lg:p-8 rounded-[32px] glass-blue border-black/5 relative group-hover:border-orange-accent/30 group-hover:bg-orange-accent/5 transition-all shadow-xl blur-fix h-full">
                       <h5 className="font-black text-lg lg:text-xl mb-2 lg:mb-3" style={{ color: COLOR_MAP[exp.type] }}>{exp.title}</h5>
-                      <p className="text-gray-400 leading-relaxed text-sm lg:text-lg font-light">{exp.text}</p>
+                      <p className="text-gray-500 leading-relaxed text-sm lg:text-lg font-light">{exp.text}</p>
                     </div>
                   </MotionDiv>
                 ))}
@@ -319,25 +319,25 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
       </MotionDiv>
 
       {/* Footer Navigation */}
-      <div className="flex flex-col items-center gap-10 pt-16 border-t border-white/5">
+      <div className="flex flex-col items-center gap-10 pt-16 border-t border-black/5">
         <div className="flex justify-between items-center w-full max-w-3xl px-8 relative z-20">
           <button 
             disabled={pageIndex === 0}
             onClick={() => setPageIndex(p => p - 1)}
-            className="flex items-center gap-3 px-8 lg:px-10 py-4 lg:py-5 glass rounded-[20px] lg:rounded-[24px] text-sm font-bold text-gray-500 hover:text-white transition-all disabled:opacity-0 hover:scale-105 active:scale-95"
+            className="flex items-center gap-3 px-8 lg:px-10 py-4 lg:py-5 glass rounded-[20px] lg:rounded-[24px] text-sm font-bold text-gray-500 hover:text-main transition-all disabled:opacity-0 hover:scale-105 active:scale-95"
           >
             <ChevronLeft size={20} /> 이전 개념
           </button>
           <div className="flex gap-4">
             {pages.map((_, i) => (
-              <div key={i} className={`h-2 lg:h-2.5 rounded-full transition-all duration-500 ${i === pageIndex ? 'bg-[#007AFF] w-12 lg:w-16 shadow-[0_0_15px_rgba(0,122,255,0.5)]' : 'bg-white/10 w-2 lg:w-2.5'}`} />
+              <div key={i} className={`h-2 lg:h-2.5 rounded-full transition-all duration-500 ${i === pageIndex ? 'bg-orange-accent w-12 lg:w-16 shadow-[0_0_15px_rgba(246,189,96,0.5)]' : 'bg-black/10 w-2 lg:w-2.5'}`} />
             ))}
           </div>
           <button 
             disabled={isLastPage}
             onClick={() => setPageIndex(p => p + 1)}
             className={`flex items-center gap-3 px-10 lg:px-12 py-4 lg:py-5 glass rounded-[20px] lg:rounded-[24px] font-black transition-all text-sm hover:scale-105 active:scale-95 ${
-              isLastPage ? 'opacity-0 pointer-events-none' : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+              isLastPage ? 'opacity-0 pointer-events-none' : 'bg-black/5 text-main hover:bg-black/10 border border-black/10'
             }`}
           >
             다음 개념 <ChevronRight size={20} />
@@ -353,7 +353,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ lesson, onFinishConcept,
             >
               <button 
                 onClick={onFinishConcept} 
-                className="group py-6 lg:py-8 px-16 lg:px-24 bg-[#007AFF] text-white rounded-[32px] lg:rounded-[40px] text-xl lg:text-2xl font-black hover:scale-105 transition-all shadow-3xl shadow-[#007AFF]/40 flex items-center justify-center gap-6 active:scale-95"
+                className="group py-6 lg:py-8 px-16 lg:px-24 bg-orange-accent text-white rounded-[32px] lg:rounded-[40px] text-xl lg:text-2xl font-black hover:scale-105 transition-all shadow-3xl shadow-orange-accent/40 flex items-center justify-center gap-6 active:scale-95"
               >
                 검증 단계로 이동 (개념 퀴즈) <CheckCircle2 size={32} className="group-hover:rotate-12 transition-transform" />
               </button>

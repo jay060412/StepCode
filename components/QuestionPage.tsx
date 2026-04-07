@@ -222,10 +222,10 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
     <div className="p-6 lg:p-12 max-w-6xl mx-auto pb-32">
       <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 text-[#007AFF] text-[10px] font-black uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-accent/10 border border-orange-accent/20 text-orange-accent text-[10px] font-black uppercase tracking-widest mb-4">
             <Sparkles size={12} /> Community & Support
           </div>
-          <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-4 text-white">질문하기</h2>
+          <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-4 text-main">질문하기</h2>
           <p className="text-gray-500 text-lg font-light leading-relaxed">
             {activeTab === 'community' ? '다른 학습자들과 질문을 공유하고 함께 성장하세요.' : '운영진에게 1:1 문의를 남겨주세요.'}
           </p>
@@ -233,23 +233,23 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
         
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="px-8 py-4 bg-[#007AFF] text-white rounded-2xl font-black shadow-2xl shadow-[#007AFF]/20 hover:scale-[1.05] active:scale-95 transition-all flex items-center gap-3 cursor-pointer"
+          className="px-8 py-4 bg-orange-accent text-white rounded-2xl font-black shadow-2xl shadow-orange-accent/20 hover:scale-[1.05] active:scale-95 transition-all flex items-center gap-3 cursor-pointer"
         >
           <Plus size={20} /> 질문 남기기
         </button>
       </header>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 mb-12 p-1.5 glass rounded-[24px] border-white/5 w-fit">
+      <div className="flex items-center gap-2 mb-12 p-1.5 glass rounded-[24px] border-black/5 w-fit">
         <button 
           onClick={() => setActiveTab('community')}
-          className={`flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${activeTab === 'community' ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+          className={`flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${activeTab === 'community' ? 'bg-black/10 text-main shadow-lg' : 'text-gray-500 hover:text-main'}`}
         >
           <Users size={18} /> 유저에게 질문하기
         </button>
         <button 
           onClick={() => setActiveTab('support')}
-          className={`flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${activeTab === 'support' ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+          className={`flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${activeTab === 'support' ? 'bg-black/10 text-main shadow-lg' : 'text-gray-500 hover:text-main'}`}
         >
           <Shield size={18} /> 관리자에게 질문하기
         </button>
@@ -271,7 +271,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
       <div className="space-y-8">
         {isLoading ? (
           <div className="py-32 flex flex-col items-center justify-center gap-4">
-            <Loader2 size={48} className="animate-spin text-[#007AFF]" />
+            <Loader2 size={48} className="animate-spin text-orange-accent" />
             <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">데이터 불러오는 중...</p>
           </div>
         ) : activeTab === 'community' ? (
@@ -284,36 +284,36 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   onClick={() => setSelectedQuestionId(q.id)}
-                  className="glass p-8 rounded-[40px] border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all flex flex-col gap-6 group cursor-pointer relative overflow-hidden"
+                  className="glass p-8 rounded-[40px] border-black/5 bg-white hover:bg-black/[0.03] transition-all flex flex-col gap-6 group cursor-pointer relative overflow-hidden"
                 >
-                  <div className="flex justify-between items-start relative z-10">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#007AFF]/20 text-[#007AFF] flex items-center justify-center font-bold">
-                        {q.user_name[0]}
+                    <div className="flex justify-between items-start relative z-10">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-accent/20 text-orange-accent flex items-center justify-center font-bold">
+                          {q.user_name[0]}
+                        </div>
+                        <div>
+                          <p className="text-main font-bold">{q.user_name}</p>
+                          <p className="text-[10px] text-gray-500">{new Date(q.created_at).toLocaleDateString()}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-white font-bold">{q.user_name}</p>
-                        <p className="text-[10px] text-gray-500">{new Date(q.created_at).toLocaleDateString()}</p>
-                      </div>
+                      {q.user_id === user.id && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => handleStartEdit(q)} className="p-2 text-gray-500 hover:text-orange-accent transition-all cursor-pointer"><Edit3 size={16} /></button>
+                          <button onClick={() => handleDelete(q.id, 'community_questions')} className="p-2 text-gray-500 hover:text-red-500 transition-all cursor-pointer"><Trash2 size={16} /></button>
+                        </div>
+                      )}
                     </div>
-                    {q.user_id === user.id && (
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => handleStartEdit(q)} className="p-2 text-gray-500 hover:text-[#007AFF] transition-all cursor-pointer"><Edit3 size={16} /></button>
-                        <button onClick={() => handleDelete(q.id, 'community_questions')} className="p-2 text-gray-500 hover:text-red-500 transition-all cursor-pointer"><Trash2 size={16} /></button>
-                      </div>
-                    )}
-                  </div>
 
                   <div className="space-y-3 relative z-10">
-                    <h4 className="text-xl font-bold text-white leading-tight line-clamp-1">{q.title}</h4>
-                    <p className="text-sm text-gray-400 font-light line-clamp-2 leading-relaxed">{q.content}</p>
+                    <h4 className="text-xl font-bold text-main leading-tight line-clamp-1">{q.title}</h4>
+                    <p className="text-sm text-gray-500 font-light line-clamp-2 leading-relaxed">{q.content}</p>
                   </div>
 
                   <div className="flex items-center justify-between mt-2 relative z-10">
-                    <div className="flex items-center gap-2 text-[#007AFF] text-[10px] font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 text-orange-accent text-[10px] font-black uppercase tracking-widest">
                       <MessageSquare size={14} /> 답변 {comments[q.id]?.length || 0}
                     </div>
-                    <div className="text-[10px] font-bold text-gray-500 group-hover:text-white transition-colors">자세히 보기 →</div>
+                    <div className="text-[10px] font-bold text-gray-500 group-hover:text-main transition-colors">자세히 보기 →</div>
                   </div>
                 </MotionDiv>
               ))
@@ -330,7 +330,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                 <MotionDiv 
                   key={q.id}
                   layout
-                  className="glass p-8 rounded-[40px] border-white/5 bg-white/[0.01] flex flex-col gap-6"
+                  className="glass p-8 rounded-[40px] border-black/5 bg-white flex flex-col gap-6"
                 >
                   <div className="flex justify-between items-start">
                     <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${q.is_resolved ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>
@@ -339,7 +339,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                     </div>
                     <div className="flex items-center gap-1">
                       {!q.is_resolved && editingId !== q.id && (
-                        <button onClick={() => handleStartEdit(q)} className="p-2 text-gray-500 hover:text-[#007AFF] transition-all cursor-pointer"><Edit3 size={16} /></button>
+                        <button onClick={() => handleStartEdit(q)} className="p-2 text-gray-500 hover:text-orange-accent transition-all cursor-pointer"><Edit3 size={16} /></button>
                       )}
                       <button onClick={() => handleDelete(q.id, 'support_questions')} className="p-2 text-gray-500 hover:text-red-500 transition-all cursor-pointer"><Trash2 size={16} /></button>
                     </div>
@@ -350,11 +350,11 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                       <textarea 
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="w-full h-32 bg-black/40 border border-[#007AFF]/30 rounded-2xl p-4 text-sm text-white outline-none"
+                        className="w-full h-32 bg-black/40 border border-orange-accent/30 rounded-2xl p-4 text-sm text-white outline-none"
                       />
                       <div className="flex justify-end gap-2">
                         <button onClick={() => setEditingId(null)} className="px-4 py-2 glass rounded-xl text-xs font-bold text-gray-500 cursor-pointer">취소</button>
-                        <button onClick={() => handleUpdate(q.id, 'support_questions')} className="px-4 py-2 bg-[#007AFF] text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"><Save size={12} /> 저장</button>
+                        <button onClick={() => handleUpdate(q.id, 'support_questions')} className="px-4 py-2 bg-orange-accent text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"><Save size={12} /> 저장</button>
                       </div>
                     </div>
                   ) : (
@@ -362,8 +362,8 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                   )}
                   
                   {q.is_resolved && q.answer && (
-                    <div className="p-8 glass-blue border-[#007AFF]/20 bg-[#007AFF]/5 rounded-[32px]">
-                      <div className="flex items-center gap-2 mb-4 text-[#007AFF] text-[10px] font-black uppercase tracking-widest">
+                    <div className="p-8 glass-blue border-orange-accent/20 bg-orange-accent/5 rounded-[32px]">
+                      <div className="flex items-center gap-2 mb-4 text-orange-accent text-[10px] font-black uppercase tracking-widest">
                         <Bot size={16} /> Admin Response
                       </div>
                       <div className="text-sm text-gray-200 leading-relaxed">
@@ -423,7 +423,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="질문의 핵심 내용을 제목으로 적어주세요"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm text-white outline-none focus:border-[#007AFF]/50 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm text-white outline-none focus:border-orange-accent/50 transition-all"
                       required
                     />
                   </div>
@@ -434,14 +434,14 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="궁금한 내용을 상세히 적어주세요..."
-                    className="w-full h-48 bg-white/5 border border-white/10 rounded-3xl p-6 text-sm text-white outline-none focus:border-[#007AFF]/50 transition-all resize-none custom-scrollbar"
+                    className="w-full h-48 bg-white/5 border border-white/10 rounded-3xl p-6 text-sm text-white outline-none focus:border-orange-accent/50 transition-all resize-none custom-scrollbar"
                     required
                   />
                 </div>
                 <button 
                   type="submit"
                   disabled={isSubmitting || !content.trim() || (activeTab === 'community' && !title.trim())}
-                  className="w-full py-6 bg-[#007AFF] text-white rounded-2xl font-black shadow-2xl shadow-[#007AFF]/20 hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 flex items-center justify-center gap-3 cursor-pointer mt-4"
+                  className="w-full py-6 bg-orange-accent text-white rounded-2xl font-black shadow-2xl shadow-orange-accent/20 hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 flex items-center justify-center gap-3 cursor-pointer mt-4"
                 >
                   {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                   질문 제출하기
@@ -481,7 +481,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                   <div className="space-y-10">
                     {/* Question Header */}
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-[#007AFF]/20 text-[#007AFF] flex items-center justify-center font-black text-2xl shadow-lg">
+                      <div className="w-14 h-14 rounded-2xl bg-orange-accent/20 text-orange-accent flex items-center justify-center font-black text-2xl shadow-lg">
                         {communityQuestions.find(q => q.id === selectedQuestionId)!.user_name[0]}
                       </div>
                       <div>
@@ -505,7 +505,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                     {/* Comments Section */}
                     <div className="space-y-8 pt-6 border-t border-white/5">
                       <div className="flex items-center gap-3">
-                        <MessageSquare size={24} className="text-[#007AFF]" />
+                        <MessageSquare size={24} className="text-orange-accent" />
                         <h5 className="text-xl font-bold text-white">답변 {comments[selectedQuestionId]?.length || 0}</h5>
                       </div>
 
@@ -519,7 +519,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                               </div>
                               <div className="flex-1 bg-white/[0.03] p-5 rounded-3xl border border-white/5 group-hover:bg-white/[0.05] transition-all">
                                 <div className="flex justify-between items-center mb-2">
-                                  <span className="text-sm font-bold text-[#007AFF]">{c.user_name}</span>
+                                  <span className="text-sm font-bold text-orange-accent">{c.user_name}</span>
                                   <div className="flex items-center gap-3">
                                     <span className="text-xs text-gray-600">{new Date(c.created_at).toLocaleString()}</span>
                                     {c.user_id === user.id && (
@@ -531,7 +531,7 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                                 {!c.parent_id && (
                                   <button 
                                     onClick={() => setReplyingTo({questionId: selectedQuestionId, commentId: c.id})}
-                                    className="mt-3 text-xs font-bold text-gray-500 hover:text-[#007AFF] flex items-center gap-1.5 cursor-pointer"
+                                    className="mt-3 text-xs font-bold text-gray-500 hover:text-orange-accent flex items-center gap-1.5 cursor-pointer"
                                   >
                                     <Reply size={14} /> 답글 달기
                                   </button>
@@ -545,8 +545,8 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                       {/* Comment Input */}
                       <div className="mt-12 space-y-4 sticky bottom-0 bg-[#0a0a0a] pt-4">
                         {replyingTo?.questionId === selectedQuestionId && (
-                          <div className="flex items-center justify-between bg-[#007AFF]/10 px-5 py-3 rounded-2xl border border-[#007AFF]/20">
-                            <span className="text-sm text-[#007AFF] font-bold flex items-center gap-2">
+                          <div className="flex items-center justify-between bg-orange-accent/10 px-5 py-3 rounded-2xl border border-orange-accent/20">
+                            <span className="text-sm text-orange-accent font-bold flex items-center gap-2">
                               <Reply size={16} /> 답글 작성 중...
                             </span>
                             <button onClick={() => setReplyingTo(null)} className="text-gray-500 hover:text-white"><X size={16} /></button>
@@ -557,12 +557,12 @@ export const QuestionPage: React.FC<QuestionPageProps> = ({ user }) => {
                             value={commentInputs[selectedQuestionId] || ''}
                             onChange={(e) => setCommentInputs(prev => ({ ...prev, [selectedQuestionId]: e.target.value }))}
                             placeholder="답변이나 의견을 남겨주세요..."
-                            className="flex-1 bg-white/5 border border-white/10 rounded-[24px] p-5 text-base text-white outline-none focus:border-[#007AFF]/50 transition-all resize-none h-24 custom-scrollbar"
+                            className="flex-1 bg-white/5 border border-white/10 rounded-[24px] p-5 text-base text-white outline-none focus:border-orange-accent/50 transition-all resize-none h-24 custom-scrollbar"
                           />
                           <button 
                             onClick={() => handleCommentSubmit(selectedQuestionId)}
                             disabled={!commentInputs[selectedQuestionId]?.trim()}
-                            className="px-8 bg-[#007AFF] text-white rounded-[24px] font-black hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-30 cursor-pointer flex items-center justify-center"
+                            className="px-8 bg-orange-accent text-white rounded-[24px] font-black hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-30 cursor-pointer flex items-center justify-center"
                           >
                             <Send size={24} />
                           </button>

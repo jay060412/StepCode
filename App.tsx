@@ -279,9 +279,9 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-6">
-        <Loader2 className="animate-spin text-[#007AFF]" size={64} />
-        <p className="text-white font-black text-xl tracking-tight">StepCode 환경 준비 중...</p>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6">
+        <Loader2 className="animate-spin text-orange-accent" size={64} />
+        <p className="text-main font-black text-xl tracking-tight">StepCode 환경 준비 중...</p>
         <p className="text-gray-500 text-xs animate-pulse mt-4">데이터 동기화 및 보안 정책 확인 중</p>
       </div>
     );
@@ -289,26 +289,26 @@ const App: React.FC = () => {
 
   if (dbError) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center gap-8">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center gap-8">
         <div className="w-20 h-20 bg-red-500/10 rounded-[30px] flex items-center justify-center text-red-500 mb-2">
           <AlertCircle size={48} />
         </div>
         <div className="space-y-2">
-          <h2 className="text-3xl font-black text-white">동기화 오류 발생</h2>
-          <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">{dbError}</p>
+          <h2 className="text-3xl font-black text-main">동기화 오류 발생</h2>
+          <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">{dbError}</p>
         </div>
         
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <button 
             onClick={() => window.location.reload()} 
-            className="w-full py-4 bg-[#007AFF] text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#007AFF]/20"
+            className="w-full py-4 bg-orange-accent text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-orange-accent/20"
           >
             <RefreshCw size={18} /> 다시 시도
           </button>
           
           <button 
             onClick={handleLogout} 
-            className="w-full py-4 glass text-gray-400 border-white/10 rounded-2xl font-bold flex items-center justify-center gap-3 hover:text-white hover:bg-white/10 transition-all"
+            className="w-full py-4 glass text-gray-400 border-white/10 rounded-2xl font-bold flex items-center justify-center gap-3 hover:text-main hover:bg-white/10 transition-all"
           >
             <LogOut size={18} /> 로그인 화면으로 가기
           </button>
@@ -332,38 +332,38 @@ const App: React.FC = () => {
               <header className="mb-16">
                 <h2 className="text-4xl lg:text-7xl font-black mb-4 tracking-tighter text-main">반가워요, {user.name}님!</h2>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 lg:gap-8">
-                  <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-white/5">
-                    <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center"><Target size={20} /></div>
-                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Progress</p><p className="text-sm font-bold">{user.progress || 0}%</p></div>
+                  <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-black/5 bg-white">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center"><Target size={20} /></div>
+                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Progress</p><p className="text-sm font-bold text-main">{user.progress || 0}%</p></div>
                   </div>
-                  <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-white/5">
+                  <div className="flex items-center gap-3 glass px-5 py-3 rounded-2xl border-black/5 bg-white">
                     <div className="w-10 h-10 rounded-xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center"><Rocket size={20} /></div>
-                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Current Level</p><p className="text-sm font-bold">Level {user.level || 1}</p></div>
+                    <div><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Current Level</p><p className="text-sm font-bold text-main">Level {user.level || 1}</p></div>
                   </div>
                 </div>
               </header>
               <section className="mb-20">
-                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-purple-500 pl-6 uppercase tracking-widest text-main"><Brain className="text-purple-400" size={24} /> 사고력 트랙</h3>
+                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-orange-accent pl-6 uppercase tracking-widest text-main"><Brain className="text-orange-accent" size={24} /> 사고력 트랙</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {ALL_TRACKS.filter(t => t.category === 'tutorial').map(track => (
-                    <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-white shadow-xl mb-6"><Brain size={28} /></div>
-                      <h4 className="text-2xl font-bold mb-3 group-hover:text-white text-main">{track.title}</h4>
+                    <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-black/5 bg-white cursor-pointer hover:bg-black/[0.05] shadow-2xl relative overflow-hidden group">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-accent to-orange-accent/50 flex items-center justify-center text-white shadow-xl mb-6"><Brain size={28} /></div>
+                      <h4 className="text-2xl font-bold mb-3 group-hover:text-teal-accent text-main">{track.title}</h4>
                       <p className="text-sm text-gray-500 leading-relaxed mb-8 h-12 line-clamp-2">{track.description}</p>
-                      <div className="flex items-center gap-2 text-[#007AFF] text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
+                      <div className="flex items-center gap-2 text-orange-accent text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
                     </MotionDiv>
                   ))}
                 </div>
               </section>
               <section className="mb-20">
-                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-[#007AFF] pl-6 uppercase tracking-widest text-main"><Terminal className="text-[#007AFF]" size={24} /> 언어 트랙</h3>
+                <h3 className="flex items-center gap-3 text-xl font-bold mb-8 border-l-4 border-teal-accent pl-6 uppercase tracking-widest text-main"><Terminal className="text-teal-accent" size={24} /> 언어 트랙</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {ALL_TRACKS.filter(t => t.category === 'language').map(track => (
-                    <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-white/5 cursor-pointer hover:bg-white/[0.05] shadow-2xl relative overflow-hidden group">
-                      <div className="mb-6">{track.iconType === 'python' ? <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3776AB] to-[#FFD43B]/20 flex items-center justify-center font-black text-white shadow-xl text-xl">Py</div> : track.iconType === 'c' ? <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5C5C5C] to-[#004482] flex items-center justify-center font-black text-white shadow-xl text-2xl">C</div> : <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-white shadow-xl"><Brain size={24} /></div>}</div>
-                      <h4 className="text-2xl font-bold mb-3 group-hover:text-white text-main">{track.title}</h4>
+                    <MotionDiv key={track.id} whileHover={{ y: -5, scale: 1.02 }} onClick={() => handleSelectTrack(track)} className="glass p-8 rounded-[40px] border-black/5 bg-white cursor-pointer hover:bg-black/[0.05] shadow-2xl relative overflow-hidden group">
+                      <div className="mb-6">{track.iconType === 'python' ? <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-accent to-teal-accent flex items-center justify-center font-black text-white shadow-xl text-xl">Py</div> : <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-accent to-teal-accent flex items-center justify-center text-white shadow-xl"><Brain size={24} /></div>}</div>
+                      <h4 className="text-2xl font-bold mb-3 group-hover:text-teal-accent text-main">{track.title}</h4>
                       <p className="text-sm text-gray-500 leading-relaxed mb-8 h-12 line-clamp-2">{track.description}</p>
-                      <div className="flex items-center gap-2 text-[#007AFF] text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
+                      <div className="flex items-center gap-2 text-orange-accent text-xs font-bold uppercase tracking-widest">시작하기 <ChevronRight size={14} /></div>
                     </MotionDiv>
                   ))}
                 </div>
@@ -372,9 +372,9 @@ const App: React.FC = () => {
           )}
           {activeRoute === AppRoute.LEARN && selectedLesson && (
             <div className="flex flex-col h-full overflow-hidden">
-              <div className="bg-black/40 border-b border-white/5 py-4 px-8 flex items-center justify-center gap-12 text-sm font-bold shrink-0">
+              <div className="bg-white/40 border-b border-black/5 py-4 px-8 flex items-center justify-center gap-12 text-sm font-bold shrink-0">
                 {availableStages.map(s => (
-                  <button key={s.stage} onClick={() => setLearningStage(s.stage)} className={`flex items-center gap-3 cursor-pointer ${learningStage === s.stage ? 'text-[#007AFF]' : 'text-gray-600'}`}>{s.icon} <span className="text-xs uppercase tracking-widest">{s.label}</span></button>
+                  <button key={s.stage} onClick={() => setLearningStage(s.stage)} className={`flex items-center gap-3 cursor-pointer ${learningStage === s.stage ? 'text-orange-accent' : 'text-gray-600'}`}>{s.icon} <span className="text-xs uppercase tracking-widest">{s.label}</span></button>
                 ))}
               </div>
               <div className="flex-1 flex overflow-hidden">
@@ -407,7 +407,7 @@ const App: React.FC = () => {
               <div className="h-full flex flex-col items-center justify-center p-8 text-center">
                 <BookOpen size={48} className="text-gray-600 mb-8" />
                 <h2 className="text-3xl font-black mb-4 text-main">선택된 트랙이 없습니다</h2>
-                <button onClick={() => setActiveRoute(AppRoute.HOME)} className="px-10 py-5 bg-[#007AFF] text-white rounded-2xl font-black cursor-pointer">홈으로 이동</button>
+                <button onClick={() => setActiveRoute(AppRoute.HOME)} className="px-10 py-5 bg-orange-accent text-white rounded-2xl font-black cursor-pointer">홈으로 이동</button>
               </div>
             )
           )}

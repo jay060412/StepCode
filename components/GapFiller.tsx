@@ -58,12 +58,12 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missed_concepts, onStartRe
     <div className="p-6 lg:p-12 max-w-7xl mx-auto pb-32">
       <header className="mb-12 flex flex-col lg:flex-row justify-between lg:items-end gap-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 text-[#007AFF] text-[10px] font-black uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-accent/10 border border-orange-accent/20 text-orange-accent text-[10px] font-black uppercase tracking-widest mb-4">
             <BrainCircuit size={12} /> Intelligence Recovery
           </div>
           <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-4 text-white">빈틈 매우기</h2>
           <p className="text-gray-500 text-lg lg:text-xl font-light leading-relaxed">
-            약점을 <span className="text-[#007AFF] font-bold">강점</span>으로, 실수를 <span className="text-purple-400 font-bold">자산</span>으로 바꾸세요.
+            약점을 <span className="text-orange-accent font-bold">강점</span>으로, 실수를 <span className="text-teal-accent font-bold">자산</span>으로 바꾸세요.
           </p>
         </div>
 
@@ -73,7 +73,7 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missed_concepts, onStartRe
               type="button"
               onClick={() => setActiveTab('missed')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'missed' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'
+                activeTab === 'missed' ? 'bg-orange-accent text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               <HelpCircle size={14} className="pointer-events-none" /> 약점 보완 ({weaknessList.length})
@@ -82,7 +82,7 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missed_concepts, onStartRe
               type="button"
               onClick={() => setActiveTab('mastered')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'mastered' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'
+                activeTab === 'mastered' ? 'bg-teal-accent text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               <Award size={14} className="pointer-events-none" /> 정복 완료 ({masteredList.length})
@@ -132,7 +132,7 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missed_concepts, onStartRe
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-8">
                     <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                      prob.type === 'concept' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                      prob.type === 'concept' ? 'bg-teal-accent/10 text-teal-accent border border-teal-accent/20' : 'bg-orange-accent/10 text-orange-accent border border-orange-accent/20'
                     }`}>
                       {prob.type}
                     </span>
@@ -156,8 +156,8 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missed_concepts, onStartRe
                       <p className="text-sm text-gray-400 font-light leading-relaxed italic">"{prob.hint}"</p>
                     </div>
                   ) : (
-                    <div className="bg-purple-500/10 p-5 rounded-2xl border border-purple-500/20 mb-8">
-                      <div className="flex items-center gap-2 text-[10px] font-black text-purple-400 uppercase mb-2">
+                    <div className="bg-teal-accent/10 p-5 rounded-2xl border border-teal-accent/20 mb-8">
+                      <div className="flex items-center gap-2 text-[10px] font-black text-teal-accent uppercase mb-2">
                         ✨ Mastered Insight
                       </div>
                       <p className="text-sm text-gray-300 font-light leading-relaxed">이 문제를 완벽히 정복했습니다! 원리를 잊지 않도록 기록에 보관 중입니다.</p>
@@ -169,7 +169,7 @@ export const GapFiller: React.FC<GapFillerProps> = ({ missed_concepts, onStartRe
                   <button
                     type="button"
                     onClick={() => onStartReview(prob)}
-                    className="w-full py-5 bg-white/5 group-hover:bg-[#007AFF] text-gray-400 group-hover:text-white rounded-[24px] font-black transition-all flex items-center justify-center gap-3 border border-white/5 group-hover:border-[#007AFF] cursor-pointer"
+                    className="w-full py-5 bg-white/5 group-hover:bg-orange-accent text-gray-400 group-hover:text-white rounded-[24px] font-black transition-all flex items-center justify-center gap-3 border border-white/5 group-hover:border-orange-accent cursor-pointer"
                   >
                     다시 풀어보기 <ChevronRight size={18} className="pointer-events-none" />
                   </button>

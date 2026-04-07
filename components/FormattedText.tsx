@@ -16,8 +16,8 @@ const parseBold = (text: string) => {
 
       if (isSpecial || content.includes("핵심 로직 설명")) {
         return (
-          <span key={i} className="block my-4 p-5 rounded-2xl bg-[#007AFF]/5 border border-[#007AFF]/20 shadow-sm">
-            <strong className="text-[#007AFF] font-black text-lg mb-1 block tracking-tight">
+          <span key={i} className="block my-4 p-5 rounded-2xl bg-orange-accent/5 border border-orange-accent/20 shadow-sm">
+            <strong className="text-orange-accent font-black text-lg mb-1 block tracking-tight">
               {content.startsWith('💡') ? content : `💡 ${content}`}
             </strong>
           </span>
@@ -53,7 +53,7 @@ export const FormattedText: React.FC<{ text: string }> = ({ text }) => {
                   <div className="w-2 h-2 rounded-full bg-green-500/20" />
                 </div>
               </div>
-              <pre className="p-6 overflow-x-auto text-cyan-400 leading-relaxed">
+              <pre className="p-6 overflow-x-auto text-teal-accent leading-relaxed">
                 <code>{codeContent}</code>
               </pre>
             </div>
@@ -73,7 +73,7 @@ export const FormattedText: React.FC<{ text: string }> = ({ text }) => {
               if (trimmed.startsWith('###')) {
                 return (
                   <h3 key={i} className="text-xl font-black text-white mt-8 mb-4 flex items-center gap-3">
-                    <span className="w-1.5 h-6 bg-[#007AFF] rounded-full" />
+                    <span className="w-1.5 h-6 bg-orange-accent rounded-full" />
                     {parseBold(trimmed.replace(/^###\s*/, ''))}
                   </h3>
                 );
@@ -84,7 +84,7 @@ export const FormattedText: React.FC<{ text: string }> = ({ text }) => {
                 const content = trimmed.substring(1).trim();
                 return (
                   <div key={i} className="flex gap-3 ml-2 items-start py-1">
-                    <span className="text-[#007AFF] font-black mt-1.5 text-xs">•</span>
+                    <span className="text-orange-accent font-black mt-1.5 text-xs">•</span>
                     <span className="flex-1 text-gray-300 leading-relaxed font-light">{parseBold(content)}</span>
                   </div>
                 );

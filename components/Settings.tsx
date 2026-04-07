@@ -152,16 +152,16 @@ export const Settings: React.FC<SettingsProps> = ({ user, onLogout, onUpdateUser
       </header>
 
       <div className="space-y-12">
-        <section className="glass p-10 rounded-[48px] border-white/5 bg-gradient-to-br from-[#007AFF]/5 to-transparent shadow-2xl">
+        <section className="glass p-10 rounded-[48px] border-black/5 bg-gradient-to-br from-orange-accent/5 to-transparent shadow-2xl">
           <div className="flex flex-col md:flex-row items-center gap-10">
-            <div className="w-32 h-32 rounded-[40px] bg-gradient-to-tr from-[#007AFF] to-cyan-400 flex items-center justify-center text-white text-5xl font-black shadow-2xl">{user.name?.[0]}</div>
+            <div className="w-32 h-32 rounded-[40px] bg-gradient-to-tr from-orange-accent to-teal-accent flex items-center justify-center text-white text-5xl font-black shadow-2xl">{user.name?.[0]}</div>
             <div className="flex-1 text-center md:text-left space-y-4">
               <div>
                 <h3 className="text-3xl font-bold mb-1 text-main">{user.name}</h3>
                 <p className="text-gray-500 font-mono text-sm">{user.email}</p>
               </div>
               <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                <span className="px-4 py-1.5 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 text-[#007AFF] text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={12} /> {user.role === 'admin' ? '관리자' : user.role === 'staff' ? '운영진' : '학습자'}</span>
+                <span className="px-4 py-1.5 rounded-full bg-orange-accent/10 border border-orange-accent/20 text-orange-accent text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={12} /> {user.role === 'admin' ? '관리자' : user.role === 'staff' ? '운영진' : '학습자'}</span>
                 <span className="px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><Zap size={12} /> 레벨 {user.level}</span>
               </div>
             </div>
@@ -171,45 +171,45 @@ export const Settings: React.FC<SettingsProps> = ({ user, onLogout, onUpdateUser
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-6">
             <h4 className="text-xs font-black text-gray-600 uppercase tracking-[0.2em] ml-2">개인 정보 설정</h4>
-            <div className="glass p-8 rounded-[40px] border-white/5 space-y-6 bg-card">
+            <div className="glass p-8 rounded-[40px] border-black/5 space-y-6 bg-card">
               <div className="space-y-3">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">사용자 이름</label>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
-                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-black/5 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm text-main outline-none focus:border-[#007AFF] transition-all" />
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-black/5 border border-black/5 rounded-2xl py-3 pl-12 pr-4 text-sm text-main outline-none focus:border-orange-accent transition-all" />
                   </div>
-                  <button onClick={handleUpdateName} disabled={isUpdating || name.trim() === user.name} className="px-6 py-3 bg-[#007AFF] text-white rounded-2xl font-bold text-xs hover:scale-105 active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center gap-2"><Save size={16} /> 저장</button>
+                  <button onClick={handleUpdateName} disabled={isUpdating || name.trim() === user.name} className="px-6 py-3 bg-orange-accent text-white rounded-2xl font-bold text-xs hover:scale-105 active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center gap-2"><Save size={16} /> 저장</button>
                 </div>
                 {saveMessage && <p className="text-green-500 text-[10px] font-bold ml-1">{saveMessage}</p>}
               </div>
-              <div className="pt-4 border-t border-white/5 space-y-3">
+              <div className="pt-4 border-t border-black/5 space-y-3">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">이메일 주소</label>
-                <div className="relative opacity-40"><Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={16} /><input type="text" value={user.email} disabled className="w-full bg-black/5 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm text-main cursor-not-allowed" /></div>
+                <div className="relative opacity-40"><Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={16} /><input type="text" value={user.email} disabled className="w-full bg-black/5 border border-black/5 rounded-2xl py-3 pl-12 pr-4 text-sm text-main cursor-not-allowed" /></div>
               </div>
             </div>
           </div>
 
           <div className="space-y-6">
             <h4 className="text-xs font-black text-gray-600 uppercase tracking-[0.2em] ml-2">앱 환경 설정</h4>
-            <div className="glass p-8 rounded-[40px] border-white/5 flex flex-col gap-2 bg-card">
-              <div className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 transition-all mb-2">
-                <div className="flex items-center gap-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${user.theme === 'light' ? 'bg-orange-500/10 text-orange-500' : 'bg-blue-500/10 text-blue-400'}`}>{user.theme === 'light' ? <Sun size={18} /> : <Moon size={18} />}</div><span className="text-sm font-bold text-gray-400">화면 테마 ({user.theme === 'light' ? '라이트' : '다크'})</span></div>
-                <button onClick={toggleTheme} className="w-12 h-6 bg-white/10 rounded-full relative transition-colors border border-white/10"><MotionDiv animate={{ x: user.theme === 'light' ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1" /></button>
+            <div className="glass p-8 rounded-[40px] border-black/5 flex flex-col gap-2 bg-white">
+              <div className="flex items-center justify-between p-4 rounded-2xl hover:bg-black/5 transition-all mb-2">
+                <div className="flex items-center gap-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${user.theme === 'light' ? 'bg-orange-500/10 text-orange-500' : 'bg-blue-500/10 text-blue-500'}`}>{user.theme === 'light' ? <Sun size={18} /> : <Moon size={18} />}</div><span className="text-sm font-bold text-gray-500">화면 테마 ({user.theme === 'light' ? '라이트' : '다크'})</span></div>
+                <button onClick={toggleTheme} className="w-12 h-6 bg-black/10 rounded-full relative transition-colors border border-black/10"><MotionDiv animate={{ x: user.theme === 'light' ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1" /></button>
               </div>
-              <button onClick={() => setActiveModal('notifications')} className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 group"><div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center"><Bell size={18} /></div><span className="text-sm font-bold text-gray-400">알림 설정</span></div><ChevronRight size={16} className="text-gray-600 group-hover:text-white" /></button>
-              <button onClick={() => setActiveModal('password')} className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 group"><div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center"><Lock size={18} /></div><span className="text-sm font-bold text-gray-400">비밀번호 변경</span></div><ChevronRight size={16} className="text-gray-600 group-hover:text-white" /></button>
-              <button onClick={onLogout} className="flex items-center justify-between p-4 rounded-2xl hover:bg-red-500/10 transition-all mt-4 border border-dashed border-white/5"><div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center"><LogOut size={18} /></div><span className="text-sm font-bold text-red-500">로그아웃</span></div></button>
+              <button onClick={() => setActiveModal('notifications')} className="flex items-center justify-between p-4 rounded-2xl hover:bg-black/5 group"><div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center"><Bell size={18} /></div><span className="text-sm font-bold text-gray-500">알림 설정</span></div><ChevronRight size={16} className="text-gray-500 group-hover:text-main" /></button>
+              <button onClick={() => setActiveModal('password')} className="flex items-center justify-between p-4 rounded-2xl hover:bg-black/5 group"><div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center"><Lock size={18} /></div><span className="text-sm font-bold text-gray-500">비밀번호 변경</span></div><ChevronRight size={16} className="text-gray-500 group-hover:text-main" /></button>
+              <button onClick={onLogout} className="flex items-center justify-between p-4 rounded-2xl hover:bg-red-500/10 transition-all mt-4 border border-dashed border-black/5"><div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center"><LogOut size={18} /></div><span className="text-sm font-bold text-red-500">로그아웃</span></div></button>
             </div>
           </div>
         </div>
 
         {/* Danger Zone */}
-        <div className="pt-8 mt-8 border-t border-white/5">
+        <div className="pt-8 mt-8 border-t border-black/5">
           <h4 className="text-xs font-black text-red-500 uppercase tracking-[0.2em] ml-2 mb-6">Danger Zone</h4>
           <div className="glass p-8 rounded-[40px] border-red-500/10 bg-red-500/[0.02] flex flex-col sm:flex-row items-center justify-between gap-6">
              <div className="text-center sm:text-left">
-               <p className="text-lg font-bold text-white mb-1">회원 탈퇴</p>
+               <p className="text-lg font-bold text-main mb-1">회원 탈퇴</p>
                <p className="text-sm text-gray-500 leading-relaxed">회원 탈퇴 시 모든 학습 데이터와 질문 내역이 즉시 삭제되며 복구할 수 없습니다.</p>
              </div>
              <button onClick={() => setActiveModal('delete-account')} className="px-8 py-4 bg-red-600/10 border border-red-600/30 text-red-500 rounded-2xl text-xs font-black hover:bg-red-600 hover:text-white transition-all shadow-xl shadow-red-600/5">계정 삭제</button>
@@ -220,26 +220,26 @@ export const Settings: React.FC<SettingsProps> = ({ user, onLogout, onUpdateUser
       {/* Modals */}
       <AnimatePresence>
         {activeModal && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
-            <MotionDiv initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="w-full max-w-lg glass p-10 rounded-[50px] bg-card border-white/10 shadow-3xl">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/40 backdrop-blur-md">
+            <MotionDiv initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="w-full max-w-lg glass p-10 rounded-[50px] bg-white border-black/10 shadow-3xl">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-2xl ${activeModal === 'notifications' ? 'bg-purple-500/10 text-purple-400' : activeModal === 'delete-account' ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-400'}`}>
+                  <div className={`p-3 rounded-2xl ${activeModal === 'notifications' ? 'bg-purple-500/10 text-purple-500' : activeModal === 'delete-account' ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
                     {activeModal === 'notifications' ? <Bell size={24} /> : activeModal === 'delete-account' ? <UserX size={24} /> : <Lock size={24} />}
                   </div>
                   <h3 className="text-2xl font-black text-main">
                     {activeModal === 'notifications' ? '알림 설정' : activeModal === 'delete-account' ? '회원 탈퇴' : '비밀번호 변경'}
                   </h3>
                 </div>
-                <button onClick={() => { setActiveModal(null); resetPasswordModal(); }} className="p-2 text-gray-500 hover:text-white"><X size={24} /></button>
+                <button onClick={() => { setActiveModal(null); resetPasswordModal(); }} className="p-2 text-gray-500 hover:text-main"><X size={24} /></button>
               </div>
 
               {activeModal === 'notifications' && (
                 <div className="space-y-6">
                   {['push', 'email', 'browser'].map(key => (
-                    <div key={key} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <div key={key} className="flex items-center justify-between p-4 rounded-2xl bg-black/5 border border-black/5">
                       <div><p className="text-sm font-bold text-main">{key === 'push' ? '푸시 알림' : key === 'email' ? '이메일 소식지' : '브라우저 알림'}</p></div>
-                      <button onClick={() => handleUpdateSettings(key as any, !user.settings?.[key as keyof typeof user.settings])} className={`w-10 h-5 rounded-full relative transition-colors ${user.settings?.[key as keyof typeof user.settings] ? 'bg-[#007AFF]' : 'bg-gray-700'}`}><MotionDiv animate={{ x: user.settings?.[key as keyof typeof user.settings] ? 22 : 2 }} className="w-3 h-3 bg-white rounded-full absolute top-1" /></button>
+                      <button onClick={() => handleUpdateSettings(key as any, !user.settings?.[key as keyof typeof user.settings])} className={`w-10 h-5 rounded-full relative transition-colors ${user.settings?.[key as keyof typeof user.settings] ? 'bg-orange-accent' : 'bg-gray-300'}`}><MotionDiv animate={{ x: user.settings?.[key as keyof typeof user.settings] ? 22 : 2 }} className="w-3 h-3 bg-white rounded-full absolute top-1" /></button>
                     </div>
                   ))}
                 </div>
@@ -249,17 +249,17 @@ export const Settings: React.FC<SettingsProps> = ({ user, onLogout, onUpdateUser
                 <form onSubmit={handlePasswordChange} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">현재 비밀번호</label>
-                    <div className="relative"><Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={16} /><input type={showCurrentPass ? "text" : "password"} value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="현재 비밀번호" required className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-main outline-none focus:border-[#007AFF]" /><button type="button" onClick={() => setShowCurrentPass(!showCurrentPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">{showCurrentPass ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
+                    <div className="relative"><Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} /><input type={showCurrentPass ? "text" : "password"} value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="현재 비밀번호" required className="w-full bg-black/5 border border-black/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-main outline-none focus:border-orange-accent" /><button type="button" onClick={() => setShowCurrentPass(!showCurrentPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-main transition-colors">{showCurrentPass ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">새 비밀번호</label>
-                    <div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={16} /><input type={showNewPass ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="6자 이상 입력" required className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-main outline-none focus:border-[#007AFF]" /><button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">{showNewPass ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
+                    <div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} /><input type={showNewPass ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="6자 이상 입력" required className="w-full bg-black/5 border border-black/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-main outline-none focus:border-orange-accent" /><button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-main transition-colors">{showNewPass ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">새 비밀번호 확인</label>
-                    <div className="relative"><ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={16} /><input type={showConfirmPass ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="비밀번호 다시 입력" required className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-main outline-none focus:border-[#007AFF]" /><button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">{showConfirmPass ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
+                    <div className="relative"><ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} /><input type={showConfirmPass ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="비밀번호 다시 입력" required className="w-full bg-black/5 border border-black/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-main outline-none focus:border-orange-accent" /><button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-main transition-colors">{showConfirmPass ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
                   </div>
-                  <button type="submit" disabled={isChangingPass} className="w-full py-4 bg-[#007AFF] text-white rounded-2xl font-black shadow-xl flex items-center justify-center gap-2 hover:bg-[#007AFF]/90 active:scale-95 disabled:opacity-50">{isChangingPass ? <RefreshCw className="animate-spin" size={20} /> : <Save size={18} />} 비밀번호 변경 완료</button>
+                  <button type="submit" disabled={isChangingPass} className="w-full py-4 bg-orange-accent text-white rounded-2xl font-black shadow-xl flex items-center justify-center gap-2 hover:bg-orange-accent/90 active:scale-95 disabled:opacity-50">{isChangingPass ? <RefreshCw className="animate-spin" size={20} /> : <Save size={18} />} 비밀번호 변경 완료</button>
                 </form>
               )}
 
@@ -267,11 +267,11 @@ export const Settings: React.FC<SettingsProps> = ({ user, onLogout, onUpdateUser
                 <div className="space-y-6">
                    <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-4">
                      <AlertCircle className="text-red-500 shrink-0 mt-1" size={20} />
-                     <p className="text-sm text-gray-400 leading-relaxed">정말로 탈퇴하시겠습니까? 학습 기록, 정복한 문제, 질문 내역 등 모든 활동 데이터가 삭제되며 이 작업은 <strong>복구할 수 없습니다.</strong></p>
+                     <p className="text-sm text-gray-500 leading-relaxed">정말로 탈퇴하시겠습니까? 학습 기록, 정복한 문제, 질문 내역 등 모든 활동 데이터가 삭제되며 이 작업은 <strong>복구할 수 없습니다.</strong></p>
                    </div>
                    <div className="space-y-3">
-                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">탈퇴 확인을 위해 <span className="text-white">'계정삭제'</span>를 입력하세요.</p>
-                     <input type="text" value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} placeholder="계정삭제" className="w-full bg-black/40 border border-red-500/30 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:border-red-500" />
+                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">탈퇴 확인을 위해 <span className="text-main font-bold">'계정삭제'</span>를 입력하세요.</p>
+                     <input type="text" value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} placeholder="계정삭제" className="w-full bg-black/5 border border-red-500/30 rounded-2xl py-4 px-6 text-sm text-main outline-none focus:border-red-500" />
                    </div>
                    <button onClick={handleDeleteAccount} disabled={isDeleting || deleteConfirmText !== '계정삭제'} className="w-full py-5 bg-red-600 text-white rounded-2xl font-black shadow-xl disabled:opacity-30 hover:bg-red-700 transition-all flex items-center justify-center gap-3">{isDeleting ? <RefreshCw className="animate-spin" size={20} /> : <UserX size={20} />} 회원 탈퇴 확정</button>
                 </div>

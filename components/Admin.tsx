@@ -241,19 +241,19 @@ export const Admin: React.FC = () => {
     <div className="p-6 lg:p-12 max-w-7xl mx-auto pb-32">
       <header className="mb-12 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 text-[#007AFF] text-[10px] font-black uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-accent/10 border border-orange-accent/20 text-orange-accent text-[10px] font-black uppercase tracking-widest mb-4">
             <ShieldCheck size={12} /> System Admin Mode
           </div>
-          <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-2 text-white">관리 센터</h2>
+          <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-2 text-main">관리 센터</h2>
           <p className="text-gray-500 font-light">전체 학습 데이터 및 시스템 정책을 관리합니다.</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex gap-1 p-1 glass rounded-2xl border-white/5 bg-white/5">
-            <button type="button" onClick={() => setActiveTab('stats')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'stats' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500'}`}>통계</button>
-            <button type="button" onClick={() => setActiveTab('users')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'users' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500'}`}>학습자</button>
-            <button type="button" onClick={() => setActiveTab('questions')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'questions' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500'}`}>질문</button>
+          <div className="flex gap-1 p-1 glass rounded-2xl border-black/5 bg-white">
+            <button type="button" onClick={() => setActiveTab('stats')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'stats' ? 'bg-orange-accent text-white shadow-lg' : 'text-gray-500 hover:text-main'}`}>통계</button>
+            <button type="button" onClick={() => setActiveTab('users')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'users' ? 'bg-orange-accent text-white shadow-lg' : 'text-gray-500 hover:text-main'}`}>학습자</button>
+            <button type="button" onClick={() => setActiveTab('questions')} className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'questions' ? 'bg-orange-accent text-white shadow-lg' : 'text-gray-500 hover:text-main'}`}>질문</button>
           </div>
-          <button type="button" onClick={fetchAdminData} className="p-4 glass rounded-2xl text-white hover:bg-white/10 transition-all border-white/5 cursor-pointer shadow-lg">
+          <button type="button" onClick={fetchAdminData} className="p-4 glass rounded-2xl text-main hover:bg-black/5 transition-all border border-black/5 bg-white cursor-pointer shadow-lg">
             <RefreshCw size={20} className={isLoading ? "animate-spin" : ""} />
           </button>
         </div>
@@ -261,7 +261,7 @@ export const Admin: React.FC = () => {
 
       {isLoading ? (
         <div className="py-32 flex flex-col items-center justify-center gap-6">
-          <Loader2 className="animate-spin text-[#007AFF]" size={48} />
+          <Loader2 className="animate-spin text-orange-accent" size={48} />
           <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">DB 연동 상태 확인 중...</p>
         </div>
       ) : (
@@ -269,25 +269,37 @@ export const Admin: React.FC = () => {
           {activeTab === 'stats' && (
             <div className="space-y-8">
               <MotionDiv key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="glass p-10 rounded-[40px] border-white/5 bg-gradient-to-br from-[#007AFF]/10 to-transparent">
-                  <Users className="text-[#007AFF] mb-6" size={32} />
+                <div className="glass p-10 rounded-[40px] border-black/5 bg-white shadow-xl">
+                  <div className="flex items-center justify-between mb-6">
+                    <Users className="text-orange-accent" size={32} />
+                    <div className="w-8 h-8 rounded-lg bg-orange-accent/10 flex items-center justify-center text-orange-accent"><Activity size={16} /></div>
+                  </div>
                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">총 학습자 (프로필)</p>
-                  <h4 className="text-5xl font-black text-white tracking-tighter">{stats.totalUsers}</h4>
+                  <h4 className="text-5xl font-black text-main tracking-tighter">{stats.totalUsers}</h4>
                 </div>
-                <div className="glass p-10 rounded-[40px] border-white/5 bg-gradient-to-br from-red-500/10 to-transparent">
-                  <MessageCircle className="text-red-500 mb-6" size={32} />
+                <div className="glass p-10 rounded-[40px] border-black/5 bg-white shadow-xl">
+                  <div className="flex items-center justify-between mb-6">
+                    <MessageCircle className="text-red-500" size={32} />
+                    <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500"><AlertCircle size={16} /></div>
+                  </div>
                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">답변 대기 중</p>
-                  <h4 className="text-5xl font-black text-white tracking-tighter">{pendingQuestions.length}</h4>
+                  <h4 className="text-5xl font-black text-main tracking-tighter">{pendingQuestions.length}</h4>
                 </div>
-                <div className="glass p-10 rounded-[40px] border-white/5 bg-gradient-to-br from-green-500/10 to-transparent">
-                  <Activity className="text-green-500 mb-6" size={32} />
+                <div className="glass p-10 rounded-[40px] border-black/5 bg-white shadow-xl">
+                  <div className="flex items-center justify-between mb-6">
+                    <Activity className="text-green-500" size={32} />
+                    <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500"><CheckCircle2 size={16} /></div>
+                  </div>
                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">평균 진도율</p>
-                  <h4 className="text-5xl font-black text-white tracking-tighter">{stats.avgProgress}%</h4>
+                  <h4 className="text-5xl font-black text-main tracking-tighter">{stats.avgProgress}%</h4>
                 </div>
-                <div className="glass p-10 rounded-[40px] border-white/5 bg-gradient-to-br from-purple-500/10 to-transparent">
-                  <BarChart3 className="text-purple-500 mb-6" size={32} />
+                <div className="glass p-10 rounded-[40px] border-black/5 bg-white shadow-xl">
+                  <div className="flex items-center justify-between mb-6">
+                    <BarChart3 className="text-purple-500" size={32} />
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Info size={16} /></div>
+                  </div>
                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">평균 레벨</p>
-                  <h4 className="text-5xl font-black text-white tracking-tighter">Lv.{stats.avgLevel}</h4>
+                  <h4 className="text-5xl font-black text-main tracking-tighter">Lv.{stats.avgLevel}</h4>
                 </div>
               </MotionDiv>
             </div>
@@ -298,30 +310,30 @@ export const Admin: React.FC = () => {
               <div className="relative w-full sm:w-96 ml-auto">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                 {/* FIX: Use setUserSearch setter instead of userSearch state variable */}
-                <input type="text" placeholder="검색..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:border-[#007AFF] outline-none" />
+                <input type="text" placeholder="검색..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="w-full bg-black/5 border border-black/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-main focus:border-orange-accent outline-none" />
               </div>
 
-              <div className="glass rounded-[40px] border-white/5 overflow-hidden">
+              <div className="glass rounded-[40px] border-black/5 overflow-hidden bg-white shadow-xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
-                    <thead className="bg-white/5 text-[10px] text-gray-500 uppercase tracking-widest border-b border-white/5">
+                    <thead className="bg-black/5 text-[10px] text-gray-500 uppercase tracking-widest border-b border-black/5">
                       <tr><th className="px-8 py-6">학습자</th><th className="px-8 py-6">진도</th><th className="px-8 py-6">권한</th><th className="px-8 py-6">상태</th><th className="px-8 py-6">관리</th></tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {filteredUsers.map(u => (
-                        <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="px-8 py-8"><p className="font-bold text-main">{u.name}</p><p className="text-xs text-gray-500">{u.email}</p></td>
-                          <td className="px-8 py-8 text-sm font-mono text-gray-400">{u.progress}% (Lv.{u.level})</td>
-                          <td className="px-8 py-8">
-                            <select value={u.role || 'user'} onChange={(e) => handleUpdateRole(u.id, e.target.value as UserRole)} className="bg-black border border-white/10 rounded-lg p-2 text-xs text-white outline-none">
-                              <option value="user">User</option><option value="staff">Staff</option><option value="admin">Admin</option>
-                            </select>
-                          </td>
-                          <td className="px-8 py-8">
-                            <button onClick={() => handleToggleBan(u.id, u.is_banned || false)} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer ${u.is_banned ? 'bg-red-500 text-white' : 'glass text-gray-500 hover:bg-white/10'}`}>
-                              {u.is_banned ? 'Banned' : 'Active'}
-                            </button>
-                          </td>
+                        <tbody className="divide-y divide-black/5">
+                          {filteredUsers.map(u => (
+                            <tr key={u.id} className="hover:bg-black/[0.02] transition-colors">
+                              <td className="px-8 py-8"><p className="font-bold text-main">{u.name}</p><p className="text-xs text-gray-500">{u.email}</p></td>
+                              <td className="px-8 py-8 text-sm font-mono text-gray-500">{u.progress}% (Lv.{u.level})</td>
+                              <td className="px-8 py-8">
+                                <select value={u.role || 'user'} onChange={(e) => handleUpdateRole(u.id, e.target.value as UserRole)} className="bg-white border border-black/10 rounded-lg p-2 text-xs text-main outline-none focus:border-orange-accent transition-all">
+                                  <option value="user">User</option><option value="staff">Staff</option><option value="admin">Admin</option>
+                                </select>
+                              </td>
+                              <td className="px-8 py-8">
+                                <button onClick={() => handleToggleBan(u.id, u.is_banned || false)} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer ${u.is_banned ? 'bg-red-500 text-white' : 'bg-black/5 text-gray-500 hover:bg-black/10'}`}>
+                                  {u.is_banned ? 'Banned' : 'Active'}
+                                </button>
+                              </td>
                           <td className="px-8 py-8">
                             <button onClick={() => handleDeleteUser(u.id, u.name)} className="p-3 text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-all rounded-xl cursor-pointer" title="학습 데이터 삭제">
                               <UserMinus size={18} />
@@ -338,30 +350,30 @@ export const Admin: React.FC = () => {
 
           {activeTab === 'questions' && (
             <MotionDiv key="questions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
-              <div className="flex items-center gap-2 p-1.5 glass rounded-2xl border-white/5 w-fit bg-white/5">
-                <button onClick={() => setQuestionSubTab('pending')} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionSubTab === 'pending' ? 'bg-orange-500 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}><Inbox size={14} /> 답변 대기 ({pendingQuestions.length})</button>
-                <button onClick={() => setQuestionSubTab('resolved')} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionSubTab === 'resolved' ? 'bg-green-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}><CheckCircle size={14} /> 답변 완료 ({resolvedQuestions.length})</button>
-                <button onClick={() => setQuestionSubTab('community')} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionSubTab === 'community' ? 'bg-[#007AFF] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}><Users size={14} /> 커뮤니티 ({communityQuestions.length})</button>
+              <div className="flex items-center gap-2 p-1.5 glass rounded-2xl border-black/5 w-fit bg-white shadow-sm">
+                <button onClick={() => setQuestionSubTab('pending')} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionSubTab === 'pending' ? 'bg-orange-accent text-white shadow-lg' : 'text-gray-500 hover:text-main'}`}><Inbox size={14} /> 답변 대기 ({pendingQuestions.length})</button>
+                <button onClick={() => setQuestionSubTab('resolved')} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionSubTab === 'resolved' ? 'bg-teal-accent text-white shadow-lg' : 'text-gray-500 hover:text-main'}`}><CheckCircle size={14} /> 답변 완료 ({resolvedQuestions.length})</button>
+                <button onClick={() => setQuestionSubTab('community')} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${questionSubTab === 'community' ? 'bg-orange-accent text-white shadow-lg' : 'text-gray-500 hover:text-main'}`}><Users size={14} /> 커뮤니티 ({communityQuestions.length})</button>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {questionSubTab === 'community' ? (
                   communityQuestions.length === 0 ? (
-                    <div className="col-span-full py-32 text-center glass rounded-[48px] border-dashed border-white/5">
+                    <div className="col-span-full py-32 text-center glass rounded-[48px] border-dashed border-black/5">
                       <MessageSquare size={48} className="mx-auto text-gray-800 mb-4 opacity-20" />
                       <p className="text-gray-500">등록된 커뮤니티 질문이 없습니다.</p>
                     </div>
                   ) : (
                     communityQuestions.map(q => (
-                      <div key={q.id} className="glass p-8 rounded-[40px] border-white/5 flex flex-col gap-6 relative transition-all group overflow-hidden bg-white/[0.01]">
+                      <div key={q.id} className="glass p-8 rounded-[40px] border-black/5 flex flex-col gap-6 relative transition-all group overflow-hidden bg-white shadow-xl">
                         <div className="flex justify-between items-start relative z-10">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg bg-[#007AFF]">{q.user_name?.[0]}</div>
-                            <div><p className="font-bold text-white">{q.user_name}</p><p className="text-[10px] text-gray-500">{new Date(q.created_at).toLocaleString()}</p></div>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg bg-orange-accent">{q.user_name?.[0]}</div>
+                            <div><p className="font-bold text-main">{q.user_name}</p><p className="text-[10px] text-gray-500">{new Date(q.created_at).toLocaleString()}</p></div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => handleStartEditCommunity(q)} className="p-3 text-gray-700 hover:text-[#007AFF] transition-colors cursor-pointer rounded-xl hover:bg-white/5"><Edit3 size={20} /></button>
-                            <button onClick={() => handleDeleteCommunityQuestion(q.id)} className="p-3 text-gray-700 hover:text-red-500 transition-colors cursor-pointer rounded-xl hover:bg-red-500/10"><Trash2 size={20} /></button>
+                            <button onClick={() => handleStartEditCommunity(q)} className="p-3 text-gray-500 hover:text-orange-accent transition-colors cursor-pointer rounded-xl hover:bg-black/5"><Edit3 size={20} /></button>
+                            <button onClick={() => handleDeleteCommunityQuestion(q.id)} className="p-3 text-gray-500 hover:text-red-500 transition-colors cursor-pointer rounded-xl hover:bg-red-500/10"><Trash2 size={20} /></button>
                           </div>
                         </div>
                         
@@ -370,57 +382,57 @@ export const Admin: React.FC = () => {
                             <input 
                               value={editCommunityTitle}
                               onChange={e => setEditCommunityTitle(e.target.value)}
-                              className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white outline-none"
+                              className="w-full bg-black/5 border border-black/10 rounded-xl p-4 text-sm text-main outline-none"
                               placeholder="제목"
                             />
                             <textarea 
                               value={editCommunityContent}
                               onChange={e => setEditCommunityContent(e.target.value)}
-                              className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none custom-scrollbar"
+                              className="w-full h-32 bg-black/5 border border-black/10 rounded-2xl p-4 text-sm text-main outline-none custom-scrollbar"
                               placeholder="내용"
                             />
                             <div className="flex justify-end gap-2">
-                              <button onClick={() => setEditingCommunityId(null)} className="px-4 py-2 glass rounded-xl text-xs font-bold text-gray-500 cursor-pointer">취소</button>
-                              <button onClick={() => handleUpdateCommunity(q.id)} className="px-4 py-2 bg-[#007AFF] text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"><Save size={12} /> 저장</button>
+                              <button onClick={() => setEditingCommunityId(null)} className="px-4 py-2 glass bg-black/5 rounded-xl text-xs font-bold text-gray-500 cursor-pointer">취소</button>
+                              <button onClick={() => handleUpdateCommunity(q.id)} className="px-4 py-2 bg-orange-accent text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"><Save size={12} /> 저장</button>
                             </div>
                           </div>
                         ) : (
                           <div className="space-y-3 relative z-10">
-                            <h4 className="text-lg font-bold text-white">{q.title}</h4>
-                            <div className="bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner"><p className="text-gray-300 text-sm leading-relaxed italic">"{q.content}"</p></div>
+                            <h4 className="text-lg font-bold text-main">{q.title}</h4>
+                            <div className="bg-black/5 p-6 rounded-2xl border border-black/5 shadow-inner"><p className="text-main text-sm leading-relaxed italic">"{q.content}"</p></div>
                           </div>
                         )}
                       </div>
                     ))
                   )
                 ) : displayQuestions.length === 0 ? (
-                  <div className="col-span-full py-32 text-center glass rounded-[48px] border-dashed border-white/5">
+                  <div className="col-span-full py-32 text-center glass rounded-[48px] border-dashed border-black/5">
                     <MessageSquare size={48} className="mx-auto text-gray-800 mb-4 opacity-20" />
                     <p className="text-gray-500">해당하는 질문이 없습니다.</p>
                   </div>
                 ) : (
                   displayQuestions.map(q => (
-                    <div key={q.id} className={`glass p-8 rounded-[40px] border-white/5 flex flex-col gap-6 relative transition-all group overflow-hidden ${q.is_resolved ? 'bg-green-500/[0.02]' : 'bg-orange-500/[0.02]'}`}>
+                    <div key={q.id} className={`glass p-8 rounded-[40px] border-black/5 flex flex-col gap-6 relative transition-all group overflow-hidden bg-white shadow-xl ${q.is_resolved ? 'border-teal-accent/20' : 'border-orange-accent/20'}`}>
                       <div className="flex justify-between items-start relative z-10">
                         <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg ${q.is_resolved ? 'bg-green-600' : 'bg-orange-500'}`}>{q.user_name?.[0]}</div>
-                          <div><p className="font-bold text-white">{q.user_name}</p><p className="text-[10px] text-gray-500">{new Date(q.created_at).toLocaleString()}</p></div>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg ${q.is_resolved ? 'bg-teal-accent' : 'bg-orange-accent'}`}>{q.user_name?.[0]}</div>
+                          <div><p className="font-bold text-main">{q.user_name}</p><p className="text-[10px] text-gray-500">{new Date(q.created_at).toLocaleString()}</p></div>
                         </div>
-                        <button onClick={(e) => handleDeleteQuestion(e, q.id)} className="p-3 text-gray-700 hover:text-red-500 transition-colors cursor-pointer rounded-xl hover:bg-red-500/10"><Trash2 size={20} /></button>
+                        <button onClick={(e) => handleDeleteQuestion(e, q.id)} className="p-3 text-gray-500 hover:text-red-500 transition-colors cursor-pointer rounded-xl hover:bg-red-500/10"><Trash2 size={20} /></button>
                       </div>
                       
-                      <div className="bg-black/40 p-6 rounded-2xl border border-white/5 relative z-10 shadow-inner"><p className="text-gray-300 text-sm leading-relaxed italic">"{q.content}"</p></div>
+                      <div className="bg-black/5 p-6 rounded-2xl border border-black/5 relative z-10"><p className="text-main text-sm leading-relaxed italic">"{q.content}"</p></div>
 
                       <div className="relative z-10">
                         {!q.is_resolved ? (
                           <div className="space-y-4">
-                            <textarea placeholder="학습자에게 도움을 줄 답변을 입력하세요..." value={answerInputs[q.id] || ''} onChange={e => setAnswerInputs(prev => ({...prev, [q.id]: e.target.value}))} className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-orange-500/50 transition-all custom-scrollbar" />
-                            <button onClick={() => handleSubmitAnswer(q.id)} disabled={!answerInputs[q.id]?.trim()} className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-black shadow-xl transition-all disabled:opacity-30 cursor-pointer flex items-center justify-center gap-2"><Send size={14} /> 답변 전송하기</button>
+                            <textarea placeholder="학습자에게 도움을 줄 답변을 입력하세요..." value={answerInputs[q.id] || ''} onChange={e => setAnswerInputs(prev => ({...prev, [q.id]: e.target.value}))} className="w-full h-32 bg-black/5 border border-black/10 rounded-2xl p-4 text-sm text-main outline-none focus:border-orange-accent/50 transition-all custom-scrollbar" />
+                            <button onClick={() => handleSubmitAnswer(q.id)} disabled={!answerInputs[q.id]?.trim()} className="w-full py-4 bg-orange-accent hover:bg-orange-accent/90 text-white rounded-xl text-xs font-black shadow-xl transition-all disabled:opacity-30 cursor-pointer flex items-center justify-center gap-2"><Send size={14} /> 답변 전송하기</button>
                           </div>
                         ) : (
-                          <div className="p-6 rounded-2xl glass-blue border-green-500/20 bg-green-500/[0.03] shadow-lg">
-                            <div className="flex items-center gap-2 mb-3 text-green-400 text-[10px] font-black uppercase tracking-widest"><ShieldCheck size={14} /> Answered by Admin</div>
-                            <div className="text-sm text-gray-300 leading-relaxed"><FormattedText text={q.answer || ''} /></div>
+                          <div className="p-6 rounded-2xl glass-blue border-teal-accent/20 bg-teal-accent/[0.03] shadow-lg">
+                            <div className="flex items-center gap-2 mb-3 text-teal-accent text-[10px] font-black uppercase tracking-widest"><ShieldCheck size={14} /> Answered by Admin</div>
+                            <div className="text-sm text-main leading-relaxed"><FormattedText text={q.answer || ''} /></div>
                           </div>
                         )}
                       </div>

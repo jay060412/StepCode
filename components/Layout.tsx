@@ -70,29 +70,29 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
-    <div className="flex h-[100dvh] w-screen bg-main text-main overflow-hidden flex-col lg:flex-row">
+    <div className="flex h-[100dvh] w-screen bg-background text-main overflow-hidden flex-col lg:flex-row">
       {/* Sidebar - [PC Only] */}
       <MotionAside 
         initial={false}
         animate={{ width: isSidebarCollapsed ? 80 : 256 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="hidden lg:flex border-r border-white/5 bg-card flex-col shrink-0 relative z-20"
+        className="hidden lg:flex border-r border-black/5 bg-card flex-col shrink-0 relative z-20"
       >
         <MotionButton
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           initial={false}
           animate={{ x: isSidebarCollapsed ? 40 : 12 }}
-          className="absolute top-1/2 -translate-y-1/2 right-0 translate-x-1/2 z-50 w-8 h-12 glass border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors shadow-2xl"
+          className="absolute top-1/2 -translate-y-1/2 right-0 translate-x-1/2 z-50 w-8 h-12 glass border-black/10 rounded-full flex items-center justify-center text-gray-400 hover:text-orange-accent transition-colors shadow-2xl"
         >
           {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </MotionButton>
 
         <div className="p-8 flex items-center justify-center lg:justify-start gap-3 h-20">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveRoute(AppRoute.HOME)}>
-            <div className="w-8 h-8 bg-[#007AFF] rounded-lg shrink-0 flex items-center justify-center font-black text-white text-xl">S</div>
+            <div className="w-8 h-8 bg-orange-accent rounded-lg shrink-0 flex items-center justify-center font-black text-white text-xl">S</div>
             {!isSidebarCollapsed && (
               <MotionH1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-2xl font-bold text-main whitespace-nowrap">
-                StepCode<span className="text-[#007AFF]">.</span>
+                StepCode<span className="text-orange-accent">.</span>
               </MotionH1>
             )}
           </div>
@@ -100,23 +100,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
 
         <nav className="flex-1 px-4 space-y-2 mt-4">
           {filteredNavItems.map((item) => (
-            <button key={item.id} onClick={() => setActiveRoute(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative group ${activeRoute === item.id ? 'bg-[#007AFF]/10 text-[#007AFF] border border-[#007AFF]/20' : 'text-gray-500 hover:text-[#007AFF] hover:bg-[#007AFF]/5'} ${isSidebarCollapsed ? 'justify-center px-0' : ''}`}>
+            <button key={item.id} onClick={() => setActiveRoute(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative group ${activeRoute === item.id ? 'bg-orange-accent/10 text-orange-accent border border-orange-accent/20' : 'text-gray-500 hover:text-orange-accent hover:bg-orange-accent/5'} ${isSidebarCollapsed ? 'justify-center px-0' : ''}`}>
               <div className="shrink-0">{item.icon}</div>
               {!isSidebarCollapsed && <span className="font-medium text-sm whitespace-nowrap">{item.label}</span>}
             </button>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/5 space-y-2">
+        <div className="p-4 border-t border-black/5 space-y-2">
           <div className={`glass rounded-2xl flex items-center gap-3 transition-all ${isSidebarCollapsed ? 'p-2 justify-center' : 'p-4'}`}>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#007AFF] to-cyan-400 flex items-center justify-center font-bold text-white shrink-0 shadow-lg">{user?.name?.[0]}</div>
-            {!isSidebarCollapsed && <div className="flex-1 overflow-hidden"><p className="text-xs font-bold truncate">{user?.name}</p><p className="text-[10px] text-gray-500 uppercase tracking-widest">{userRole}</p></div>}
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-accent to-teal-accent flex items-center justify-center font-bold text-white shrink-0 shadow-lg">{user?.name?.[0]}</div>
+            {!isSidebarCollapsed && <div className="flex-1 overflow-hidden"><p className="text-xs font-bold truncate text-main">{user?.name}</p><p className="text-[10px] text-gray-500 uppercase tracking-widest">{userRole}</p></div>}
           </div>
         </div>
       </MotionAside>
 
       <main className="flex-1 flex flex-col relative overflow-hidden pb-16 lg:pb-0">
-        <header className="h-16 lg:h-20 border-b border-white/5 flex items-center justify-between px-6 lg:px-8 bg-card backdrop-blur-md z-40 shrink-0">
+        <header className="h-16 lg:h-20 border-b border-black/5 flex items-center justify-between px-6 lg:px-8 bg-card backdrop-blur-md z-40 shrink-0">
           <div className="flex items-center gap-2 text-xs lg:text-sm text-gray-500">
             <span className="hidden sm:inline cursor-pointer hover:text-main" onClick={() => setActiveRoute(AppRoute.HOME)}>나의 학습</span>
             <span className="hidden sm:inline"><ChevronRight size={14} /></span>
@@ -128,7 +128,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
             <div className="relative">
               <button 
                 onClick={() => setIsNotiOpen(!isNotiOpen)}
-                className="p-2.5 rounded-xl hover:bg-white/5 transition-all relative text-gray-500 hover:text-white"
+                className="p-2.5 rounded-xl hover:bg-black/5 transition-all relative text-gray-500 hover:text-orange-accent"
               >
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -146,10 +146,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-4 w-80 lg:w-96 glass rounded-3xl border-white/10 bg-card shadow-3xl z-50 overflow-hidden"
+                      className="absolute right-0 mt-4 w-80 lg:w-96 glass rounded-3xl border-black/10 bg-card shadow-3xl z-50 overflow-hidden"
                     >
-                      <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                        <h3 className="font-bold text-sm">알림 센터</h3>
+                      <div className="px-6 py-5 border-b border-black/5 flex items-center justify-between bg-black/[0.02]">
+                        <h3 className="font-bold text-sm text-main">알림 센터</h3>
                         <span className="text-[10px] font-bold text-gray-500">{notifications.length}개의 최신 알림</span>
                       </div>
                       <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
@@ -158,10 +158,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
                             <div 
                               key={n.id} 
                               onClick={() => markAsRead(n.id)}
-                              className={`p-4 rounded-2xl transition-all cursor-pointer mb-1 ${n.is_read ? 'opacity-50 hover:bg-white/5' : 'bg-[#007AFF]/5 border border-[#007AFF]/10 hover:bg-[#007AFF]/10'}`}
+                              className={`p-4 rounded-2xl transition-all cursor-pointer mb-1 ${n.is_read ? 'opacity-50 hover:bg-black/5' : 'bg-orange-accent/5 border border-orange-accent/10 hover:bg-orange-accent/10'}`}
                             >
                               <div className="flex items-start gap-3">
-                                <div className={`p-2 rounded-lg shrink-0 ${n.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-[#007AFF]/10 text-[#007AFF]'}`}>
+                                <div className={`p-2 rounded-lg shrink-0 ${n.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-orange-accent/10 text-orange-accent'}`}>
                                   {n.type === 'success' ? <CheckCircle2 size={16} /> : <Megaphone size={16} />}
                                 </div>
                                 <div>
@@ -185,7 +185,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
             </div>
 
             {isManagementMember && (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 glass rounded-full border-[#007AFF]/30 bg-[#007AFF]/10 text-[#007AFF]">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 glass rounded-full border-orange-accent/30 bg-orange-accent/10 text-orange-accent">
                 <ShieldCheck size={16} />
                 <span className="text-xs font-bold uppercase">{userRole}</span>
               </div>
@@ -198,10 +198,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
         </div>
       </main>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-4 z-[50]">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card backdrop-blur-xl border-t border-black/5 flex items-center justify-around px-4 z-[50]">
         {filteredNavItems.slice(0, 5).map((item) => (
-          <button key={item.id} onClick={() => setActiveRoute(item.id)} className={`flex flex-col items-center justify-center gap-1 min-w-[64px] ${activeRoute === item.id ? 'text-[#007AFF]' : 'text-gray-500'}`}>
-            <div className={`p-1 rounded-lg ${activeRoute === item.id ? 'bg-[#007AFF]/10' : ''}`}>{item.icon}</div>
+          <button key={item.id} onClick={() => setActiveRoute(item.id)} className={`flex flex-col items-center justify-center gap-1 min-w-[64px] ${activeRoute === item.id ? 'text-orange-accent' : 'text-gray-500'}`}>
+            <div className={`p-1 rounded-lg ${activeRoute === item.id ? 'bg-orange-accent/10' : ''}`}>{item.icon}</div>
             <span className="text-[10px] font-bold">{item.label}</span>
           </button>
         ))}

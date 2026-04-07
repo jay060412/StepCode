@@ -155,11 +155,11 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
   if (!currentProb) return null;
 
   return (
-    <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl mx-auto glass rounded-[40px] border-white/5 bg-black/60 overflow-hidden shadow-2xl mb-20 relative z-10">
+    <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl mx-auto glass rounded-[40px] border-black/5 bg-white overflow-hidden shadow-2xl mb-20 relative z-10">
       {/* Top Navigation Bar */}
-      <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+      <div className="px-8 py-6 border-b border-black/5 bg-black/[0.02] flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <div className={`p-3 rounded-xl ${type === 'concept' ? 'bg-[#007AFF]/20 text-[#007AFF]' : 'bg-cyan-500/20 text-cyan-400'}`}>
+          <div className={`p-3 rounded-xl ${type === 'concept' ? 'bg-orange-accent/20 text-orange-accent' : 'bg-teal-accent/20 text-teal-accent'}`}>
             {type === 'concept' ? <HelpCircle size={20} /> : <Terminal size={20} />}
           </div>
           <div className="flex items-center gap-2">
@@ -169,12 +169,12 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
                 onClick={() => setCurrentIndex(idx)}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
                   currentIndex === idx 
-                    ? 'ring-2 ring-[#007AFF] ring-offset-2 ring-offset-black bg-[#007AFF] text-white scale-110' 
+                    ? 'ring-2 ring-orange-accent ring-offset-2 ring-offset-background bg-orange-accent text-white scale-110' 
                     : results[idx]
                       ? results[idx].isCorrect 
-                        ? 'bg-green-500 text-white' 
+                        ? 'bg-teal-accent text-white' 
                         : 'bg-red-500 text-white'
-                      : 'bg-white/10 text-gray-500 hover:bg-white/20'
+                      : 'bg-black/10 text-gray-500 hover:bg-black/20'
                 }`}
               >
                 {results[idx] ? (results[idx].isCorrect ? <CheckCircle2 size={12} /> : <XCircle size={12} />) : idx + 1}
@@ -189,8 +189,8 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
 
       <div className="p-10 lg:p-14">
         <div className="mb-10">
-          <span className="text-[10px] font-black text-[#007AFF] uppercase tracking-[0.2em] mb-3 block">Challenge Task</span>
-          <h4 className="text-2xl lg:text-3xl font-bold text-white leading-tight whitespace-pre-line">{currentProb.question}</h4>
+          <span className="text-[10px] font-black text-orange-accent uppercase tracking-[0.2em] mb-3 block">Challenge Task</span>
+          <h4 className="text-2xl lg:text-3xl font-bold text-main leading-tight whitespace-pre-line">{currentProb.question}</h4>
         </div>
 
         <div className="min-h-[320px]">
@@ -210,10 +210,10 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
                     currentUserAnswer === opt 
                       ? results[currentIndex]
                         ? results[currentIndex].isCorrect 
-                          ? 'border-green-500 bg-green-500/10 text-green-400' 
+                          ? 'border-teal-accent bg-teal-accent/10 text-teal-accent' 
                           : 'border-red-500 bg-red-500/10 text-red-400'
-                        : 'border-[#007AFF] bg-[#007AFF]/10 text-white' 
-                      : 'border-white/5 text-gray-500 hover:bg-white/5'
+                        : 'border-orange-accent bg-orange-accent/10 text-main' 
+                      : 'border-black/5 text-gray-500 hover:bg-black/5'
                   }`}
                 >
                   <span className="flex-1">{opt}</span>
@@ -225,7 +225,7 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="w-full glass rounded-[32px] border-white/10 overflow-hidden bg-[#050505] flex flex-col shadow-inner">
+              <div className="w-full glass rounded-[32px] border-black/10 overflow-hidden bg-white flex flex-col shadow-inner">
                 <div className="flex overflow-hidden relative font-mono text-lg lg:text-xl min-h-[280px]">
                   <textarea
                     ref={textareaRef}
@@ -236,25 +236,25 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
                       onSaveProgress(results, newAnswers);
                     }}
                     disabled={!!results[currentIndex]}
-                    className="flex-1 bg-transparent border-none outline-none text-cyan-400 p-8 resize-none leading-relaxed font-mono"
+                    className="flex-1 bg-transparent border-none outline-none text-teal-accent p-8 resize-none leading-relaxed font-mono"
                     placeholder="# 여기에 파이썬 코드를 작성하세요..."
                     spellCheck={false}
                   />
                 </div>
                 {!results[currentIndex] && (
-                  <div className="p-4 bg-white/[0.02] border-t border-white/5 flex justify-end gap-3">
-                     <button onClick={handleExecute} className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-bold text-gray-300 transition-colors">
-                       <Play size={14} className="text-green-500" /> 코드 실행
+                  <div className="p-4 bg-black/[0.02] border-t border-black/5 flex justify-end gap-3">
+                     <button onClick={handleExecute} className="flex items-center gap-2 px-6 py-3 bg-black/5 hover:bg-black/10 rounded-2xl text-xs font-bold text-main transition-colors">
+                       <Play size={14} className="text-teal-accent" /> 코드 실행
                      </button>
                   </div>
                 )}
               </div>
-              <div className="glass bg-black/60 border-white/5 rounded-2xl p-6 font-mono min-h-[100px] shadow-inner">
-                 <div className="text-[10px] text-gray-600 uppercase tracking-widest mb-3">Terminal Output</div>
+              <div className="glass bg-white border border-black/10 rounded-2xl p-6 font-mono min-h-[100px] shadow-inner">
+                 <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Terminal Output</div>
                  {output.length > 0 ? (
-                   output.map((line, i) => <div key={i} className="text-green-400/90 mb-1 text-sm">{line}</div>)
+                   output.map((line, i) => <div key={i} className="text-teal-accent mb-1 text-sm">{line}</div>)
                  ) : (
-                   <div className="text-gray-800 italic text-sm">실행 결과가 여기에 표시됩니다.</div>
+                   <div className="text-gray-400 italic text-sm">실행 결과가 여기에 표시됩니다.</div>
                  )}
               </div>
             </div>
@@ -262,14 +262,14 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
         </div>
 
         {results[currentIndex] ? (
-          <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 p-8 lg:p-12 glass rounded-[32px] border-white/5 flex flex-col gap-8 relative z-20 bg-white/[0.01]">
+          <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 p-8 lg:p-12 glass rounded-[32px] border-black/10 flex flex-col gap-8 relative z-20 bg-white shadow-xl">
              <div className="flex-1">
-                <div className="text-lg text-gray-300 leading-relaxed"><FormattedText text={results[currentIndex].feedback} /></div>
+                <div className="text-lg text-main leading-relaxed"><FormattedText text={results[currentIndex].feedback} /></div>
                 
-                <div className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="mt-12 pt-8 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between gap-6">
                   <button 
                     onClick={onBackToConcept}
-                    className="flex items-center gap-2 text-gray-500 hover:text-[#007AFF] transition-all text-sm font-bold group"
+                    className="flex items-center gap-2 text-gray-500 hover:text-orange-accent transition-all text-sm font-bold group"
                   >
                     <BookOpen size={16} className="group-hover:-rotate-12 transition-transform" />
                     개념이 기억 안 나시나요? (학습으로 돌아가기)
@@ -277,7 +277,7 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
 
                   <button 
                     onClick={handleNextAction} 
-                    className="w-full sm:w-auto px-10 py-5 bg-[#007AFF] text-white rounded-[20px] font-black shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                    className="w-full sm:w-auto px-10 py-5 bg-orange-accent text-white rounded-[20px] font-black shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
                   >
                     {currentIndex < problems.length - 1 ? (
                       <>다음 문제로 이동 <ChevronRight size={18} /></>
@@ -296,12 +296,12 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
                   setUserAnswers(newAnswers); 
                   setOutput([]); 
                   onSaveProgress(results, newAnswers);
-                }} className="p-4 glass rounded-2xl text-gray-600 hover:text-white transition-colors" title="초기화">
+                }} className="p-4 glass rounded-2xl text-gray-500 hover:text-main transition-colors border border-black/5 bg-white shadow-md" title="초기화">
                   <RotateCcw size={20} />
                 </button>
                 <button 
                   onClick={onBackToConcept} 
-                  className="p-4 glass rounded-2xl text-gray-600 hover:text-white transition-colors flex items-center gap-2 text-xs font-bold"
+                  className="p-4 glass rounded-2xl text-gray-500 hover:text-main transition-colors flex items-center gap-2 text-xs font-bold border border-black/5 bg-white shadow-md"
                 >
                   <BookOpen size={18} /> 개념 다시보기
                 </button>
@@ -309,7 +309,7 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
              <button 
                onClick={handleSubmit} 
                disabled={!currentUserAnswer.trim() && type === 'coding'} 
-               className="px-12 py-5 rounded-[22px] font-black text-lg flex items-center gap-3 bg-[#007AFF] text-white shadow-2xl shadow-[#007AFF]/30 active:scale-95 transition-all disabled:opacity-30"
+               className="px-12 py-5 rounded-[22px] font-black text-lg flex items-center gap-3 bg-orange-accent text-white shadow-2xl shadow-orange-accent/30 active:scale-95 transition-all disabled:opacity-30"
              >
                 정답 제출하기 <CheckCircle2 size={20} />
              </button>

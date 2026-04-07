@@ -6,22 +6,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StepCode | Visual Coding Learning</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cream': '#F7EDE2',
+                        'orange-accent': '#F6BD60',
+                        'teal-accent': '#84A59D',
+                        'main-bg': 'var(--bg-color)',
+                        'main-text': 'var(--text-color)',
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@100;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
     <style>
         :root {
-            --bg-color: #000000;
-            --text-color: #ffffff;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --card-bg: #0a0a0a;
+            --bg-color: #F7EDE2;
+            --text-color: #333333;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(0, 0, 0, 0.05);
+            --card-bg: #ffffff;
             --sub-text: #666666;
+            --accent-color: #F6BD60;
+            --secondary-color: #84A59D;
         }
 
         html.light {
-            --bg-color: #f5f5f7;
-            --text-color: #1d1d1f;
-            --glass-bg: rgba(255, 255, 255, 0.7);
+            --bg-color: #F7EDE2;
+            --text-color: #333333;
+            --glass-bg: rgba(255, 255, 255, 0.8);
             --glass-border: rgba(0, 0, 0, 0.05);
             --card-bg: #ffffff;
             --sub-text: #86868b;

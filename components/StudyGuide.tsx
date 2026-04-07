@@ -38,8 +38,8 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         "'로직 흐름 추적' 버튼으로 컴퓨터의 사고 흐름을 눈으로 따라가세요.",
         "변수 모니터링 창을 통해 값이 실시간으로 변하는 순간을 포착하세요."
       ],
-      color: "text-[#007AFF]",
-      bgColor: "bg-[#007AFF]/10",
+      color: "text-orange-accent",
+      bgColor: "bg-orange-accent/10",
       icon: <PlayCircle size={24} />
     },
     quiz: {
@@ -50,8 +50,8 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         "오답 시 시스템이 제공하는 정교한 힌트를 활용해 다시 생각해보세요.",
         "단순히 정답을 맞히는 것보다 '왜' 정답인지를 이해하는 것이 중요합니다."
       ],
-      color: "text-purple-400",
-      bgColor: "bg-purple-500/10",
+      color: "text-teal-accent",
+      bgColor: "bg-teal-accent/10",
       icon: <HelpCircleIcon size={24} />
     },
     coding: {
@@ -62,8 +62,8 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         "콘솔창의 에러 메시지를 두려워 말고 하나씩 해결해 나가는 재미를 느끼세요.",
         "최종 제출 시 자동 채점 시스템이 당신의 코드를 분석해 성공 여부를 판별해줍니다."
       ],
-      color: "text-cyan-400",
-      bgColor: "bg-cyan-500/10",
+      color: "text-orange-accent",
+      bgColor: "bg-orange-accent/10",
       icon: <Terminal size={24} />
     }
   };
@@ -75,15 +75,15 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-16 lg:mb-24"
       >
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6">
-          <Sparkles size={14} className="text-[#007AFF]" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">StepCode Strategy Guide</span>
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 border border-black/10 mb-6">
+          <Sparkles size={14} className="text-orange-accent" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">StepCode Strategy Guide</span>
         </div>
-        <h2 className="text-4xl lg:text-7xl font-black mb-6 tracking-tighter bg-gradient-to-b from-white to-gray-500 bg-clip-text text-transparent">
+        <h2 className="text-4xl lg:text-7xl font-black mb-6 tracking-tighter text-main">
           가장 확실하게 <br/>코딩을 배우는 법
         </h2>
         <p className="text-gray-500 text-lg lg:text-xl font-light max-w-2xl mx-auto leading-relaxed">
-          StepCode는 <span className="text-white font-medium">관찰-검증-구현</span>의 반복을 통해 <br className="hidden lg:block"/> 단순 암기가 아닌 프로그래밍적 사고력을 길러줍니다.
+          StepCode는 <span className="text-main font-medium">관찰-검증-구현</span>의 반복을 통해 <br className="hidden lg:block"/> 단순 암기가 아닌 프로그래밍적 사고력을 길러줍니다.
         </p>
       </MotionDiv>
 
@@ -95,8 +95,8 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
               onClick={() => setActiveTab(tab)}
               className={`px-8 py-4 rounded-[20px] font-bold text-sm transition-all border ${
                 activeTab === tab 
-                ? 'bg-[#007AFF] text-white border-[#007AFF] shadow-xl shadow-[#007AFF]/20 scale-105' 
-                : 'glass text-gray-500 border-white/5 hover:text-gray-300'
+                ? 'bg-orange-accent text-white border-orange-accent shadow-xl shadow-orange-accent/20 scale-105' 
+                : 'glass bg-black/5 text-gray-500 border-black/5 hover:text-main'
               }`}
             >
               {tab === 'concept' ? '1. 개념 학습' : tab === 'quiz' ? '2. 개념 퀴즈' : '3. 코딩 도전'}
@@ -110,8 +110,8 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Screen Simulation</span>
             </div>
 
-            <div className="relative overflow-hidden glass rounded-[40px] border-white/10 bg-black/40 shadow-2xl aspect-[4/3] flex flex-col">
-              <div className="px-6 py-4 bg-white/[0.03] border-b border-white/5 flex items-center justify-between">
+            <div className="relative overflow-hidden glass rounded-[40px] border-black/10 bg-white shadow-2xl aspect-[4/3] flex flex-col">
+              <div className="px-6 py-4 bg-black/[0.03] border-b border-black/5 flex items-center justify-between">
                 <div className="flex gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-red-500/40" />
                   <div className="w-2 h-2 rounded-full bg-yellow-500/40" />
@@ -132,26 +132,26 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
                     {activeTab === 'concept' && (
                       <div className="space-y-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-[#007AFF] flex items-center justify-center text-white font-bold">1</div>
-                          <div className="h-4 w-40 bg-white/10 rounded-full" />
+                          <div className="w-8 h-8 rounded-lg bg-orange-accent flex items-center justify-center text-white font-bold">1</div>
+                          <div className="h-4 w-40 bg-black/10 rounded-full" />
                         </div>
-                        <div className="glass bg-black/40 p-6 rounded-3xl border-white/5 font-mono text-cyan-400 space-y-2 relative">
+                        <div className="glass bg-black/5 p-6 rounded-3xl border-black/5 font-mono text-teal-accent space-y-2 relative">
                           <div className="flex items-center gap-3">
-                            <span className="text-gray-700 text-xs">01</span>
+                            <span className="text-gray-400 text-xs">01</span>
                             <span>name = "StepCode"</span>
                           </div>
                           <div className="flex items-center gap-3 opacity-30">
-                            <span className="text-gray-700 text-xs">02</span>
+                            <span className="text-gray-400 text-xs">02</span>
                             <span>print(f"Hello {'{'}name{'}'}")</span>
                           </div>
                           {/* 변수 모니터링 배지 - 애니메이션 부하를 줄이기 위해 부모 애니메이션에 의존 */}
-                          <div className="absolute top-4 right-4 px-3 py-1 bg-[#007AFF]/20 border border-[#007AFF]/40 rounded-full text-[10px] flex items-center gap-2">
-                            <Variable size={10} className="text-[#007AFF]" />
-                            <span className="text-white">name: "StepCode"</span>
+                          <div className="absolute top-4 right-4 px-3 py-1 bg-orange-accent/20 border border-orange-accent/40 rounded-full text-[10px] flex items-center gap-2">
+                            <Variable size={10} className="text-orange-accent" />
+                            <span className="text-main">name: "StepCode"</span>
                           </div>
                         </div>
                         <div className="flex justify-end">
-                          <div className="px-6 py-3 bg-[#007AFF] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg">
+                          <div className="px-6 py-3 bg-orange-accent text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg">
                             <PlayCircle size={14} /> 로직 흐름 추적
                           </div>
                         </div>
@@ -160,33 +160,33 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
 
                     {activeTab === 'quiz' && (
                       <div className="flex flex-col items-center justify-center h-full gap-8">
-                         <div className="w-16 h-16 rounded-3xl bg-purple-500/20 flex items-center justify-center text-purple-400 mb-2">
+                         <div className="w-16 h-16 rounded-3xl bg-teal-accent/20 flex items-center justify-center text-teal-accent mb-2">
                            <BookOpen size={32} />
                          </div>
-                         <div className="h-4 w-3/4 bg-white/10 rounded-full" />
+                         <div className="h-4 w-3/4 bg-black/10 rounded-full" />
                          <div className="w-full space-y-3">
-                           <div className="w-full p-4 glass border-purple-500/30 rounded-2xl flex justify-between items-center">
-                             <span className="text-sm font-bold text-purple-400">A. 변수 이름</span>
-                             <CheckCircle2 size={18} className="text-purple-400" />
+                           <div className="w-full p-4 glass border-teal-accent/30 rounded-2xl flex justify-between items-center">
+                             <span className="text-sm font-bold text-teal-accent">A. 변수 이름</span>
+                             <CheckCircle2 size={18} className="text-teal-accent" />
                            </div>
-                           <div className="w-full p-4 glass border-white/5 rounded-2xl text-sm text-gray-500">B. 함수 결과</div>
+                           <div className="w-full p-4 glass border-black/5 rounded-2xl text-sm text-gray-500">B. 함수 결과</div>
                          </div>
                       </div>
                     )}
 
                     {activeTab === 'coding' && (
                       <div className="flex flex-col h-full gap-4">
-                         <div className="flex-1 glass bg-black/40 rounded-3xl border-white/5 p-6 font-mono text-cyan-400">
+                         <div className="flex-1 glass bg-black/5 rounded-3xl border-black/5 p-6 font-mono text-teal-accent">
                             <div className="flex items-center gap-3 mb-4">
-                              <span className="text-gray-700 text-xs">01</span>
+                              <span className="text-gray-400 text-xs">01</span>
                               <span># 코드를 작성하세요</span>
                             </div>
                          </div>
-                         <div className="h-20 glass bg-[#0a0a0a] rounded-2xl border-white/5 p-4 font-mono text-[10px] text-green-400">
+                         <div className="h-20 glass bg-white rounded-2xl border-black/5 p-4 font-mono text-[10px] text-teal-accent">
                            <div>&gt; 입력을 기다리는 중...</div>
                          </div>
                          <div className="flex justify-end">
-                           <div className="px-8 py-3 bg-cyan-500 text-black rounded-xl text-xs font-black">
+                           <div className="px-8 py-3 bg-orange-accent text-white rounded-xl text-xs font-black">
                              결과 확인
                            </div>
                          </div>
@@ -203,10 +203,10 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
               <span className={`px-4 py-2 ${studyStages[activeTab].bgColor} ${studyStages[activeTab].color} rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block`}>
                 How to Master
               </span>
-              <h3 className="text-3xl lg:text-5xl font-bold mb-6 tracking-tight text-white leading-tight">
+              <h3 className="text-3xl lg:text-5xl font-bold mb-6 tracking-tight text-main leading-tight">
                 {studyStages[activeTab].title}
               </h3>
-              <p className="text-gray-400 text-lg lg:text-xl font-light leading-relaxed">
+              <p className="text-gray-500 text-lg lg:text-xl font-light leading-relaxed">
                 {studyStages[activeTab].desc}
               </p>
             </div>
@@ -221,7 +221,7 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
                   className="flex items-start gap-4"
                 >
                   <div className={`mt-1.5 w-2 h-2 rounded-full ${studyStages[activeTab].color} shrink-0`} />
-                  <span className="text-gray-300 text-base lg:text-lg font-light leading-snug">{point}</span>
+                  <span className="text-main text-base lg:text-lg font-light leading-snug">{point}</span>
                 </MotionDiv>
               ))}
             </div>
@@ -238,27 +238,27 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <MotionDiv 
             whileHover={{ y: -5 }}
-            className="glass p-10 lg:p-14 rounded-[50px] border-white/5 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent flex flex-col items-center text-center group"
+            className="glass p-10 lg:p-14 rounded-[50px] border-black/5 bg-gradient-to-br from-teal-accent/10 via-transparent to-transparent flex flex-col items-center text-center group"
           >
-            <div className="w-20 h-20 rounded-[30px] bg-purple-500/10 text-purple-400 flex items-center justify-center mb-8 shadow-2xl">
+            <div className="w-20 h-20 rounded-[30px] bg-teal-accent/10 text-teal-accent flex items-center justify-center mb-8 shadow-2xl">
               <Brain size={40} />
             </div>
             <h4 className="text-3xl font-black mb-4">코딩이 생전 처음이에요</h4>
-            <p className="text-gray-400 font-light leading-relaxed mb-10 text-lg">
+            <p className="text-gray-500 font-light leading-relaxed mb-10 text-lg">
               문법보다 <strong>'논리'</strong>를 먼저 익히는 것이 중요합니다. 코딩에 대한 막연한 두려움을 버리세요. 컴퓨터는 단지 명령을 따르는 기계일 뿐입니다. <br/><br/>
-              <span className="text-purple-400 font-bold italic">"컴퓨터처럼 사고하는 법부터 가볍게 시작하세요."</span>
+              <span className="text-teal-accent font-bold italic">"컴퓨터처럼 사고하는 법부터 가볍게 시작하세요."</span>
             </p>
-            <div className="w-full space-y-4 mb-10 text-left bg-white/[0.02] p-6 rounded-3xl border border-white/5">
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <CheckCircle2 size={16} className="text-purple-400" /> 알고리즘 사고력 트랙 (기초 논리)
+            <div className="w-full space-y-4 mb-10 text-left bg-black/5 p-6 rounded-3xl border border-black/5">
+              <div className="flex items-center gap-3 text-sm text-gray-500">
+                <CheckCircle2 size={16} className="text-teal-accent" /> 알고리즘 사고력 트랙 (기초 논리)
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <CheckCircle2 size={16} className="text-purple-400" /> 파이썬 입문 트랙 (실전 문법)
+              <div className="flex items-center gap-3 text-sm text-gray-500">
+                <CheckCircle2 size={16} className="text-teal-accent" /> 파이썬 입문 트랙 (실전 문법)
               </div>
             </div>
             <button 
               onClick={onStartAlgorithm}
-              className="w-full py-5 bg-purple-600 text-white rounded-[24px] font-black shadow-2xl shadow-purple-600/30 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3"
+              className="w-full py-5 bg-teal-accent text-white rounded-[24px] font-black shadow-2xl shadow-teal-accent/30 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3"
             >
               사고력 트랙으로 시작하기 <Rocket size={20} />
             </button>
@@ -266,27 +266,27 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
 
           <MotionDiv 
             whileHover={{ y: -5 }}
-            className="glass p-10 lg:p-14 rounded-[50px] border-white/5 bg-gradient-to-br from-[#007AFF]/10 via-transparent to-transparent flex flex-col items-center text-center group"
+            className="glass p-10 lg:p-14 rounded-[50px] border-black/5 bg-gradient-to-br from-orange-accent/10 via-transparent to-transparent flex flex-col items-center text-center group"
           >
-            <div className="w-20 h-20 rounded-[30px] bg-[#007AFF]/10 text-[#007AFF] flex items-center justify-center mb-8 shadow-2xl">
+            <div className="w-20 h-20 rounded-[30px] bg-orange-accent/10 text-orange-accent flex items-center justify-center mb-8 shadow-2xl">
               <Code2 size={40} />
             </div>
             <h4 className="text-3xl font-black mb-4">코딩 경험이 조금 있어요</h4>
-            <p className="text-gray-400 font-light leading-relaxed mb-10 text-lg">
+            <p className="text-gray-500 font-light leading-relaxed mb-10 text-lg">
               블록 코딩이나 기초 문법을 접해보셨나요? 그렇다면 바로 텍스트 코딩의 세계로 뛰어드세요. StepCode의 <strong>'로직 추적'</strong> 기능이 당신의 코딩 근육을 더 단단하게 만들어줄 것입니다. <br/><br/>
-              <span className="text-[#007AFF] font-bold italic">"알고 있는 것을 실제로 구현하는 힘을 기르세요."</span>
+              <span className="text-orange-accent font-bold italic">"알고 있는 것을 실제로 구현하는 힘을 기르세요."</span>
             </p>
-            <div className="w-full space-y-4 mb-10 text-left bg-white/[0.02] p-6 rounded-3xl border border-white/5">
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <CheckCircle2 size={16} className="text-[#007AFF]" /> 파이썬 입문 트랙 (직관적 이해)
+            <div className="w-full space-y-4 mb-10 text-left bg-black/5 p-6 rounded-3xl border border-black/5">
+              <div className="flex items-center gap-3 text-sm text-gray-500">
+                <CheckCircle2 size={16} className="text-orange-accent" /> 파이썬 입문 트랙 (직관적 이해)
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <CheckCircle2 size={16} className="text-[#007AFF]" /> 파이썬 실무 심화 (고급 활용)
+              <div className="flex items-center gap-3 text-sm text-gray-500">
+                <CheckCircle2 size={16} className="text-orange-accent" /> 파이썬 실무 심화 (고급 활용)
               </div>
             </div>
             <button 
               onClick={onStartPython}
-              className="w-full py-5 bg-[#007AFF] text-white rounded-[24px] font-black shadow-2xl shadow-[#007AFF]/30 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3"
+              className="w-full py-5 bg-orange-accent text-white rounded-[24px] font-black shadow-2xl shadow-orange-accent/30 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3"
             >
               파이썬 트랙 바로가기 <Rocket size={20} />
             </button>
@@ -302,11 +302,11 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         ].map((f, i) => {
           const IconComponent = f.icon;
           return (
-            <div key={i} className="glass p-8 rounded-[40px] border-white/5 text-center group">
-              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-6 group-hover:bg-[#007AFF]/10 transition-colors">
-                <IconComponent size={28} className="text-gray-400 group-hover:text-[#007AFF] transition-colors" />
+            <div key={i} className="glass p-8 rounded-[40px] border-black/5 text-center group bg-white shadow-xl">
+              <div className="w-16 h-16 rounded-2xl bg-black/5 flex items-center justify-center mx-auto mb-6 group-hover:bg-orange-accent/10 transition-colors">
+                <IconComponent size={28} className="text-gray-400 group-hover:text-orange-accent transition-colors" />
               </div>
-              <h4 className="text-xl font-bold mb-3">{f.title}</h4>
+              <h4 className="text-xl font-bold mb-3 text-main">{f.title}</h4>
               <p className="text-sm text-gray-500 font-light leading-relaxed">{f.desc}</p>
             </div>
           );
@@ -317,19 +317,19 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({ onStartPython, onViewCur
         whileInView={{ opacity: 1, y: 0 }}
         initial={{ opacity: 0, y: 30 }}
         viewport={{ once: true }}
-        className="mt-24 lg:mt-32 p-12 lg:p-24 rounded-[60px] bg-gradient-to-br from-[#007AFF]/20 via-[#007AFF]/5 to-transparent border border-[#007AFF]/20 text-center"
+        className="mt-24 lg:mt-32 p-12 lg:p-24 rounded-[60px] bg-gradient-to-br from-orange-accent/20 via-orange-accent/5 to-transparent border border-orange-accent/20 text-center"
       >
-        <h2 className="text-3xl lg:text-5xl font-black mb-10 tracking-tighter">당신의 첫 번째 코딩 동반자, <br className="hidden sm:block"/> StepCode.</h2>
+        <h2 className="text-3xl lg:text-5xl font-black mb-10 tracking-tighter text-main leading-tight">당신의 첫 번째 코딩 동반자, <br className="hidden sm:block"/> StepCode.</h2>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
           <button 
             onClick={onStartPython}
-            className="px-12 py-5 bg-[#007AFF] text-white rounded-[24px] font-black text-lg shadow-2xl shadow-[#007AFF]/30 hover:scale-105 active:scale-95 transition-all"
+            className="px-12 py-5 bg-orange-accent text-white rounded-[24px] font-black text-lg shadow-2xl shadow-orange-accent/30 hover:scale-105 active:scale-95 transition-all"
           >
             지금 바로 python학습 시작하기
           </button>
           <button 
             onClick={onViewCurriculum}
-            className="px-12 py-5 glass text-white rounded-[24px] font-black text-lg hover:bg-white/10 transition-all"
+            className="px-12 py-5 glass bg-black/5 text-main rounded-[24px] font-black text-lg hover:bg-black/10 transition-all border border-black/10"
           >
             커리큘럼 전체 보기
           </button>

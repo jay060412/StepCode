@@ -19,7 +19,7 @@ async function startServer() {
 
   // Proxy route for external compiler to avoid Mixed Content (HTTPS -> HTTP) issues
   app.post("/api/external-execute", async (req, res) => {
-    const { code, inputs = [] } = req.body;
+    const { code, input = "" } = req.body;
     const externalUrl = process.env.VITE_EXTERNAL_COMPILER_URL || 'http://play.wrd.kr:25860';
     
     // AbortController를 사용하여 10초 타임아웃 설정
@@ -34,7 +34,7 @@ async function startServer() {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({ code, inputs }),
+        body: JSON.stringify({ code, input }),
         signal: controller.signal
       });
       
@@ -68,7 +68,7 @@ async function startServer() {
 
   // API routes
   app.post("/api/execute/c", async (req, res) => {
-    const { code, inputs = [] } = req.body;
+    const { code, input = "" } = req.body;
     const tempDir = path.join(process.cwd(), "temp");
     if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
@@ -108,10 +108,9 @@ async function startServer() {
         });
       }
 
-      // Execute with inputs
-      const inputStr = inputs.join("\n");
+      // Execute with input
       // Use a timeout to prevent infinite loops
-      const { stdout, stderr } = await execAsync(`echo "${inputStr}" | ${outPath}`, { timeout: 5000 });
+      const { stdout, stderr } = await execAsync(`echo "${input}" | ${outPath}`, { timeout: 5000 });
 
       res.json({ success: true, stdout, stderr, compiler: usedCompiler });
     } catch (error: any) {
