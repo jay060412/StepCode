@@ -122,16 +122,24 @@ export interface ExplanationBlock {
   badge: string;
 }
 
+export interface TestCase {
+  input: string;
+  output: string;
+}
+
 export interface Problem {
   id: string;
   question: string;
+  inputDescription?: string;
+  outputDescription?: string;
+  exampleInput?: string;
+  exampleOutput?: string;
+  testCases?: TestCase[];
   options?: string[];
   answer: string;
   hint: string;
   explanation?: string;
   type: 'concept' | 'coding';
-  exampleInput?: string;
-  exampleOutput?: string;
   mastered?: boolean; 
 }
 

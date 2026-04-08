@@ -383,6 +383,7 @@ const App: React.FC = () => {
                   {learningStage === 'quiz' && (
                     <ProblemSolving 
                       problems={selectedLesson.conceptProblems} type="concept" 
+                      language={selectedTrack.iconType}
                       savedResults={sessionResults.quiz.results} savedAnswers={sessionResults.quiz.answers}
                       onSaveProgress={(res, ans) => setSessionResults(prev => ({ ...prev, quiz: { results: res, answers: ans } }))}
                       onBackToConcept={() => setLearningStage('concept')} onFinish={missed => moveToNextStage(missed)} 
@@ -391,6 +392,7 @@ const App: React.FC = () => {
                   {learningStage === 'coding' && (
                     <ProblemSolving 
                       problems={selectedLesson.codingProblems} type="coding" 
+                      language={selectedTrack.iconType}
                       savedResults={sessionResults.coding.results} savedAnswers={sessionResults.coding.answers}
                       onSaveProgress={(res, ans) => setSessionResults(prev => ({ ...prev, coding: { results: res, answers: ans } }))}
                       onBackToConcept={() => setLearningStage('concept')} onFinish={missed => handleFinishLesson(missed)} 

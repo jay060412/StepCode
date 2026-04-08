@@ -316,20 +316,72 @@ export const py_basic_stage1: Lesson = {
   codingProblems: [
     {
       id: 'py1_cp1',
-      question: '문제 1. 다음 문장을 출력하시오.\nHello, Python!',
+      question: '문제 1. 다음 문장을 출력하시오.',
+      inputDescription: '입력은 없습니다.',
+      outputDescription: 'Hello, Python! 을 출력합니다.',
+      exampleInput: '(입력 없음)',
+      exampleOutput: 'Hello, Python!',
+      testCases: [
+        { input: '', output: 'Hello, Python!' },
+        { input: '', output: 'Hello, Python!' },
+        { input: '', output: 'Hello, Python!' },
+        { input: '', output: 'Hello, Python!' },
+        { input: '', output: 'Hello, Python!' },
+        { input: '', output: 'Hello, Python!' },
+        { input: '', output: 'Hello, Python!' },
+        { input: '', output: 'Hello, Python!' },
+        { input: '', output: 'Hello, Python!' },
+        { input: '', output: 'Hello, Python!' }
+      ],
       answer: 'print("Hello, Python!")',
       hint: 'print() 함수와 문자열을 활용하세요.',
-      type: 'coding',
-      exampleOutput: 'Hello, Python!'
+      type: 'coding'
     },
     {
       id: 'py1_cp2',
-      question:
-        '문제 2. 변수 name에 자신의 이름을 저장하고\nf-string을 사용해 다음과 같이 출력하시오.\n\n안녕하세요, ○○님!',
+      question: '문제 2. 변수 name에 자신의 이름을 저장하고 f-string을 사용해 다음과 같이 출력하시오.',
+      inputDescription: '입력은 없습니다.',
+      outputDescription: '안녕하세요, ○○님! 을 출력합니다.',
+      exampleInput: '(입력 없음)',
+      exampleOutput: '안녕하세요, 지니님!',
+      testCases: [
+        { input: '', output: '안녕하세요, 지니님!' },
+        { input: '', output: '안녕하세요, 지니님!' },
+        { input: '', output: '안녕하세요, 지니님!' },
+        { input: '', output: '안녕하세요, 지니님!' },
+        { input: '', output: '안녕하세요, 지니님!' },
+        { input: '', output: '안녕하세요, 지니님!' },
+        { input: '', output: '안녕하세요, 지니님!' },
+        { input: '', output: '안녕하세요, 지니님!' },
+        { input: '', output: '안녕하세요, 지니님!' },
+        { input: '', output: '안녕하세요, 지니님!' }
+      ],
       answer: 'name = "지니"\nprint(f"안녕하세요, {name}님!")',
       hint: 'f-string과 중괄호를 사용하세요.',
-      type: 'coding',
-      exampleOutput: '안녕하세요, 지니님!'
+      type: 'coding'
+    },
+    {
+      id: 'py1_cp3',
+      question: '문제 3. 입력받은 값을 그대로 출력하시오.',
+      inputDescription: '임의의 문자열이 입력됩니다.',
+      outputDescription: '입력받은 문자열을 그대로 출력합니다.',
+      exampleInput: 'Hello World',
+      exampleOutput: 'Hello World',
+      testCases: [
+        { input: 'Python', output: 'Python' },
+        { input: 'Coding', output: 'Coding' },
+        { input: 'StepCode', output: 'StepCode' },
+        { input: '12345', output: '12345' },
+        { input: 'AI Studio', output: 'AI Studio' },
+        { input: 'Input Test', output: 'Input Test' },
+        { input: 'Output Test', output: 'Output Test' },
+        { input: 'Success', output: 'Success' },
+        { input: 'Final Test', output: 'Final Test' },
+        { input: 'Done', output: 'Done' }
+      ],
+      answer: 'data = input()\nprint(data)',
+      hint: 'input() 함수를 사용하여 입력을 받고 print()로 출력하세요.',
+      type: 'coding'
     }
   ]
 };

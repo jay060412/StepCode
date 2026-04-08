@@ -66,6 +66,85 @@ async function startServer() {
     }
   });
 
+  // Proxy route for grading server
+  app.post("/api/grade", async (req, res) => {
+
+    const {
+      language = "python",
+      problemId = null,
+      code,
+      testCases,
+      timeLimit = 2000
+    } = req.body;
+
+    const externalUrl =
+      process.env.VITE_EXTERNAL_COMPILER_URL ||
+      'http://play.wrd.kr:25860';
+
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    },30000);
+
+    try {
+
+      console.log("Forward grading request");
+
+      const response = await fetch(
+        `${externalUrl}/grade`,
+        {
+          method:'POST',
+
+          headers:{
+            'Content-Type':'application/json'
+          },
+
+          body: JSON.stringify({
+
+            language,
+            problemId,
+            code,
+            timeLimit,
+
+            testCases: testCases.map(tc => ({
+              input: tc.input ?? "",
+              output: tc.output ?? ""
+            }))
+
+          }),
+
+          signal: controller.signal
+        }
+      );
+
+      clearTimeout(timeout);
+
+      const data = await response.json();
+
+      res.status(response.status).json(data);
+
+    }
+    catch(error:any){
+
+      clearTimeout(timeout);
+
+      const isTimeout =
+        error.name === 'AbortError';
+
+      res.status(500).json({
+
+        error:
+        isTimeout
+        ? "채점 서버 응답 시간 초과"
+        : "채점 서버 연결 실패"
+
+      });
+
+    }
+
+});
+
   // API routes
   app.post("/api/execute/c", async (req, res) => {
     const { code, input = "" } = req.body;

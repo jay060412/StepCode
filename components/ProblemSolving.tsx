@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Problem } from '../types';
-import { HelpCircle, Terminal, Play, RotateCcw, CheckCircle2, XCircle, ChevronLeft, BookOpen, ChevronRight } from 'lucide-react';
+import { HelpCircle, Terminal, Play, RotateCcw, CheckCircle2, XCircle, ChevronLeft, BookOpen, ChevronRight, AlertTriangle } from 'lucide-react';
 import { FormattedText } from './FormattedText';
 
 // Fix for framer-motion intrinsic element type errors
@@ -17,6 +17,7 @@ interface ProblemSolvingProps {
   savedResults?: Record<number, any>;
   savedAnswers?: Record<number, string>;
   type: 'concept' | 'coding';
+  language?: string;
 }
 
 declare global {
@@ -24,6 +25,23 @@ declare global {
     loadPyodide: any;
   }
 }
+
+const getResultLabel = (status: string) => {
+  switch (status) {
+    case 'accepted':
+      return '정답';
+    case 'wrong_answer':
+      return '오답';
+    case 'compile_error':
+      return '컴파일 에러';
+    case 'runtime_error':
+      return '런타임 에러';
+    case 'time_limit_exceeded':
+      return '시간 초과';
+    default:
+      return '시스템 오류';
+  }
+};
 
 export const ProblemSolving: React.FC<ProblemSolvingProps> = ({ 
   problems, 
@@ -33,13 +51,15 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
   onSaveProgress,
   savedResults = {},
   savedAnswers = {},
-  type 
+  type,
+  language = 'python'
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>(savedAnswers);
-  const [results, setResults] = useState<Record<number, { isCorrect: boolean; feedback: string; output?: string[] }>>(savedResults as any);
+  const [results, setResults] = useState<Record<number, { isCorrect: boolean; feedback: string; output?: string[]; grading?: any }>>(savedResults as any);
   const [output, setOutput] = useState<string[]>([]);
   const [isEngineLoading, setIsEngineLoading] = useState(false);
+  const [isGrading, setIsGrading] = useState(false);
   
   const pyodideRef = useRef<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -113,10 +133,11 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!currentProb || results[currentIndex]) return;
+    if (!currentProb || results[currentIndex] || isGrading) return;
 
     let isCorrect = false;
     let feedback = "";
+    let gradingData = null;
 
     if (type === 'concept') {
       isCorrect = currentUserAnswer === currentProb.answer;
@@ -124,18 +145,45 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
         ? `### 정답입니다! 🎉\n\n${currentProb.explanation || '훌륭합니다! 핵심 원리를 정확히 이해하셨네요.'}`
         : `### 오답입니다 😢\n\n내가 선택한 답: **${currentUserAnswer}**\n정답: **${currentProb.answer}**\n\n**해설:** ${currentProb.explanation || '제시된 보기를 다시 한번 확인해보세요.'}`;
     } else {
-      const actualOutput = output.join('\n').trim();
-      const expectedOutput = currentProb.exampleOutput?.trim() || "";
-      isCorrect = actualOutput === expectedOutput;
+      setIsGrading(true);
+      try {
+        const response = await fetch('/api/grade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: currentUserAnswer,
+            testCases: currentProb.testCases || []
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Grading server error');
+        }
+        
+        const data = await response.json();
+        gradingData = data;
+        // 모든 테스트 케이스가 'accepted'인 경우에만 정답으로 처리
+        isCorrect = data.results.every((r: any) => r.status === 'accepted');
 
-      feedback = isCorrect
-        ? `### 구현 성공! 🎉\n\n예상 출력 결과와 정확히 일치합니다.\n\n**실행 결과:**\n\`\`\`\n${actualOutput}\n\`\`\`\n\n**핵심 로직 설명:** ${currentProb.explanation || '정확한 출력문을 구현하셨습니다.'}`
-        : `### 결과 불일치 😢\n\n출력값이 정답과 다릅니다.\n\n**나의 출력:**\n\`\`\`\n${actualOutput || '(출력 없음)'}\n\`\`\`\n\n**예상 출력:**\n\`\`\`\n${expectedOutput}\n\`\`\``;
+        if (isCorrect) {
+          feedback = `### 구현 성공! 🎉\n\n모든 테스트 케이스(${data.results.length}개)를 통과했습니다.\n\n**핵심 로직 설명:** ${currentProb.explanation || '정확한 로직을 구현하셨습니다.'}`;
+        } else {
+          const failedCount = data.results.filter((r: any) => r.status !== 'accepted').length;
+          feedback = `### 구현 실패 😢\n\n총 ${data.results.length}개의 테스트 케이스 중 ${failedCount}개에서 오류가 발생했습니다.\n\n**힌트:** ${currentProb.hint || '입출력 형식을 다시 확인해보세요.'}`;
+        }
+      } catch (e) {
+        console.error("Grading failed:", e);
+        feedback = `### 채점 서버 오류 ⚠️\n\n채점 서버와 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.`;
+        setIsGrading(false);
+        return; // 오류 시 제출 처리 안 함
+      }
+      setIsGrading(false);
     }
 
     const newResults = {
       ...results,
-      [currentIndex]: { isCorrect, feedback, output: [...output] }
+      [currentIndex]: { isCorrect, feedback, output: [...output], grading: gradingData }
     };
     
     setResults(newResults);
@@ -190,7 +238,48 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
       <div className="p-6 lg:p-14">
         <div className="mb-6 lg:mb-10">
           <span className="text-[8px] lg:text-[10px] font-black text-orange-accent uppercase tracking-[0.2em] mb-2 lg:mb-3 block">Challenge Task</span>
-          <h4 className="text-xl lg:text-3xl font-bold text-main leading-tight whitespace-pre-line">{currentProb.question}</h4>
+          
+          {type === 'coding' ? (
+            <div className="space-y-8">
+              <h4 className="text-xl lg:text-3xl font-bold text-main leading-tight whitespace-pre-line">{currentProb.question}</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {currentProb.inputDescription && (
+                  <div className="glass p-6 rounded-2xl border-black/5 bg-black/[0.01]">
+                    <h5 className="text-xs font-black text-orange-accent uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <ChevronRight size={14} /> Input Description
+                    </h5>
+                    <p className="text-sm text-gray-600 leading-relaxed">{currentProb.inputDescription}</p>
+                  </div>
+                )}
+                {currentProb.outputDescription && (
+                  <div className="glass p-6 rounded-2xl border-black/5 bg-black/[0.01]">
+                    <h5 className="text-xs font-black text-teal-accent uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <ChevronRight size={14} /> Output Description
+                    </h5>
+                    <p className="text-sm text-gray-600 leading-relaxed">{currentProb.outputDescription}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {currentProb.exampleInput && (
+                  <div className="space-y-3">
+                    <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Example Input</h5>
+                    <pre className="p-4 bg-black/5 rounded-xl font-mono text-xs text-gray-600 border border-black/5">{currentProb.exampleInput}</pre>
+                  </div>
+                )}
+                {currentProb.exampleOutput && (
+                  <div className="space-y-3">
+                    <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Example Output</h5>
+                    <pre className="p-4 bg-black/5 rounded-xl font-mono text-xs text-gray-600 border border-black/5">{currentProb.exampleOutput}</pre>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <h4 className="text-xl lg:text-3xl font-bold text-main leading-tight whitespace-pre-line">{currentProb.question}</h4>
+          )}
         </div>
 
         <div className="min-h-[250px] lg:min-h-[320px]">
@@ -243,9 +332,15 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
                 </div>
                 {!results[currentIndex] && (
                   <div className="p-4 bg-black/[0.02] border-t border-black/5 flex justify-end gap-3">
-                     <button onClick={handleExecute} className="flex items-center gap-2 px-6 py-3 bg-black/5 hover:bg-black/10 rounded-2xl text-xs font-bold text-main transition-colors">
-                       <Play size={14} className="text-teal-accent" /> 코드 실행
-                     </button>
+                     {language === 'python' && (
+                       <button 
+                         onClick={handleExecute} 
+                         disabled={isGrading}
+                         className="flex items-center gap-2 px-6 py-3 bg-black/5 hover:bg-black/10 rounded-2xl text-xs font-bold text-main transition-colors disabled:opacity-50"
+                       >
+                         <Play size={14} className="text-teal-accent" /> 코드 실행
+                       </button>
+                     )}
                   </div>
                 )}
               </div>
@@ -264,7 +359,94 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
         {results[currentIndex] ? (
           <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 lg:mt-12 p-6 lg:p-12 glass rounded-[24px] lg:rounded-[32px] border-black/10 flex flex-col gap-6 lg:gap-8 relative z-20 bg-white shadow-xl">
              <div className="flex-1">
-                <div className="text-base lg:text-lg text-main leading-relaxed"><FormattedText text={results[currentIndex].feedback} /></div>
+                <div className="text-base lg:text-lg text-main leading-relaxed">
+                  <FormattedText text={results[currentIndex].feedback} />
+                </div>
+
+                {results[currentIndex].grading && (
+                  <div className="mt-8 space-y-6">
+                    <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest">Test Case Results</h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {results[currentIndex].grading.results.map((r: any, i: number) => (
+                        <div key={i} className={`p-4 rounded-xl border flex flex-col gap-2 ${r.status === 'accepted' ? 'bg-teal-accent/5 border-teal-accent/20 text-teal-accent' : 'bg-red-500/5 border-red-500/20 text-red-400'}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase tracking-tighter">테스트 {r.index || i + 1}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold">{getResultLabel(r.status)}</span>
+                              {r.status === 'accepted' ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+                            </div>
+                          </div>
+                          
+                          {r.status === 'wrong_answer' && (
+                            <div className="mt-1 space-y-1 text-[10px] font-mono opacity-80">
+                              <div className="flex justify-between"><span>기댓값:</span> <span>{r.expected}</span></div>
+                              <div className="flex justify-between"><span>실제값:</span> <span>{r.actual}</span></div>
+                            </div>
+                          )}
+
+                          {(r.status === 'compile_error' || r.status === 'runtime_error' || r.status === 'system_error') && (
+                            <div className="mt-1 p-2 bg-black/5 rounded text-[9px] font-mono break-all line-clamp-2">
+                              {r.stderr || r.message}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* 상세 오답 정보 표시 (첫 번째 실패 케이스) */}
+                    {results[currentIndex].grading.results.some((r: any) => r.status !== 'accepted') && (
+                      <div className="mt-6 p-6 bg-red-50 rounded-2xl border border-red-100">
+                        <h6 className="text-sm font-bold text-red-600 mb-4 flex items-center gap-2">
+                          <AlertTriangle size={16} /> 상세 오류 분석
+                        </h6>
+                        <div className="space-y-4">
+                          {results[currentIndex].grading.results.filter((r: any) => r.status !== 'accepted').slice(0, 1).map((r: any, i: number) => (
+                            <div key={i} className="grid grid-cols-1 gap-4 text-xs">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded text-[10px] font-bold">
+                                  {getResultLabel(r.status)}
+                                </span>
+                                <span className="text-gray-400 font-bold">테스트 케이스 {r.index || currentIndex + 1}</span>
+                              </div>
+
+                              {r.input && (
+                                <div className="space-y-1">
+                                  <span className="text-gray-400 font-bold uppercase tracking-tighter">Input:</span>
+                                  <pre className="p-3 bg-white rounded-lg border border-red-100 font-mono text-gray-600 overflow-x-auto">{r.input}</pre>
+                                </div>
+                              )}
+
+                              {r.status === 'wrong_answer' ? (
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <span className="text-gray-400 font-bold uppercase tracking-tighter">Your Output:</span>
+                                    <pre className="p-3 bg-white rounded-lg border border-red-100 font-mono text-red-400 overflow-x-auto">{r.actual || '(없음)'}</pre>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <span className="text-gray-400 font-bold uppercase tracking-tighter">Expected Output:</span>
+                                    <pre className="p-3 bg-white rounded-lg border border-red-100 font-mono text-teal-600 overflow-x-auto">{r.expected}</pre>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-1">
+                                  <span className="text-gray-400 font-bold uppercase tracking-tighter">Error Message:</span>
+                                  <pre className="p-3 bg-white rounded-lg border border-red-100 font-mono text-red-500 whitespace-pre-wrap overflow-x-auto">
+                                    {r.stderr || r.message || '상세 에러 내용이 없습니다.'}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          {results[currentIndex].grading.results.filter((r: any) => r.status !== 'accepted').length > 1 && (
+                            <p className="text-[10px] text-red-400 italic mt-2">
+                              * 외 {results[currentIndex].grading.results.filter((r: any) => r.status !== 'accepted').length - 1}개의 테스트 케이스가 더 실패했습니다.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 <div className="mt-8 lg:mt-12 pt-6 lg:pt-8 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between gap-6">
                   <button 
@@ -308,10 +490,10 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
              </div>
              <button 
                onClick={handleSubmit} 
-               disabled={!currentUserAnswer.trim() && type === 'coding'} 
+               disabled={!currentUserAnswer.trim() || isGrading} 
                className="w-full sm:w-auto px-8 lg:px-12 py-4 lg:py-5 rounded-[16px] lg:rounded-[22px] font-black text-base lg:text-lg flex items-center justify-center gap-3 bg-orange-accent text-white shadow-2xl shadow-orange-accent/30 active:scale-95 transition-all disabled:opacity-30"
              >
-                정답 제출하기 <CheckCircle2 size={20} />
+                {isGrading ? '채점 중...' : '정답 제출하기'} <CheckCircle2 size={20} />
              </button>
           </div>
         )}
