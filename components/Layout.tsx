@@ -42,6 +42,18 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
   useEffect(() => {
     fetchNotifications();
     
+    // 화면 크기에 따라 사이드바 자동 조절
+    const handleResize = () => {
+      if (window.innerWidth < 1280) {
+        setIsSidebarCollapsed(true);
+      } else {
+        setIsSidebarCollapsed(false);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
     // 실시간 알림 구독
     const channel = supabase
       .channel('schema-db-changes')
@@ -52,7 +64,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActive
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { 
+      supabase.removeChannel(channel);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [user?.id, fetchNotifications]);
 
   const markAsRead = async (id: string) => {

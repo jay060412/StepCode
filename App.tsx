@@ -372,13 +372,13 @@ const App: React.FC = () => {
           )}
           {activeRoute === AppRoute.LEARN && selectedLesson && (
             <div className="flex flex-col h-full overflow-hidden">
-              <div className="bg-white/40 border-b border-black/5 py-4 px-8 flex items-center justify-center gap-12 text-sm font-bold shrink-0">
+              <div className="bg-white/40 border-b border-black/5 py-3 lg:py-4 px-4 lg:px-8 flex items-center justify-center gap-4 sm:gap-6 lg:gap-12 text-xs lg:text-sm font-bold shrink-0">
                 {availableStages.map(s => (
-                  <button key={s.stage} onClick={() => setLearningStage(s.stage)} className={`flex items-center gap-3 cursor-pointer ${learningStage === s.stage ? 'text-orange-accent' : 'text-gray-600'}`}>{s.icon} <span className="text-xs uppercase tracking-widest">{s.label}</span></button>
+                  <button key={s.stage} onClick={() => setLearningStage(s.stage)} className={`flex items-center gap-1.5 sm:gap-2 lg:gap-3 cursor-pointer whitespace-nowrap ${learningStage === s.stage ? 'text-orange-accent' : 'text-gray-600'}`}>{s.icon} <span className="text-[9px] sm:text-[10px] lg:text-xs uppercase tracking-widest">{s.label}</span></button>
                 ))}
               </div>
               <div className="flex-1 flex overflow-hidden">
-                <div id="learn-scroll-container" className="flex-1 overflow-y-auto p-12 custom-scrollbar">
+                <div id="learn-scroll-container" className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 custom-scrollbar">
                   {learningStage === 'concept' && <CodeViewer lesson={selectedLesson} onFinishConcept={() => moveToNextStage([])} />}
                   {learningStage === 'quiz' && (
                     <ProblemSolving 

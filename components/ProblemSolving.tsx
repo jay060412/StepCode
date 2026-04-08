@@ -155,19 +155,19 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
   if (!currentProb) return null;
 
   return (
-    <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl mx-auto glass rounded-[40px] border-black/5 bg-white overflow-hidden shadow-2xl mb-20 relative z-10">
+    <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl mx-auto glass rounded-[24px] lg:rounded-[40px] border-black/5 bg-white overflow-hidden shadow-2xl mb-10 lg:mb-20 relative z-10">
       {/* Top Navigation Bar */}
-      <div className="px-8 py-6 border-b border-black/5 bg-black/[0.02] flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className={`p-3 rounded-xl ${type === 'concept' ? 'bg-orange-accent/20 text-orange-accent' : 'bg-teal-accent/20 text-teal-accent'}`}>
-            {type === 'concept' ? <HelpCircle size={20} /> : <Terminal size={20} />}
+      <div className="px-4 lg:px-8 py-4 lg:py-6 border-b border-black/5 bg-black/[0.02] flex items-center justify-between">
+        <div className="flex items-center gap-3 lg:gap-6">
+          <div className={`p-2 lg:p-3 rounded-xl ${type === 'concept' ? 'bg-orange-accent/20 text-orange-accent' : 'bg-teal-accent/20 text-teal-accent'}`}>
+            {type === 'concept' ? <HelpCircle size={18} /> : <Terminal size={18} />}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 lg:gap-2">
             {problems.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentIndex(idx)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
+                className={`w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-[8px] lg:text-[10px] font-black transition-all ${
                   currentIndex === idx 
                     ? 'ring-2 ring-orange-accent ring-offset-2 ring-offset-background bg-orange-accent text-white scale-110' 
                     : results[idx]
@@ -177,23 +177,23 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
                       : 'bg-black/10 text-gray-500 hover:bg-black/20'
                 }`}
               >
-                {results[idx] ? (results[idx].isCorrect ? <CheckCircle2 size={12} /> : <XCircle size={12} />) : idx + 1}
+                {results[idx] ? (results[idx].isCorrect ? <CheckCircle2 size={10} /> : <XCircle size={10} />) : idx + 1}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
-           {currentIndex + 1} / {problems.length} Problems
+        <div className="flex items-center gap-4 text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-widest">
+           {currentIndex + 1} / {problems.length} <span className="hidden sm:inline">Problems</span>
         </div>
       </div>
 
-      <div className="p-10 lg:p-14">
-        <div className="mb-10">
-          <span className="text-[10px] font-black text-orange-accent uppercase tracking-[0.2em] mb-3 block">Challenge Task</span>
-          <h4 className="text-2xl lg:text-3xl font-bold text-main leading-tight whitespace-pre-line">{currentProb.question}</h4>
+      <div className="p-6 lg:p-14">
+        <div className="mb-6 lg:mb-10">
+          <span className="text-[8px] lg:text-[10px] font-black text-orange-accent uppercase tracking-[0.2em] mb-2 lg:mb-3 block">Challenge Task</span>
+          <h4 className="text-xl lg:text-3xl font-bold text-main leading-tight whitespace-pre-line">{currentProb.question}</h4>
         </div>
 
-        <div className="min-h-[320px]">
+        <div className="min-h-[250px] lg:min-h-[320px]">
           {type === 'concept' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {allShuffledOptions[currentIndex].map((opt, i) => (
@@ -262,22 +262,22 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
         </div>
 
         {results[currentIndex] ? (
-          <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 p-8 lg:p-12 glass rounded-[32px] border-black/10 flex flex-col gap-8 relative z-20 bg-white shadow-xl">
+          <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 lg:mt-12 p-6 lg:p-12 glass rounded-[24px] lg:rounded-[32px] border-black/10 flex flex-col gap-6 lg:gap-8 relative z-20 bg-white shadow-xl">
              <div className="flex-1">
-                <div className="text-lg text-main leading-relaxed"><FormattedText text={results[currentIndex].feedback} /></div>
+                <div className="text-base lg:text-lg text-main leading-relaxed"><FormattedText text={results[currentIndex].feedback} /></div>
                 
-                <div className="mt-12 pt-8 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="mt-8 lg:mt-12 pt-6 lg:pt-8 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between gap-6">
                   <button 
                     onClick={onBackToConcept}
-                    className="flex items-center gap-2 text-gray-500 hover:text-orange-accent transition-all text-sm font-bold group"
+                    className="flex items-center gap-2 text-gray-500 hover:text-orange-accent transition-all text-[10px] lg:text-sm font-bold group"
                   >
                     <BookOpen size={16} className="group-hover:-rotate-12 transition-transform" />
-                    개념이 기억 안 나시나요? (학습으로 돌아가기)
+                    개념이 기억 안 나시나요? <span className="hidden sm:inline">(학습으로 돌아가기)</span>
                   </button>
 
                   <button 
                     onClick={handleNextAction} 
-                    className="w-full sm:w-auto px-10 py-5 bg-orange-accent text-white rounded-[20px] font-black shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                    className="w-full sm:w-auto px-8 lg:px-10 py-4 lg:py-5 bg-orange-accent text-white rounded-[16px] lg:rounded-[20px] font-black shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 text-sm lg:text-base"
                   >
                     {currentIndex < problems.length - 1 ? (
                       <>다음 문제로 이동 <ChevronRight size={18} /></>
@@ -289,27 +289,27 @@ export const ProblemSolving: React.FC<ProblemSolvingProps> = ({
              </div>
           </MotionDiv>
         ) : (
-          <div className="mt-12 flex justify-between items-center">
-             <div className="flex gap-2">
+          <div className="mt-8 lg:mt-12 flex flex-col sm:flex-row justify-between items-center gap-6">
+             <div className="flex gap-2 w-full sm:w-auto">
                 <button onClick={() => { 
                   const newAnswers = { ...userAnswers, [currentIndex]: '' };
                   setUserAnswers(newAnswers); 
                   setOutput([]); 
                   onSaveProgress(results, newAnswers);
-                }} className="p-4 glass rounded-2xl text-gray-500 hover:text-main transition-colors border border-black/5 bg-white shadow-md" title="초기화">
-                  <RotateCcw size={20} />
+                }} className="flex-1 sm:flex-none p-4 glass rounded-xl lg:rounded-2xl text-gray-500 hover:text-main transition-colors border border-black/5 bg-white shadow-md flex items-center justify-center" title="초기화">
+                  <RotateCcw size={18} />
                 </button>
                 <button 
                   onClick={onBackToConcept} 
-                  className="p-4 glass rounded-2xl text-gray-500 hover:text-main transition-colors flex items-center gap-2 text-xs font-bold border border-black/5 bg-white shadow-md"
+                  className="flex-[2] sm:flex-none p-4 glass rounded-xl lg:rounded-2xl text-gray-500 hover:text-main transition-colors flex items-center justify-center gap-2 text-[10px] lg:text-xs font-bold border border-black/5 bg-white shadow-md"
                 >
-                  <BookOpen size={18} /> 개념 다시보기
+                  <BookOpen size={16} /> 개념 다시보기
                 </button>
              </div>
              <button 
                onClick={handleSubmit} 
                disabled={!currentUserAnswer.trim() && type === 'coding'} 
-               className="px-12 py-5 rounded-[22px] font-black text-lg flex items-center gap-3 bg-orange-accent text-white shadow-2xl shadow-orange-accent/30 active:scale-95 transition-all disabled:opacity-30"
+               className="w-full sm:w-auto px-8 lg:px-12 py-4 lg:py-5 rounded-[16px] lg:rounded-[22px] font-black text-base lg:text-lg flex items-center justify-center gap-3 bg-orange-accent text-white shadow-2xl shadow-orange-accent/30 active:scale-95 transition-all disabled:opacity-30"
              >
                 정답 제출하기 <CheckCircle2 size={20} />
              </button>
